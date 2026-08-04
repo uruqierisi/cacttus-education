@@ -51,7 +51,7 @@ import { ApiError } from './api-error';
 import { REDACTED_PLACEHOLDER, isDeniedKey, looksLikeSecretValue } from './redact';
 
 /** The `AuditLog.entityType` vocabulary. Mirrors the doc comment in schema.prisma. */
-export const AUDIT_ENTITY_TYPES = ['Form', 'Submission', 'User', 'Post', 'Auth'] as const;
+export const AUDIT_ENTITY_TYPES = ['Form', 'Submission', 'User', 'Post', 'Auth', 'Training'] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 /**

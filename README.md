@@ -117,6 +117,24 @@ cp .env.example .env      # set VITE_API_URL to http://localhost:4000
 npm run dev               # http://localhost:5173
 ```
 
+### 4. Marketing site
+
+```bash
+cd cacttus-edu-front
+pnpm install
+cp .env.example .env.local   # VITE_API_BASE_URL=http://localhost:4000
+pnpm dev                     # http://localhost:5174
+```
+
+The port is pinned with `strictPort`, so startup fails loudly rather than drifting
+onto another port. That matters: **5173 is the dashboard's origin and the only one the
+API answers with `Access-Control-Allow-Credentials`.** The marketing site is allowlisted
+as `MARKETING_ORIGIN` for the public endpoints only — it sends no cookies and receives
+no credentials, by design (see `backend/src/config/cors.ts`).
+
+Which form the public "Apliko tani" band renders is set by one constant:
+`cacttus-edu-front/src/marketing/lib/forms.config.ts` → `APPLICATION_FORM_SLUG`.
+
 ---
 
 ## Commands

@@ -22,13 +22,20 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { IMAGE_UPLOAD, type UploadedImageExtension } from '../config/constants';
+import { IMAGE_UPLOAD, PDF_UPLOAD, type StoredFileExtension } from '../config/constants';
 import { env } from '../config/env';
 import { logger } from './logger';
 
+/**
+ * Kept as `SaveImageInput` for source compatibility with existing callers, but the
+ * extension is now any `StoredFileExtension`: images and syllabus PDFs share one
+ * directory, one URL prefix and one random-UUID naming rule, because the security
+ * property that matters — the client never contributes to the stored filename — is
+ * identical for both and is worth having in exactly one place.
+ */
 export type SaveImageInput = {
   readonly buffer: Buffer;
-  readonly extension: UploadedImageExtension;
+  readonly extension: StoredFileExtension;
 };
 
 export interface StorageAdapter {
@@ -118,9 +125,10 @@ export class LocalDiskAdapter implements StorageAdapter {
  * so no traversal sequence, nested path or query string can survive the parse.
  */
 const STORED_FILENAME = new RegExp(
-  `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(?:${Object.keys(
-    IMAGE_UPLOAD.ALLOWED,
-  ).join('|')})$`,
+  `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(?:${[
+    ...Object.keys(IMAGE_UPLOAD.ALLOWED),
+    ...Object.keys(PDF_UPLOAD.ALLOWED),
+  ].join('|')})$`,
   'i',
 );
 

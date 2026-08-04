@@ -89,6 +89,43 @@ export const IMAGE_UPLOAD = {
 
 export type UploadedImageExtension = keyof typeof IMAGE_UPLOAD.ALLOWED;
 
+/**
+ * Syllabus PDFs ("Shkarko planprogramin" on a training's detail page).
+ *
+ * THIS PATH IS WEAKER THAN THE IMAGE PATH, AND THE DIFFERENCE IS WORTH STATING.
+ * An uploaded image is re-encoded by sharp, so the bytes on disk are ones WE produced
+ * and anything smuggled into a comment or trailing segment is discarded. There is no
+ * equivalent re-encode for PDF here — a PDF can legitimately contain JavaScript, and
+ * rewriting one safely needs a dedicated sanitiser this project does not carry.
+ *
+ * So the containment is delivery-side rather than content-side, and it is layered:
+ *   1. multer caps the byte count as the request streams;
+ *   2. magic bytes are sniffed (`lib/pdf-type.ts`) — the extension we write is derived
+ *      from THAT, never from the client's filename or Content-Type;
+ *   3. the file is served from the upload root, which already sets `nosniff` and
+ *      `Content-Security-Policy: default-src 'none'; sandbox`;
+ *   4. PDFs additionally get `Content-Disposition: attachment` (see app.ts), so the
+ *      browser downloads rather than opening them in its in-page viewer. That is what
+ *      keeps a hostile PDF from executing anything in OUR origin.
+ * Uploading is staff-only (requireAuth on /api/admin), so the threat model is a
+ * compromised or careless staff account, not an anonymous attacker.
+ */
+export const PDF_UPLOAD = {
+  /** 10 MB — a planprogram is a few pages of text, not a media file. */
+  MAX_FILE_BYTES: 10 * 1024 * 1024,
+  /** Multipart field name the PDF must arrive under. Same as images, for one client helper. */
+  FIELD_NAME: 'file',
+  ALLOWED: Object.freeze({ pdf: 'application/pdf' }),
+} as const;
+
+export type UploadedPdfExtension = keyof typeof PDF_UPLOAD.ALLOWED;
+
+/**
+ * Every extension the StorageAdapter may write. Both upload kinds share one directory
+ * and one URL prefix, so the filename allowlist that guards deletion must know both.
+ */
+export type StoredFileExtension = UploadedImageExtension | UploadedPdfExtension;
+
 export const CSV_IMPORT = {
   /** Enforced by multer at the UPLOAD boundary — the request is aborted mid-stream. */
   MAX_FILE_BYTES: 5 * 1024 * 1024,

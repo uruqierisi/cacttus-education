@@ -12,3 +12,12 @@ export async function uploadImage(req: Request, res: Response): Promise<void> {
 
   sendCreated(res, await uploadsService.storeCoverImage(req.file));
 }
+
+/** Syllabus PDF for a training's "Shkarko planprogramin" button. */
+export async function uploadPdf(req: Request, res: Response): Promise<void> {
+  if (!req.file) {
+    throw ApiError.badRequest('Zgjidh një skedë PDF për ta ngarkuar.');
+  }
+
+  sendCreated(res, await uploadsService.storeSyllabusPdf(req.file));
+}

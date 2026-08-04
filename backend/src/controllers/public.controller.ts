@@ -11,9 +11,11 @@ import { validatedBody, validatedParams, validatedQuery } from '../middleware/va
 import * as postsService from '../services/posts.service';
 import * as submissionsService from '../services/submissions.service';
 import * as formsService from '../services/forms.service';
+import * as trainingsService from '../services/trainings.service';
 import type { SlugParam } from '../schemas/common.schema';
 import type { PublicPostsQuery } from '../schemas/post.schema';
 import type { CreateSubmissionInput } from '../schemas/submission.schema';
+import type { PublicTrainingsQuery } from '../schemas/training.schema';
 
 /** Serve stale for a day while revalidating — the blog changes rarely. */
 const FEED_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
@@ -32,6 +34,37 @@ export async function getPublishedPost(req: Request, res: Response): Promise<voi
 
   res.setHeader('Cache-Control', FEED_CACHE_CONTROL);
   sendSuccess(res, post);
+}
+
+/**
+ * The training catalogue grid.
+ *
+ * Cacheable like the blog feed: the catalogue changes when an admin edits it, which is
+ * rare, and a stale card for a minute is not a correctness problem.
+ */
+export async function listTrainings(req: Request, res: Response): Promise<void> {
+  const query = validatedQuery<PublicTrainingsQuery>(req);
+  const items = await trainingsService.listPublicTrainings(query);
+
+  res.setHeader('Cache-Control', FEED_CACHE_CONTROL);
+  sendSuccess(res, items);
+}
+
+/** Filter chips, derived from what is actually on live cards. */
+export async function trainingFilters(_req: Request, res: Response): Promise<void> {
+  const filters = await trainingsService.getPublicTrainingFilters();
+
+  res.setHeader('Cache-Control', FEED_CACHE_CONTROL);
+  sendSuccess(res, filters);
+}
+
+/** Everything a training's detail page renders, minus the form's field definitions. */
+export async function getTraining(req: Request, res: Response): Promise<void> {
+  const { slug } = validatedParams<SlugParam>(req);
+  const training = await trainingsService.getPublicTrainingBySlug(slug);
+
+  res.setHeader('Cache-Control', FEED_CACHE_CONTROL);
+  sendSuccess(res, training);
 }
 
 /** Field definitions so the marketing site can render a form it does not hard-code. */

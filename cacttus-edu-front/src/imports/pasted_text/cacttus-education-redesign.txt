@@ -1,0 +1,877 @@
+You are a senior product designer. Design a complete, multi-page, fully prototyped website redesign for **Cacttus Education**, Kosovo's first accredited
+  professional ICT school (Prishtina, operating since 2016). This is a rebrand: the information architecture and content stay as specified below; only
+  the visual design is new.
+
+  **Art direction:** simple yet sophisticated, clean, genuinely professional. Student-friendly and welcoming, but credible and accredited — not a stuffy
+  university. Light theme only. Generous white space, strong typographic hierarchy, soft purple accents, real photography slots, restrained motion. Do not
+  produce a generic template: use scale contrast, layered depth, and designed hover states.
+
+  **LANGUAGE RULE — read this twice.** Every single piece of user-facing text you render must be in **Albanian**, spelled exactly as written in this
+  prompt. Never translate the Albanian strings into English. Never invent English labels. My instructions to you are in English; the design is 100%
+  Albanian.
+
+  ---
+
+  ## 1. FIGMA FILE SETUP
+
+  Create these Figma pages, in this order:
+
+  - `00 Cover` — file title, brand summary, and a **Placeholder Index**: a text list of every screen that contains placeholder copy or placeholder
+  imagery, so the client can find and replace them.
+  - `01 Foundations` — color variables, type scale, spacing scale, radii, shadows, grid, iconography.
+  - `02 Components` — every component with every state.
+  - `03 Desktop` — all desktop frames at 1440 px wide.
+  - `04 Mobile` — all mobile frames at 390 px wide.
+  - `05 Prototype` — the wired flow map (arrange frames left→right in the order of section 8).
+
+  Rules for the whole file:
+  - Every frame and every group uses **Auto Layout**. No absolute-positioned stacks except decorative accents.
+  - All colors and spacing values are **Figma Variables** — never raw hex on a layer. This lets the client change the brand color in one edit.
+  - Component naming: `Category/Name/Variant` (e.g. `Button/Primary/Default`, `Card/Training/Hover`).
+  - No detached instances anywhere.
+  - Name every frame and every meaningful layer in plain language (e.g. `Home / Hero / Rotating headline`, not `Frame 427`).
+  - **Placeholder marking:** any text or image that is filler must have its layer name prefixed with `PH/` (e.g. `PH/Module title`, `PH/Student photo
+  03`). The visible Albanian text stays clean — only the layer name carries the marker. List every `PH/` area on the `00 Cover` page.
+
+  ---
+
+  ## 2. BRAND & DESIGN TOKENS
+
+  ### Color variables (create exactly these, with these names)
+
+  **Primary (brand purple)**
+  | Variable | Hex |
+  |---|---|
+  | `color/primary/50` | `#F9F4FB` |
+  | `color/primary/100` | `#F2E9F7` |
+  | `color/primary/200` | `#E4CFEC` |
+  | `color/primary/300` | `#D1AEE0` |
+  | `color/primary/400` | `#AF73C9` |
+  | `color/primary/500` | `#8E44AD` ← base brand color |
+  | `color/primary/600` | `#75388F` |
+  | `color/primary/700` | `#5D2C72` |
+  | `color/primary/800` | `#452154` |
+  | `color/primary/900` | `#2D1637` |
+
+  **Neutrals**
+  | Variable | Hex |
+  |---|---|
+  | `color/neutral/0` | `#FFFFFF` (base surface) |
+  | `color/neutral/50` | `#FAFAFB` |
+  | `color/neutral/100` | `#F4F4F6` |
+  | `color/neutral/200` | `#E6E6EA` |
+  | `color/neutral/300` | `#D2D2D9` |
+  | `color/neutral/400` | `#9E9EA9` |
+  | `color/neutral/500` | `#71717D` |
+  | `color/neutral/600` | `#52525C` |
+  | `color/neutral/700` | `#3F3F46` |
+  | `color/neutral/800` | `#27272C` |
+  | `color/neutral/900` | `#16161A` |
+
+  **Semantic & accent**
+  | Variable | Hex | Use |
+  |---|---|---|
+  | `color/accent/amber` | `#F5A524` | discount figure in the top banner, scholarship chips |
+  | `color/state/success` | `#1E9E6A` | success message, open-enrollment badge |
+  | `color/state/warning` | `#D98A00` | warning message |
+  | `color/state/error` | `#D33A3A` | form field error |
+  | `color/state/info` | `#2D7FF9` | info message |
+
+  **Applied roles:** page background `color/neutral/0`; alternating section background `color/primary/50`; body text `color/neutral/700`; headings
+  `color/neutral/900`; muted text `color/neutral/500`; hairlines/borders `color/neutral/200`; primary button fill `color/primary/500`, hover
+  `color/primary/600`, pressed `color/primary/700`; link text `color/primary/600`; dark surfaces (top banner, footer) `color/primary/900`.
+
+  ### Typography
+
+  Use **Publica Sans** for both headings and body. If Publica Sans is unavailable in this environment, use **Inter** as the single fallback and note the
+  substitution on the `00 Cover` page. Weights used: 400 Regular, 500 Medium, 600 SemiBold, 700 Bold.
+
+  Desktop scale (size / line-height / weight / tracking):
+  | Style | Value |
+  |---|---|
+  | `Display` | 64 / 68 / 700 / −1.5% |
+  | `H1` | 52 / 58 / 700 / −1% |
+  | `H2` | 40 / 48 / 700 / −0.5% |
+  | `H3` | 30 / 38 / 600 / 0 |
+  | `H4` | 24 / 32 / 600 / 0 |
+  | `Body L` | 18 / 30 / 400 / 0 |
+  | `Body` | 16 / 28 / 400 / 0 |
+  | `Body S` | 14 / 22 / 400 / 0 |
+  | `Caption` | 13 / 18 / 400 / 0 |
+  | `Overline` | 12 / 16 / 600 / +8%, UPPERCASE |
+  | `Button` | 16 / 24 / 600 / 0 |
+  | `Nav link` | 15 / 24 / 500 / 0 |
+
+  Mobile scale: `Display` 38/42, `H1` 32/38, `H2` 26/32, `H3` 22/28, `H4` 19/26, `Body L` 17/28, `Body` 16/26, `Body S` 14/22. Other styles unchanged.
+
+  Line length for paragraphs: 60–75 characters maximum.
+
+  **Critical typographic constraint:** the program name **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"** is very long. Every heading, card title,
+  breadcrumb, and nav dropdown item that carries it must wrap gracefully to two or three lines without clipping, overflow, or ellipsis. Test it in the
+  narrowest container you place it in.
+
+  ### Spacing, radii, shadows, grid
+
+  - Spacing scale (8 px base): 4, 8, 16, 24, 32, 40, 48, 64, 80, 96, 120, 160.
+  - Section vertical padding: desktop 120 top / 120 bottom (96 for dense sections); mobile 64 / 64.
+  - Radii: `radius/sm` 8, `radius/md` 12, `radius/lg` 16, `radius/xl` 24, `radius/full` 999.
+  - Shadows: `shadow/sm` 0 1 2 rgba(45,22,55,0.06); `shadow/md` 0 4 12 rgba(45,22,55,0.08); `shadow/lg` 0 12 32 rgba(45,22,55,0.12); `focus ring` 0 0 0 3
+  rgba(142,68,173,0.35).
+  - Desktop grid: 1440 frame, 1200 content max-width, 12 columns, 24 gutter, 120 side margins.
+  - Mobile grid: 390 frame, single column, 20 side margins, 16 gutter.
+  - Icons: 24×24 stroke icons, 1.5 px stroke, rounded caps, `color/neutral/600` default and `color/primary/500` when active.
+
+  ### Logo
+
+  The real logo file is unavailable. Place a logo slot top-left of the navbar: a 148×36 rectangle at `radius/sm`, layer named `PH/Logo — Cacttus
+  Education`, with the wordmark "Cacttus Education" set in Publica Sans SemiBold 20 as a stand-in. Clear space around it equals 24 px on all sides. Use
+  the same slot (white version on `color/primary/900`) in the footer at 132×32.
+
+  ---
+
+  ## 3. COMPONENT LIBRARY (page `02 Components`)
+
+  Build each of these as a component set with the listed variants/states. Show every state side by side on the Components page with a label above each.
+
+  1. **`Button/Primary`** — height 48 (desktop) / 44 (mobile), padding 16/28, `radius/full`, fill `color/primary/500`, white text, `Button` style. States:
+  Default, Hover, Pressed, Focus, Disabled, Loading (spinner + text).
+  2. **`Button/Secondary`** — transparent fill, 1.5 px border `color/primary/500`, text `color/primary/600`. Same 6 states.
+  3. **`Button/Ghost`** — text-only with trailing chevron, used for "Mëso më shumë" / "Shiko projektin". States: Default, Hover, Focus, Disabled.
+  4. **`Button/Icon`** — 44×44 circular, used for carousel arrows and social icons. States: Default, Hover, Pressed, Disabled.
+  5. **`Nav/Item`** — variants: Default, Hover, Active, With-chevron-closed, With-chevron-open. Hover draws a 2 px `color/primary/500` underline that
+  grows from the center.
+  6. **`Nav/Dropdown/Studime`** — mega panel, 720 wide.
+  7. **`Nav/Dropdown/Projektet`** — list panel, 420 wide.
+  8. **`Nav/Dropdown/Biznese`** — panel, 660 wide, 2×2 grid.
+  9. **`Nav/Dropdown/RrethNesh`** — small panel, 240 wide.
+  10. **`Card/Program`** — large study-field card: 16:10 photo slot, H3 title, `Body S` description, chip row, ghost CTA. States: Default, Hover.
+  11. **`Card/Training`** — category chip, H4 title, 5 meta rows (label + value), `Button/Primary` small "Apliko". States: Default, Hover.
+  12. **`Card/Business`** — icon disc 56×56, H4 title, description, ghost CTA. States: Default, Hover.
+  13. **`Card/Project`** — donor text-lockup chip, H4 title, 2-line description, ghost CTA. States: Default, Hover.
+  14. **`Card/Article`** — 16:9 cover slot, category chip, H4 title, 2-line excerpt, date. States: Default, Hover.
+  15. **`Card/Person`** — 4:5 portrait slot, name (`H4`), role (`Body S`, muted), city chip, small LinkedIn icon button. States: Default, Hover.
+  16. **`Chip/Filter`** — pill, states: Default, Hover, Selected, Focus.
+  17. **`Chip/Meta`** — static info pill (e.g. "2 vite · 4 semestra"), one state.
+  18. **`Accordion/Semester`** — header row with semester label, credits, chevron; body with module rows. States: Collapsed, Expanded, Hover.
+  19. **`Input/Text`** — label above, 52 height field, `radius/md`, 1 px `color/neutral/300`. States: Default, Focus (ring + `color/primary/500` border),
+  Filled, Error (border `color/state/error` + message below), Disabled.
+  20. **`Input/Select`** — same states plus Open (options list).
+  21. **`Input/Textarea`** — 132 height, same states.
+  22. **`Input/Checkbox`** — states: Unchecked, Checked, Focus, Error.
+  23. **`Carousel/ImageSlide`** — 16:9 image slot at `radius/lg`. **Image only — never place any text, caption, name, or overlay on these slides.**
+  24. **`Carousel/Dots`** — 5 dots, Active and Inactive.
+  25. **`Banner/Top`** — full-width strip.
+  26. **`Footer`** — the full footer block as one component.
+  27. **`Form/Application`** — the reusable application form block used on 3 pages.
+  28. **`Breadcrumb`** — items separated by a `/`, last item non-interactive.
+  29. **`State/Empty`** — centered icon + text: **"Nuk ka trajnime të disponueshme për filtrat e zgjedhur"** + `Button/Secondary` labeled **"Pastro
+  filtrat"**. Shown on the Components page only.
+  30. **`Nav/MobileMenu`** — full-screen mobile navigation with accordion rows.
+
+  ---
+
+  ## 4. GLOBAL LAYOUT RULES
+
+  ### 4.1 Top banner (every page)
+
+  Full-width strip, height 40 desktop / 36 mobile, fill `color/primary/900`, centered text in white `Body S` Medium:
+
+  > **Regjistrohu me 20% zbritje**
+
+  Render "20%" in `color/accent/amber`, weight 600. At the right edge (desktop only) a ghost link in white: **"Apliko tani"** with a trailing arrow, and a
+  16×16 close "×" at the far right. The banner sits above the navbar and scrolls away; the navbar becomes sticky at the top after the banner scrolls out.
+
+  ### 4.2 Navbar (every page)
+
+  Height 76 desktop. Layout: logo slot left → nav items centered/left-aligned after the logo → CTA button far right. Background `color/neutral/0` with a 1
+  px bottom hairline `color/neutral/200`; when sticky, add `shadow/sm`.
+
+  Nav items in this exact order and with these exact labels:
+
+  | # | Label | Behavior |
+  |---|---|---|
+  | 1 | **Studime profesionale** | Chevron. Opens a mega dropdown. **This parent item is NOT a link and must NOT navigate anywhere on click.** Its only
+  job is to open the dropdown; the user must choose one of the two fields of study. |
+  | 2 | **Trajnime profesionale** | No dropdown. Direct link. |
+  | 3 | **Projektet** | Chevron. Opens a dropdown listing all 8 projects. |
+  | 4 | **Për biznese** | Chevron. Opens a dropdown with the 4 business offerings. |
+  | 5 | **Lajme** | No dropdown. Direct link. |
+  | 6 | **Kontakti** | No dropdown. Direct link. |
+  | 7 | **Rreth nesh** | Chevron. Opens a dropdown with two items. |
+  | — | **Apliko tani** | `Button/Primary`, always last, right-aligned. |
+
+  **Dropdown 1 — Studime profesionale** (720 wide, `radius/lg`, white, `shadow/lg`, 32 padding):
+  - Overline: **"Studime Profesionale"**
+  - Subtitle (`Body S`, muted), verbatim: **"Cacttus Education ofron studime dyvjeçare të akredituara në fushën e teknologjisë."**
+  - Two horizontal option rows, each with a 48×48 rounded icon tile in `color/primary/100`:
+    1. Title **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"** (allow 2-line wrap) — description **"Programim, zhvillim uebi, aplikacione mobile"** —
+  code/laptop icon.
+    2. Title **"Siguria Kibernetike"** — description **"Mbrojtje sistemesh, analiza rreziqesh, incidente kibernetike"** — shield/lock icon.
+
+  **Dropdown 2 — Projektet** (420 wide, single column of 8 rows, each row = project name + small trailing arrow on hover):
+  1. **Skill Factory**
+  2. **Partneriteti për Impaktin në TIK**
+  3. **SDC**
+  4. **Gratë në Punë Online**
+  5. **KODE**
+  6. **Regional Challenge Fund (RCF)**
+  7. **LuxDev Smart Mobility Project**
+  8. **Virtual Innovation Consortium (VIC)**
+
+  **Dropdown 3 — Për biznese** (660 wide, 2×2 grid):
+  - Overline: **"Për Biznese"**
+  - Subtitle, verbatim: **"Ndihmojmë kompanitë të përgatiten për transformimin dixhital."**
+  - Four cells (title + description):
+    1. **"Trajnime të personalizuara"** — **"Rikualifikoni punëtorët ekzistues për role dixhitale"**
+    2. **"Rrjeti i talentëve"** — **"Akses në portfoliot dhe CV e studentëve"**
+    3. **"Bursa e Impaktit"** — **"Bëhu Sponsor i Bursave të impaktit"**
+    4. **"Klasët me qera"** — **"Klasat moderne të pajisura për qira"**
+
+  **Dropdown 4 — Rreth nesh** (240 wide, two rows): **"Ekipi"**, **"Ligjëruesit"**.
+
+  ### 4.3 Footer rule (RULE 1 OF 2 — stated again in section 7)
+
+  - **NO FOOTER** on the two Studime profesionale pages (`Programim` and `Siguria Kibernetike`). Those pages end with the application form and nothing
+  after it.
+  - **FOOTER PRESENT** on every other page: Ballina, Trajnime profesionale, Për biznese (hub + all 4 detail pages), Projektet (hub + all 8 detail pages),
+  Lajme, Artikull, Kontakti, Ekipi, Ligjëruesit.
+
+  ### 4.4 Footer content (use verbatim)
+
+  Fill `color/primary/900`, white text, 4 columns on desktop, stacked on mobile, 80 top padding.
+
+  - **Column 1 — brand:** white logo slot, then paragraph: **"Cacttus Education është lider në Kosovë në ofrimin e edukimit profesional në fushën e
+  teknologjisë informative."** Then address lines: **"Rr. Bashkim Fehmiu, Arbëria 3, BC2/14 nr.4"** / **"10000 Prishtinë, Kosovë"** / **"+383 (0)38 600
+  237"**.
+  - **Column 2 — heading "Navigimi":** **"Studime profesionale"**, **"Trajnime profesionale"**, **"Projektet"**, **"Për biznese"**, **"Lajme"**.
+  - **Column 3 — heading "Rreth nesh":** **"Ekipi"**, **"Ligjëruesit"**, **"Kontakti"**.
+  - **Column 4 — heading "Rrjetet Sociale":** four 40×40 circular icon buttons — Facebook, Instagram, LinkedIn, X (Twitter).
+  - **Bottom bar** (1 px divider above, `Caption`, 60% white): left **"Cacttus Education 2026. Të gjitha drejtat e rezervuara."** · right **"Ndërtuar me ♥
+  në Prishtinë"**.
+
+  ### 4.5 Reusable application form block (`Form/Application`)
+
+  Used on: Ballina (last section), Programim (last section), Siguria Kibernetike (last section).
+
+  - Section background `color/primary/50`, content in a white card at `radius/xl` with `shadow/lg`, max width 880.
+  - Heading (`H2`): **"Apliko për regjistrim"**
+  - Subtitle (`Body L`, muted): **"Plotëso formularin dhe stafi ynë do të të kontaktojë brenda 48 orëve."**
+  - Fields, two per row on desktop, one per row on mobile:
+    - **"Emri dhe mbiemri"** (text)
+    - **"Email"** (text)
+    - **"Numri i telefonit"** (text)
+    - **"Qyteti"** (select: **"Prishtinë"**, **"Prizren"**, **"Kamenicë"**)
+    - **"Programi i interesit"** (select, full width: **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"**, **"Siguria Kibernetike"**, **"Trajnime
+  profesionale"**)
+    - **"Mesazhi (opsionale)"** (textarea, full width)
+    - Checkbox: **"Pajtohem me kushtet e privatësisë."**
+  - Submit: `Button/Primary` full width on mobile, auto width on desktop, label **"Dërgo aplikimin"**.
+  - Left of the form on desktop (or above on mobile) a 3-row reassurance list with check icons: **"Bursa deri në 80%"**, **"Akredituar MAS"**,
+  **"Regjistrime të hapura"**.
+
+  ---
+
+  ## 5. SITEMAP — EXACT FRAME LIST
+
+  Create every frame below on `03 Desktop` at 1440 wide (height = content), named exactly as shown.
+
+  | Frame name |
+  |---|
+  | `D01 Ballina` |
+  | `D02 Programim — Zhvillues i Ueb-it dhe Aplikacioneve Mobile` |
+  | `D03 Siguria Kibernetike` |
+  | `D04 Trajnime profesionale` |
+  | `D05 Për biznese` |
+  | `D06 Biznese — Trajnime të personalizuara` |
+  | `D07 Biznese — Rrjeti i talentëve` |
+  | `D08 Biznese — Bursa e Impaktit` |
+  | `D09 Biznese — Klasët me qera` |
+  | `D10 Projektet` |
+  | `D11 Projekt — Skill Factory` |
+  | `D12 Projekt — Partneriteti për Impaktin në TIK` |
+  | `D13 Projekt — SDC` |
+  | `D14 Projekt — Gratë në Punë Online` |
+  | `D15 Projekt — KODE` |
+  | `D16 Projekt — Regional Challenge Fund (RCF)` |
+  | `D17 Projekt — LuxDev Smart Mobility Project` |
+  | `D18 Projekt — Virtual Innovation Consortium (VIC)` |
+  | `D19 Lajme` |
+  | `D20 Artikull — Cacttus Education hap regjistrimet për vitin akademik 2026/27` |
+  | `D21 Kontakti` |
+  | `D22 Ekipi — Të gjitha` |
+  | `D23 Ekipi — Prishtinë` |
+  | `D24 Ekipi — Prizren` |
+  | `D25 Ekipi — Kamenicë` |
+  | `D26 Ligjëruesit` |
+
+  On `04 Mobile` at 390 wide, create: `M01 Ballina`, `M02 Programim`, `M03 Siguria Kibernetike`, `M04 Trajnime profesionale`, `M05 Për biznese`, `M06
+  Projektet`, `M07 Lajme`, `M08 Artikull`, `M09 Kontakti`, `M10 Ekipi — Të gjitha`, `M11 Ligjëruesit`, `M12 Menu (overlay)`.
+
+  Frames `D11`–`D18` share one layout template with the title, intro paragraph, and partner lockup swapped per project. Frames `D06`–`D09` share one
+  layout template the same way. Frames `D23`–`D25` are duplicates of `D22` with a different chip selected and a filtered card set.
+
+  ---
+
+  ## 6. ANIMATION & INTERACTION SPEC
+
+  Apply exactly these; do not invent additional motion.
+
+  | Interaction | Spec |
+  |---|---|
+  | **Hero rotating headline (typewriter)** | Build 3 variants of the hero frame. The headline is a fixed line plus one changing word. Wire variant 1 → 2
+  → 3 → 1 with **After Delay 2400 ms**, transition **Smart Animate, 700 ms, Ease Out**. Include a 2 px caret bar after the word, animated as a separate
+  2-frame blink loop, After Delay 500 ms, Instant. Reserve fixed width for the longest word so the layout never shifts. |
+  | **Dropdown open** | On hover of the nav item: opacity 0→100 and Y +8→0, **180 ms, Ease Out**. Close: **120 ms, Ease In**. Chevron rotates 0°→180°, 180
+  ms. |
+  | **Button hover** | Y −2, fill `primary/500`→`primary/600`, shadow `md`→`lg`, **150 ms, Ease Out**. |
+  | **Button press** | Scale 0.98, fill `primary/700`, **80 ms, Ease Out**. |
+  | **Card hover** (Program, Training, Business, Project, Article, Person) | Y −6, shadow `sm`→`lg`, border `neutral/200`→`primary/200`, inner image scale
+  1.0→1.04 with clipping on, **220 ms, Ease Out**. |
+  | **Success-stories carousel** | Auto-advance: **After Delay 3500 ms**, **Smart Animate, 500 ms, Ease In And Out**. Left/right `Button/Icon` arrows also
+  advance on click with the same transition. Dots update with the slide. |
+  | **Scroll reveal** | Each major section enters with opacity 0→100 and Y 24→0, **400 ms, Ease Out**, stagger 80 ms between sibling cards. Show this as a
+  "scroll reveal" variant pair in `02 Components`. |
+  | **Semester accordion / tabs** | Collapsed↔Expanded via **Smart Animate, 250 ms, Ease Out**; chevron rotates 180°. |
+  | **Filter chip select** | Fill `neutral/100`→`primary/500`, text `neutral/700`→white, **150 ms, Ease Out**; the destination frame swap uses **Smart
+  Animate, 250 ms, Ease Out**. |
+  | **Nav item hover** | 2 px underline grows from center, 0→100% width, **200 ms, Ease Out**. |
+  | **Mobile menu** | Opens as an overlay sliding in from the right, **260 ms, Ease Out**; closes with the reverse. |
+
+  Every interactive element must have a visible hover state and a visible focus ring. Nothing may be flat and static on hover.
+
+  ---
+
+  ## 7. PAGE-BY-PAGE BREAKDOWN
+
+  Every page starts with the top banner (4.1) and the navbar (4.2), in that order.
+
+  ### D01 — Ballina (Homepage)
+
+  1. **Top banner** — "Regjistrohu me 20% zbritje".
+  2. **Navbar.**
+  3. **Hero** — asymmetric two-column, 56/44 split, `color/primary/50` background with a soft radial glow of `color/primary/200` behind the image.
+     - Left: badge row — `Chip/Meta` **"Akredituar MAS"** and a green-dot chip **"Regjistrime të hapura"**.
+     - Headline (`Display`), fixed first line **"Ndërto karrierën tënde në"** + rotating second word in `color/primary/500`, cycling through:
+  **"programim."** → **"siguri kibernetike."** → **"teknologji."**
+     - Paragraph (`Body L`): **"Shkolla e parë profesionale e teknologjisë në Kosovë. Studime dyvjeçare të akredituara, trajnime praktike dhe ligjërues
+  nga industria."**
+     - Buttons: `Button/Primary` **"Apliko tani"** + `Button/Secondary` **"Shiko programet"**.
+     - Stat strip below the buttons, 4 items, number in `H3` + label in `Body S`: **"500+ / Studentë të diplomuar"**, **"80% / Bursa deri në"**, **"9 vite
+  / Përvojë në treg"**, **"40+ / Partnerë nga industria"**. Mark all four numbers `PH/`.
+     - Right: 4:5 photo slot named `PH/Foto studentësh — hero`, `radius/xl`, plus a small floating white card overlapping its bottom-left corner with the
+  text **"Praktikë e garantuar te partnerët tanë"**.
+  4. **Studentët & fushat e studimit** (white background).
+     - Overline **"STUDIME PROFESIONALE"**, `H2` **"Zgjidh fushën tënde të studimit"**, `Body L` **"Dy programe dyvjeçare të akredituara, të ndërtuara
+  bashkë me industrinë."**
+     - A photo band above the cards: 3 image slots in a 2:3 / 1:1 / 2:3 rhythm named `PH/Foto studentësh 01–03`, at `radius/lg`, slightly offset
+  vertically from each other for depth.
+     - Two `Card/Program` side by side:
+       - Card A — photo slot `PH/Foto programi — Programim`; title **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"** (wraps to 2–3 lines); description
+  **"Programim, zhvillim uebi, aplikacione mobile"**; chips **"2 vite"**, **"4 semestra"**, **"Prishtinë · Prizren · Kamenicë"**; ghost CTA **"Shiko
+  programin"**.
+       - Card B — photo slot `PH/Foto programi — Siguria Kibernetike`; title **"Siguria Kibernetike"**; description **"Mbrojtje sistemesh, analiza
+  rreziqesh, incidente kibernetike"**; same chips; ghost CTA **"Shiko programin"**.
+  5. **Trajnime profesionale promo** (background `color/primary/900`, white text, full-bleed).
+     - Overline **"TRAJNIME PROFESIONALE"**, `H2` **"Aftësohu shpejt, në muaj — jo në vite."**
+     - Paragraph: **"Trajnime intensive praktike në programim, siguri kibernetike, dizajn dhe menaxhim projektesh — online, në klasë ose hibrid."**
+     - Three highlight rows with icons: **"14 trajnime aktive"**, **"Ligjërues nga industria"**, **"Certifikatë në përfundim"**.
+     - `Button/Primary` **"Shiko të gjitha trajnimet"**.
+     - Right side: a 3-card stack preview showing the titles **"JavaScript"**, **"Cyber Security Essentials"**, **"Dizajn Grafik"**.
+  6. **Histori suksesi — carousel** (background `color/neutral/50`).
+     - `H2` **"Histori suksesi"** and one line `Body L` **"Studentët tanë, sot në industri."** — this is the only text in the section.
+     - Below it, an **image-only carousel**: 3 visible slides on desktop (each 16:9, `radius/lg`, 24 gap), 1.2 slides on mobile. Create **6 slides
+  total**, named `PH/Foto studenti 01` … `PH/Foto studenti 06`. **No names, no quotes, no captions, no overlays, no text of any kind on or under the
+  slides.** Left/right `Button/Icon` arrows sit outside the track; `Carousel/Dots` centered below.
+  7. **Application form** — the `Form/Application` block from 4.5.
+  8. **Footer** — present.
+
+  ### D02 — Programim: "Zhvillues i Ueb-it dhe Aplikacioneve Mobile"
+
+  Positive, creative, energetic marketing of the program. **This page has NO FOOTER.**
+
+  1. Top banner + navbar.
+  2. **Program hero** (background `color/primary/50`): `Breadcrumb` **"Ballina / Studime profesionale / Zhvillues i Ueb-it dhe Aplikacioneve Mobile"**;
+  `H1` **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"**; paragraph **"Bëhu zhvillues i kompletuar: nga faqja e parë e internetit te aplikacioni mobil në
+  duart e mijëra përdoruesve. Dy vite, katër semestra, projekte reale."**; `Chip/Meta` row: **"2 vite · 4 semestra"**, **"120 ECTS"**, **"Prishtinë ·
+  Prizren · Kamenicë"**, **"Akredituar MAS"**; buttons `Button/Primary` **"Apliko tani"** + `Button/Secondary` **"Shkarko planprogramin"**; right: 4:5
+  photo slot `PH/Foto — studentë programimi`.
+  3. **"Çfarë do të mësosh"** — `H2`, then a 3×2 grid of 6 icon cards: **"Bazat e programimit"**, **"Zhvillim front-end"**, **"Zhvillim back-end"**,
+  **"Aplikacione mobile"**, **"Bazat e të dhënave"**, **"Projekte reale me klientë"**. Each with one `Body S` line of supporting copy (mark `PH/`).
+  4. **Plani mësimor — semestrat.** Keep the four-semester structure exactly. `H2` **"Plani mësimor"**, `Body L` **"Katër semestra që të çojnë nga zero te
+  punësimi."** Layout: a horizontal 4-step progress rail labeled **"Semestri 1"**, **"Semestri 2"**, **"Semestri 3"**, **"Semestri 4"**, with a filled
+  dot per step, above four `Accordion/Semester` blocks. Semester 1 is expanded by default; the other three are collapsed. Each accordion header shows the
+  semester label on the left and **"30 ECTS"** on the right. Each body holds 5 module rows; a module row = module name (`Body`, weight 500) +
+  right-aligned `Caption` **"6 ECTS · 45 orë"**. Mark all module names `PH/`.
+     - **Semestri 1:** "Hyrje në programim", "Bazat e HTML dhe CSS", "Algoritme dhe struktura të dhënash", "Matematikë diskrete", "Anglishte teknike".
+     - **Semestri 2:** "JavaScript dhe DOM", "Bazat e të dhënave (SQL)", "Programim i orientuar në objekte", "Dizajn i ndërfaqeve (UI/UX)", "Kontroll
+  versionesh me Git".
+     - **Semestri 3:** "Zhvillim front-end me React", "Zhvillim back-end me Node.js", "Zhvillim i aplikacioneve mobile", "API dhe integrime", "Testim i
+  softuerit".
+     - **Semestri 4:** "Cloud dhe DevOps", "Siguri e aplikacioneve", "Menaxhim projektesh Agile", "Praktikë profesionale", "Projekt diplome".
+  5. **"Ku punojnë të diplomuarit tanë"** — `H2` + a wrapped row of role chips: **"Front-end Developer"**, **"Back-end Developer"**, **"Mobile
+  Developer"**, **"QA Engineer"**, **"UI/UX Designer"**, **"DevOps Engineer"**. Below, a partner logo strip of 6 empty bordered lockups named `PH/Logo
+  partneri 01–06` (text-only stand-ins, no invented brand marks).
+  6. **Application form** (`Form/Application`, with "Programi i interesit" pre-filled to **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"**).
+  7. **NO FOOTER.** The page ends immediately after the form. (RULE 2 OF 2 — this repeats section 4.3 deliberately: do not attach a footer to `D02` or
+  `D03`.)
+
+  ### D03 — Siguria Kibernetike
+
+  Identical structure, layout, and section order to `D02`. Changes only:
+
+  - `H1` **"Siguria Kibernetike"**; breadcrumb ends with **"Siguria Kibernetike"**.
+  - Hero paragraph: **"Mbroj sistemet, të dhënat dhe njerëzit. Mëso të zbulosh dobësitë, të analizosh rreziqet dhe të reagosh ndaj incidenteve
+  kibernetike."**
+  - "Çfarë do të mësosh" cards: **"Rrjeta dhe sisteme"**, **"Kriptografi e aplikuar"**, **"Testim i depërtimit"**, **"Analizë e incidenteve"**,
+  **"Forenzikë dixhitale"**, **"Siguri në cloud"**.
+  - Semester modules (mark `PH/`):
+    - **Semestri 1:** "Hyrje në rrjeta kompjuterike", "Sisteme operative Linux", "Bazat e sigurisë së informacionit", "Skriptim me Python", "Anglishte
+  teknike".
+    - **Semestri 2:** "Administrim i rrjetave", "Kriptografi e aplikuar", "Siguri e sistemeve Windows", "Bazat e të dhënave dhe siguria", "Etika dhe
+  legjislacioni kibernetik".
+    - **Semestri 3:** "Testim i depërtimit (Penetration Testing)", "Analizë e malware-it", "Monitorim dhe SIEM", "Siguri në cloud", "Menaxhim i rrezikut".
+    - **Semestri 4:** "Reagim ndaj incidenteve", "Forenzikë dixhitale", "Siguri e aplikacioneve web", "Praktikë profesionale", "Projekt diplome".
+  - Role chips: **"SOC Analyst"**, **"Penetration Tester"**, **"Security Engineer"**, **"IT Auditor"**, **"Incident Responder"**, **"Network
+  Administrator"**.
+  - Application form with "Programi i interesit" pre-filled to **"Siguria Kibernetike"**. **NO FOOTER.**
+
+  ### D04 — Trajnime profesionale
+
+  1. Top banner + navbar.
+  2. **Intro hero** (compact, `color/primary/50`): `H1` **"Trajnime profesionale"**; paragraph **"Trajnime të shkurtra dhe intensive, të dizajnuara me
+  kompanitë e teknologjisë. Zgjidh formatin që të përshtatet: online, në klasë ose hibrid — dhe merr certifikatë në përfundim."**; three `Chip/Meta`:
+  **"14 trajnime"**, **"6 kategori"**, **"Certifikatë profesionale"**.
+  3. **Filter bar** (sticky under the navbar): row 1 = category `Chip/Filter` set — **"Të gjitha"** (selected), **"Programim"**, **"Administrim"**,
+  **"Siguri Kibernetike"**, **"Marketing & Dizajn"**, **"Menaxhim i Projekteve"**, **"Shkathtësi të buta"**. Row 2 = city chips — **"Të gjitha"**,
+  **"Prishtinë"**, **"Prizren"**, **"Online"**, **"Kamenicë"**.
+  4. **Trainings grid** — 3 columns desktop, 1 column mobile, 24 gap. Each `Card/Training` shows: category chip, training name (`H4`), then 5 meta rows
+  using these exact Albanian labels — **"Fillimi"**, **"Formati"**, **"Orët"**, **"Ligjëruesi"**, **"Qyteti"** — and a `Button/Primary` small **"Apliko"**
+  at the bottom. **When a value is missing, render an em dash "—" in the value slot; never hide the row and never let the card change height.** Render
+  all 14 cards with exactly this data:
+
+  | # | Name | Kategoria | Fillimi | Formati | Orët | Ligjëruesi | Qyteti |
+  |---|---|---|---|---|---|---|---|
+  | 1 | Applied AI and Machine Learning | Programim | 2026/04 | Online | — | Arsim Susuri | Online |
+  | 2 | AI Security | Programim | 2026/04 | Klasë | 4 | Andi Ahmeti | Prishtinë |
+  | 3 | Data Science | Programim | 2026/03 | Klasë | 120 | Hana Hoxha | Prishtinë |
+  | 4 | JavaScript | Programim | 2026/01 | Hibrid | 30 | Ali Kaçamaku | Prishtinë |
+  | 5 | Software Testing QA and Automation | Administrim | 2026/04 | Klasë | — | Pegmatit Bruci | Prishtinë |
+  | 6 | Cloud and DevOps | Administrim | 2026/03 | Klasë | — | Alban Krasniqi | Prishtinë |
+  | 7 | Cyber Security Essentials | Siguri Kibernetike | 2026/01 | Klasë | — | — | Prishtinë |
+  | 8 | Ethical Hacking & Penetration Testing | Siguri Kibernetike | 2026/04 | Klasë | 60 | Mentor Berisha | Prishtinë |
+  | 9 | Graphic Design with AI | Marketing & Dizajn | 2026/04 | Online | 40 | — | Online |
+  | 10 | Dizajn Grafik | Marketing & Dizajn | 2026/01 | Hibrid | 40 | Enes Sermaxhaj | Prizren |
+  | 11 | Content Creation | Marketing & Dizajn | 2026/01 | Klasë | 20 | Arber Gashi | Prishtinë |
+  | 12 | Project Management & Agile | Menaxhim i Projekteve | 2026/04 | Online | 30 | — | Online |
+  | 13 | Komunikimi dhe Prezantimi Profesional | Shkathtësi të buta | 2026/03 | Klasë | 20 | Era Gjakova | Prishtinë |
+  | 14 | Web Development Bootcamp | Programim | 2026/02 | Hibrid | 80 | — | Prizren |
+
+    (Row 14 is filler — mark its name layer `PH/`.) Render the "Orët" value as the number followed by **" orë"** (e.g. "30 orë").
+  5. **Ligjëruesit photo section** — last section before the footer. `H2` **"Ligjëruesit tanë"**, `Body L` **"Profesionistë aktivë në industri që
+  ligjërojnë atë që punojnë çdo ditë."**, then a 3×2 grid of 6 portrait slots (4:5, `radius/lg`) named `PH/Foto ligjëruesi 01–06`, each with the name and
+  role below in `Body S`: **"Arsim Susuri · Applied AI and Machine Learning"**, **"Hana Hoxha · Data Science"**, **"Ali Kaçamaku · JavaScript"**,
+  **"Mentor Berisha · Ethical Hacking"**, **"Enes Sermaxhaj · Dizajn Grafik"**, **"Era Gjakova · Komunikim Profesional"**.
+  6. **Footer** — present.
+
+  ### D05 — Për biznese
+
+  1. Top banner + navbar.
+  2. **Hero:** `H1` **"Për biznese"**; paragraph, verbatim: **"Ndihmojmë kompanitë të përgatiten për transformimin dixhital."** plus a second line: **"Nga
+  rikualifikimi i ekipit deri te qasja në talentët e rinj të teknologjisë."**; `Button/Primary` **"Na kontakto"**.
+  3. **Four `Card/Business` in a 2×2 grid**, each with an icon disc, title, the exact description string, one extra `PH/` paragraph of two lines, and a
+  ghost CTA **"Mëso më shumë"**:
+     1. **"Trajnime të personalizuara"** — **"Rikualifikoni punëtorët ekzistues për role dixhitale"**
+     2. **"Rrjeti i talentëve"** — **"Akses në portfoliot dhe CV e studentëve"**
+     3. **"Bursa e Impaktit"** — **"Bëhu Sponsor i Bursave të impaktit"**
+     4. **"Klasët me qera"** — **"Klasat moderne të pajisura për qira"**
+  4. **CTA band** (`color/primary/900`): `H3` **"Ke një nevojë specifike për ekipin tënd?"** + `Button/Primary` **"Bisedo me ne"**.
+  5. **Footer** — present.
+
+  ### D06–D09 — Business detail pages (one shared template)
+
+  1. Top banner + navbar.
+  2. Hero: `Breadcrumb` **"Ballina / Për biznese / {titulli}"**, `H1` = the offering title, intro paragraph = the offering description expanded to 2
+  sentences (mark `PH/`), 16:9 image slot `PH/Foto — {titulli}`.
+  3. **"Çfarë përfshin"** — three benefit blocks in a row, each icon + `H4` + two `PH/` lines.
+  4. **"Si funksionon"** — three numbered steps in a horizontal stepper: **"1. Konsultim"**, **"2. Dizajnimi i programit"**, **"3. Realizimi dhe
+  raportimi"**, each with one `PH/` line.
+  5. **CTA band:** `H3` **"Le të fillojmë bashkëpunimin"** + `Button/Primary` **"Na kontakto"**.
+  6. **Footer** — present.
+
+  ### D10 — Projektet
+
+  1. Top banner + navbar.
+  2. **Intro first:** `H1` **"Projektet"**; paragraph **"Cacttus Education zbaton projekte me partnerë vendorë dhe ndërkombëtarë për të rritur aftësitë
+  dixhitale në Kosovë — nga rikualifikimi profesional te punësimi i të rinjve dhe fuqizimi i grave në teknologji."**; three counters: **"8 / Projekte"**,
+  **"6 / Partnerë ndërkombëtarë"**, **"2000+ / Përfitues"** (mark numbers `PH/`).
+  3. **Projects grid** — 3 columns × 8 `Card/Project`. Since no donor logo files exist, render each partner as an **intentional text-only lockup**: a
+  bordered chip, 1 px `color/neutral/300`, `radius/sm`, height 32, containing the partner acronym in `Overline` weight 600, `color/neutral/600`. Never
+  draw a fake logo mark.
+
+  | Card title | Partner lockup text | Description (mark `PH/`) |
+  |---|---|---|
+  | **Skill Factory** | **"PARTNER"** | "Program praktik për aftësimin e të rinjve në teknologji." |
+  | **Partneriteti për Impaktin në TIK** | **"USAID"** | "Partneritet për rritjen e impaktit të sektorit të TIK-ut në Kosovë." |
+  | **SDC** | **"SDC"** | "Mbështetje për aftësimin profesional dhe punësimin." |
+  | **Gratë në Punë Online** | **"WoW"** | "Fuqizimi i grave për punë online dhe të pavarur." |
+  | **KODE** | **"KODE"** | "Zhvillimi i ekonomisë dixhitale përmes aftësive të TIK-ut." |
+  | **Regional Challenge Fund (RCF)** | **"RCF"** | "Investim në arsimin profesional dual me industrinë." |
+  | **LuxDev Smart Mobility Project** | **"LuxDev"** | "Zgjidhje dixhitale për mobilitetin e zgjuar." |
+  | **Virtual Innovation Consortium (VIC)** | **"VIC"** | "Konsorcium virtual për inovacion dhe bashkëpunim ndërkufitar." |
+
+    Each card ends with a ghost CTA **"Shiko projektin"**.
+  4. **Footer** — present.
+
+  ### D11–D18 — Project detail pages (one shared template)
+
+  1. Top banner + navbar.
+  2. Hero: `Breadcrumb` **"Ballina / Projektet / {emri i projektit}"**, `H1` = project name, `Body L` intro (mark `PH/`), partner text lockup, `Chip/Meta`
+  row **"2024 – 2026"**, **"Kosovë"**, **"Në zbatim"**.
+  3. **"Rreth projektit"** — two-column: left a 2-paragraph `PH/` body, right a 16:9 image slot `PH/Foto projekti`.
+  4. **Impact stats** — 3 counters with `PH/` numbers and labels **"Përfitues"**, **"Trajnime të mbajtura"**, **"Partnerë"**.
+  5. **Gallery** — 3 image slots in a row, `PH/Foto galeri 01–03`.
+  6. **CTA band:** `H3` **"Dëshiron të bashkëpunosh me ne?"** + `Button/Primary` **"Na kontakto"**.
+  7. **Footer** — present.
+
+  ### D19 — Lajme
+
+  1. Top banner + navbar.
+  2. Hero: `H1` **"Lajme"**, `Body L` **"Njoftime, histori dhe risi nga Cacttus Education."**
+  3. Category `Chip/Filter` row: **"Të gjitha"** (selected), **"Lajmet"**, **"Teknologji"**, **"Karriera"**, **"Projekte"**.
+  4. **Featured article** — a full-width editorial block, 58/42 split: large 16:9 cover slot `PH/Foto artikulli kryesor` on one side; on the other, chip
+  **"Lajmet"**, `H2` **"Cacttus Education hap regjistrimet për vitin akademik 2026/27"**, 2-line excerpt **"Regjistrimet për të dy programet dyvjeçare
+  janë të hapura. Bursat arrijnë deri në 80% të tarifës vjetore."**, meta line **"12 shkurt 2026 · 4 min lexim"**, ghost CTA **"Lexo artikullin"**. **This
+  is the working test article and must be clickable.**
+  5. **Article grid** — 3 columns × 6 `Card/Article`, titles (mark all 6 `PH/`):
+     - **"Si duket një ditë në klasat e Cacttus Education"** — chip "Lajmet" — "5 shkurt 2026"
+     - **"Pesë gjuhët e programimit që kërkohen më shumë në 2026"** — chip "Teknologji" — "28 janar 2026"
+     - **"Nga studenti te zhvilluesi: rrugëtimi i një të diplomuari"** — chip "Karriera" — "20 janar 2026"
+     - **"Përfundon cikli i parë i trajnimeve në kuadër të projektit KODE"** — chip "Projekte" — "14 janar 2026"
+     - **"Siguria kibernetike: pse çdo kompani ka nevojë për një specialist"** — chip "Teknologji" — "8 janar 2026"
+     - **"Cacttus Education nënshkruan partneritet të ri me industrinë"** — chip "Lajmet" — "22 dhjetor 2025"
+     Each card: cover slot `PH/Foto artikulli 01–06`, chip, `H4` title, 2-line excerpt (mark `PH/`), date in `Caption`.
+  6. **Pagination** — page numbers 1, 2, 3 with prev/next arrows; page 1 active.
+  7. **Footer** — present.
+
+  ### D20 — Artikull (full article detail, reader view)
+
+  1. Top banner + navbar.
+  2. Article header, centered, max-width 760: `Breadcrumb` **"Ballina / Lajme / Artikulli"**, chip **"Lajmet"**, `H1` **"Cacttus Education hap
+  regjistrimet për vitin akademik 2026/27"**, meta row: 40×40 avatar slot `PH/Avatar autori` + **"Cacttus Education"** · **"12 shkurt 2026"** · **"4 min
+  lexim"**.
+  3. Cover image, full content width, 16:9, `radius/lg`, slot `PH/Foto kryesore e artikullit`.
+  4. Body column, max-width 700, `Body L` 18/32, paragraph spacing 24. Include, in this order (all body text mark `PH/`):
+     - Lead paragraph: **"Cacttus Education ka hapur regjistrimet për vitin akademik 2026/27 në të dy programet dyvjeçare të akredituara: Zhvillues i
+  Ueb-it dhe Aplikacioneve Mobile dhe Siguria Kibernetike."**
+     - Two paragraphs of body text.
+     - `H2` subhead: **"Bursa deri në 80%"** + two paragraphs.
+     - A pull-quote block with a 4 px left border in `color/primary/500`: **"Qëllimi ynë është që çdo i ri me talent të ketë qasje në arsim cilësor të
+  teknologjisë, pavarësisht mundësive financiare."**
+     - `H2` subhead: **"Si të aplikosh"** + a 3-item bulleted list: **"Plotëso formularin online"**, **"Dërgo dokumentet e kërkuara"**, **"Merr pjesë në
+  intervistën orientuese"**.
+     - An inline image, 16:9, slot `PH/Foto brenda artikullit`, with a `Caption` below: **"Studentët e gjeneratës 2025 gjatë punëtorisë praktike."**
+     - Closing paragraph.
+  5. Share row: `Caption` **"Shpërnda:"** + Facebook, LinkedIn, X icon buttons + a "copy link" icon button.
+  6. **"Artikuj të ngjashëm"** — `H2` + 3 `Card/Article` reusing three titles from `D19`.
+  7. **Footer** — present.
+
+  ### D21 — Kontakti
+
+  1. Top banner + navbar.
+  2. Hero (compact): `H1` **"Kontakti"**, `Body L` **"Na shkruaj ose na vizito — jemi këtu për çdo pyetje rreth studimeve dhe trajnimeve."**
+  3. Two-column, 55/45:
+     - **Left — contact form** in a white card with `shadow/md`: **"Emri dhe mbiemri"**, **"Email"**, **"Numri i telefonit"**, **"Subjekti"** (select:
+  **"Studime profesionale"**, **"Trajnime profesionale"**, **"Për biznese"**, **"Tjetër"**), **"Mesazhi"** (textarea), `Button/Primary` **"Dërgo
+  mesazhin"**.
+     - **Right — info card** on `color/primary/50`: heading **"Të dhënat e kontaktit"**, then icon rows — **"Rr. Bashkim Fehmiu, Arbëria 3, BC2/14
+  nr.4"**, **"10000 Prishtinë, Kosovë"**, **"+383 (0)38 600 237"**, **"info@cacttus.education"** (mark this email layer `PH/`), **"E hënë – E premte,
+  09:00 – 17:00"** (mark `PH/`). Below: label **"Na ndiq"** + the four social icon buttons.
+  4. **Map block** — full content width, 16:9 desktop / 4:3 mobile, `radius/lg`, a neutral map-styled placeholder with a `color/primary/500` pin, slot
+  named `PH/Harta — lokacioni`.
+  5. **Footer** — present.
+
+  ### D22–D25 — Rreth nesh → Ekipi (4 frames, one per filter state)
+
+  1. Top banner + navbar.
+  2. Hero: `Breadcrumb` **"Ballina / Rreth nesh / Ekipi"**, `H1` **"Ekipi"**, `Body L` **"Njihu me njerëzit që qëndrojnë prapa Cacttus Education."**
+  3. **Filter buttons** — a centered row of `Chip/Filter`: **"Të gjitha"**, **"Prishtinë"**, **"Prizren"**, **"Kamenicë"**. Exactly one is selected per
+  frame.
+  4. **People grid** — 4 columns desktop / 2 columns mobile of `Card/Person`. Portrait slot 4:5 named `PH/Foto — {emri}`, name `H4`, role `Body S` muted,
+  city `Chip/Meta`, LinkedIn icon button. Mark all names and roles `PH/`.
+
+     Full roster (12 people):
+     | Name | Role | City |
+     |---|---|---|
+     | Arta Berisha | Drejtoreshë ekzekutive | Prishtinë |
+     | Blerim Krasniqi | Menaxher i programeve akademike | Prishtinë |
+     | Donika Hoxha | Koordinatore e trajnimeve | Prishtinë |
+     | Fisnik Morina | Menaxher i projekteve | Prishtinë |
+     | Rina Sylejmani | Zyrtare për marrëdhënie me studentë | Prishtinë |
+     | Endrit Gashi | Udhëheqës i degës | Prizren |
+     | Learta Zeqiri | Koordinatore akademike | Prizren |
+     | Valon Ismaili | Zyrtar për marketing | Prizren |
+     | Diellza Rexhepi | Zyrtare administrative | Prizren |
+     | Granit Mustafa | Udhëheqës i degës | Kamenicë |
+     | Adelina Bekteshi | Koordinatore e trajnimeve | Kamenicë |
+     | Leotrim Salihu | Mbështetje teknike | Kamenicë |
+
+     - `D22 Ekipi — Të gjitha`: chip "Të gjitha" selected, all 12 cards.
+     - `D23 Ekipi — Prishtinë`: chip "Prishtinë" selected, only the 5 Prishtinë people.
+     - `D24 Ekipi — Prizren`: chip "Prizren" selected, only the 4 Prizren people.
+     - `D25 Ekipi — Kamenicë`: chip "Kamenicë" selected, only the 3 Kamenicë people.
+  5. **Footer** — present on all four frames.
+
+  ### D26 — Rreth nesh → Ligjëruesit
+
+  1. Top banner + navbar.
+  2. Hero: `Breadcrumb` **"Ballina / Rreth nesh / Ligjëruesit"**, `H1` **"Ligjëruesit"**, `Body L` **"Profesionistë aktivë në industri, që sjellin
+  përvojën reale në klasë."**
+  3. **No city filter on this page.** A single grid, 4 columns desktop / 2 columns mobile, 12 `Card/Person` with portrait slots `PH/Foto ligjëruesi —
+  {emri}`:
+
+  | Name | Subject line |
+  |---|---|
+  | Arsim Susuri | Applied AI and Machine Learning |
+  | Andi Ahmeti | AI Security |
+  | Hana Hoxha | Data Science |
+  | Ali Kaçamaku | JavaScript |
+  | Pegmatit Bruci | Software Testing QA and Automation |
+  | Alban Krasniqi | Cloud and DevOps |
+  | Mentor Berisha | Ethical Hacking & Penetration Testing |
+  | Enes Sermaxhaj | Dizajn Grafik |
+  | Arber Gashi | Content Creation |
+  | Era Gjakova | Komunikimi dhe Prezantimi Profesional |
+  | Fatlum Ahmeti | Cyber Security Essentials (mark `PH/`) |
+  | Vlora Dema | Project Management & Agile (mark `PH/`) |
+
+  4. **CTA band:** `H3` **"Dëshiron të ligjërosh te ne?"** + `Button/Secondary` **"Na kontakto"**.
+  5. **Footer** — present.
+
+  ---
+
+  ## 8. PROTOTYPE WIRING MAP
+
+  Wire **every** item below. Default transition unless stated otherwise: **Instant, Navigate To, scroll position: top**. Every hover state uses **While
+  Hovering** with the timings from section 6.
+
+  ### Navbar (wire identically on every one of the 26 desktop frames)
+
+  | Trigger | Action |
+  |---|---|
+  | Logo slot | → `D01 Ballina` |
+  | **"Studime profesionale"** (hover) | Open `Nav/Dropdown/Studime` overlay |
+  | **"Studime profesionale"** (click) | **NO ACTION — no link, no navigation. It only opens the dropdown.** |
+  | Dropdown item **"Zhvillues i Ueb-it dhe Aplikacioneve Mobile"** | → `D02` |
+  | Dropdown item **"Siguria Kibernetike"** | → `D03` |
+  | **"Trajnime profesionale"** (click) | → `D04` |
+  | **"Projektet"** (hover) | Open `Nav/Dropdown/Projektet` |
+  | **"Projektet"** (click) | → `D10` |
+  | Dropdown **"Skill Factory"** | → `D11` |
+  | Dropdown **"Partneriteti për Impaktin në TIK"** | → `D12` |
+  | Dropdown **"SDC"** | → `D13` |
+  | Dropdown **"Gratë në Punë Online"** | → `D14` |
+  | Dropdown **"KODE"** | → `D15` |
+  | Dropdown **"Regional Challenge Fund (RCF)"** | → `D16` |
+  | Dropdown **"LuxDev Smart Mobility Project"** | → `D17` |
+  | Dropdown **"Virtual Innovation Consortium (VIC)"** | → `D18` |
+  | **"Për biznese"** (hover) | Open `Nav/Dropdown/Biznese` |
+  | **"Për biznese"** (click) | → `D05` |
+  | Dropdown **"Trajnime të personalizuara"** | → `D06` |
+  | Dropdown **"Rrjeti i talentëve"** | → `D07` |
+  | Dropdown **"Bursa e Impaktit"** | → `D08` |
+  | Dropdown **"Klasët me qera"** | → `D09` |
+  | **"Lajme"** (click) | → `D19` |
+  | **"Kontakti"** (click) | → `D21` |
+  | **"Rreth nesh"** (hover) | Open `Nav/Dropdown/RrethNesh` |
+  | **"Rreth nesh"** (click) | **NO ACTION — dropdown only** |
+  | Dropdown **"Ekipi"** | → `D22` |
+  | Dropdown **"Ligjëruesit"** | → `D26` |
+  | **"Apliko tani"** button | → `D01 Ballina`, Scroll To the application form section, Smart Animate 400 ms Ease Out |
+
+  ### Top banner
+
+  | Trigger | Action |
+  |---|---|
+  | Banner **"Apliko tani"** link | → `D01`, Scroll To application form |
+  | Banner "×" | Close overlay (banner hides) |
+
+  ### Footer (wire identically on every frame that has a footer)
+
+  | Trigger | Action |
+  |---|---|
+  | Footer logo | → `D01` |
+  | **"Studime profesionale"** | → `D02` |
+  | **"Trajnime profesionale"** | → `D04` |
+  | **"Projektet"** | → `D10` |
+  | **"Për biznese"** | → `D05` |
+  | **"Lajme"** | → `D19` |
+  | **"Ekipi"** | → `D22` |
+  | **"Ligjëruesit"** | → `D26` |
+  | **"Kontakti"** | → `D21` |
+  | 4 social icons | Open Overlay `Toast/Link` (a small "—" placeholder overlay); no external URL |
+
+  ### D01 Ballina
+
+  | Trigger | Action |
+  |---|---|
+  | Hero **"Apliko tani"** | Scroll To application form on `D01` |
+  | Hero **"Shiko programet"** | Scroll To "Zgjidh fushën tënde të studimit" section |
+  | `Card/Program` A (whole card + its CTA) | → `D02` |
+  | `Card/Program` B (whole card + its CTA) | → `D03` |
+  | **"Shiko të gjitha trajnimet"** | → `D04` |
+  | Carousel right arrow | Next slide, Smart Animate 500 ms Ease In And Out |
+  | Carousel left arrow | Previous slide, same transition |
+  | Carousel auto-play | After Delay 3500 ms → next slide, loop back to slide 1 |
+  | Each dot | Jump to its slide |
+  | **"Dërgo aplikimin"** | Open Overlay `Modal/Success` — centered card, check icon, `H3` **"Faleminderit! Aplikimi u dërgua."**, `Body` **"Do të të
+  kontaktojmë brenda 48 orëve."**, `Button/Primary` **"Mbyll"** → close overlay |
+
+  ### D02 / D03
+
+  | Trigger | Action |
+  |---|---|
+  | Breadcrumb **"Ballina"** | → `D01` |
+  | **"Apliko tani"** (hero) | Scroll To the application form on the same page |
+  | **"Shkarko planprogramin"** | Open Overlay `Modal/Success` variant with `H3` **"Planprogrami u dërgua në email."** |
+  | Semester accordion header ×4 | Toggle Expanded/Collapsed, Smart Animate 250 ms |
+  | Semester rail step ×4 | Expand the matching accordion and Scroll To it |
+  | **"Dërgo aplikimin"** | Open Overlay `Modal/Success` |
+
+  ### D04 Trajnime profesionale
+
+  | Trigger | Action |
+  |---|---|
+  | Every category chip | Set selected state (Smart Animate 250 ms); stay on `D04` |
+  | Every city chip | Set selected state; stay on `D04` |
+  | Each of the 14 **"Apliko"** buttons | Open Overlay `Modal/Apply` — a compact card containing name, email, phone fields, the training name pre-filled
+  in a read-only field, `Button/Primary` **"Dërgo aplikimin"** and a close "×" |
+  | `Modal/Apply` **"Dërgo aplikimin"** | Swap to `Modal/Success` |
+
+  ### D05 → D06–D09
+
+  | Trigger | Action |
+  |---|---|
+  | Business card 1 (whole card + **"Mëso më shumë"**) | → `D06` |
+  | Business card 2 | → `D07` |
+  | Business card 3 | → `D08` |
+  | Business card 4 | → `D09` |
+  | **"Bisedo me ne"** / **"Na kontakto"** on `D05`–`D09` | → `D21` |
+  | Breadcrumb **"Për biznese"** on `D06`–`D09` | → `D05` |
+
+  ### D10 → D11–D18
+
+  | Trigger | Action |
+  |---|---|
+  | Project card 1 "Skill Factory" | → `D11` |
+  | Project card 2 "Partneriteti për Impaktin në TIK" | → `D12` |
+  | Project card 3 "SDC" | → `D13` |
+  | Project card 4 "Gratë në Punë Online" | → `D14` |
+  | Project card 5 "KODE" | → `D15` |
+  | Project card 6 "Regional Challenge Fund (RCF)" | → `D16` |
+  | Project card 7 "LuxDev Smart Mobility Project" | → `D17` |
+  | Project card 8 "Virtual Innovation Consortium (VIC)" | → `D18` |
+  | Breadcrumb **"Projektet"** on `D11`–`D18` | → `D10` |
+  | **"Na kontakto"** on `D11`–`D18` | → `D21` |
+
+  ### D19 / D20
+
+  | Trigger | Action |
+  |---|---|
+  | Featured article block + **"Lexo artikullin"** | → `D20` |
+  | Category chips ×5 | Set selected state; stay on `D19` |
+  | 6 article cards | → `D20` (all six route to the same detail frame) |
+  | Pagination 1 / 2 / 3 / arrows | Set active state; stay on `D19` |
+  | `D20` breadcrumb **"Lajme"** | → `D19` |
+  | `D20` "Artikuj të ngjashëm" cards ×3 | → `D20` (self) |
+  | `D20` share icons | Open Overlay `Toast/Link` |
+
+  ### D21 Kontakti
+
+  | Trigger | Action |
+  |---|---|
+  | **"Dërgo mesazhin"** | Open Overlay `Modal/Success` with `H3` **"Mesazhi u dërgua."** and `Body` **"Do të të përgjigjemi sa më shpejt."** |
+
+  ### D22–D25 Ekipi
+
+  | Trigger | Action |
+  |---|---|
+  | Chip **"Të gjitha"** (from any Ekipi frame) | → `D22`, Smart Animate 250 ms Ease Out |
+  | Chip **"Prishtinë"** | → `D23`, Smart Animate |
+  | Chip **"Prizren"** | → `D24`, Smart Animate |
+  | Chip **"Kamenicë"** | → `D25`, Smart Animate |
+  | Person card LinkedIn icon | Open Overlay `Toast/Link` |
+
+  ### D26 Ligjëruesit
+
+  | Trigger | Action |
+  |---|---|
+  | **"Na kontakto"** | → `D21` |
+
+  ### Mobile
+
+  | Trigger | Action |
+  |---|---|
+  | Hamburger icon on any mobile frame | Open Overlay `M12 Menu`, slide in from right, 260 ms Ease Out |
+  | `M12` accordion **"Studime profesionale"** | Expand to reveal the two programs; the parent row itself never navigates |
+  | `M12` accordion **"Projektet"** | Expand to reveal all 8 projects |
+  | `M12` accordion **"Për biznese"** | Expand to reveal the 4 offerings |
+  | `M12` accordion **"Rreth nesh"** | Expand to reveal "Ekipi" and "Ligjëruesit" |
+  | `M12` **"Trajnime profesionale"**, **"Lajme"**, **"Kontakti"** | Navigate directly to `M04`, `M07`, `M09` |
+  | `M12` **"Apliko tani"** | → `M01`, Scroll To the application form |
+  | `M12` "×" | Close overlay |
+
+  **Do not leave a single button, card, chip, nav item, dropdown row, or arrow unwired.** Anything that looks clickable must be clickable.
+
+  ---
+
+  ## 9. RESPONSIVE RULES
+
+  **Desktop (1440):** as specified above. Content max-width 1200. Grids: programs 2-col, trainings 3-col, business 2×2, projects 3-col, articles 3-col,
+  people 4-col.
+
+  **Mobile (390):**
+  - Navbar collapses to logo left + hamburger right, height 60. The `Apliko tani` button moves into the mobile menu as a full-width button pinned to the
+  bottom of the overlay.
+  - Top banner text shrinks to `Caption`; drop the right-hand "Apliko tani" link, keep the "×".
+  - All multi-column grids become 1 column, except people grids which become 2 columns and the hero stat strip which becomes a 2×2 grid.
+  - Hero: image below the text block; headline uses the mobile `Display` size; the rotating word still animates and still reserves fixed width.
+  - Success-stories carousel shows 1.2 slides with a peek of the next, horizontal drag plus dots; arrows hidden.
+  - Filter chip rows become horizontally scrollable single rows with a fade mask at the right edge.
+  - Semester accordions stay full-width; the horizontal 4-step rail becomes a vertical stepper on the left of the accordions.
+  - Footer columns stack in order: brand → Navigimi → Rreth nesh → Rrjetet Sociale; bottom bar centered, stacked.
+  - All tap targets ≥ 44×44. Section padding drops to 64/64. Side margins 20.
+
+  ---
+
+  ## 10. ACCESSIBILITY
+
+  - All text meets **WCAG AA** contrast: body text ≥ 4.5:1, large text and meaningful UI elements ≥ 3:1. Never place `color/primary/300` or lighter behind
+  white text. Muted text uses `color/neutral/500` on white minimum.
+  - Every interactive component has a distinct **focus** state: 3 px ring `rgba(142,68,173,0.35)` plus a 1 px `color/primary/500` border.
+  - Never signal state by color alone: selected filter chips also change weight to 600; error fields also show an icon and a message; the "Regjistrime të
+  hapura" chip pairs its green dot with the word.
+  - Minimum body text size 16; never below 13 anywhere.
+  - Form fields always have a visible label above the field — placeholders are never the only label.
+  - Image slots include an `alt`-style description in the layer name, e.g. `PH/Foto studentësh — hero — grup studentësh në laborator`.
+  - Provide a "reduced motion" note on `00 Cover`: all decorative motion (typewriter, carousel autoplay, scroll reveal) must be disable-able in build.
+
+  ---
+
+  ## 11. DELIVERABLE CHECKLIST — the design is done when all of these are true
+
+  1. All 26 desktop frames and 12 mobile frames exist, named exactly as listed in section 5.
+  2. Every user-facing string is in Albanian and matches this prompt verbatim; there is zero English text in any design frame.
+  3. `Studime profesionale` and `Rreth nesh` open dropdowns on hover and navigate nowhere on click; both other dropdown parents (`Projektet`, `Për
+  biznese`) open a dropdown and also navigate to their hub page.
+  4. `D02` and `D03` end with the application form and have **no footer**; all 24 other desktop frames have the footer from section 4.4.
+  5. The `Semestri 1 / 2 / 3 / 4` structure is present, complete, and interactive on both `D02` and `D03`.
+  6. The success-stories carousel contains 6 image-only slides with no text whatsoever, auto-advances, and responds to both arrows and dots.
+  7. All 14 training cards render with the exact data table from `D04`, and every missing value shows "—" without changing card height.
+  8. All 8 project cards and all 4 business cards link to their own dedicated detail frames.
+  9. `D19` links to the working test article `D20`, and `D20` renders a complete reader-view article.
+  10. Ekipi has the three city filter buttons plus "Të gjitha", wired to four frames with correctly filtered rosters; Ligjëruesit has no city filter.
+  11. Every color and spacing value on every layer is bound to a Figma Variable — changing `color/primary/500` re-skins the entire file.
+  12. Every button and card has a designed hover state and a focus state; every prototype connection in section 8 exists.
+  13. Every placeholder text and image layer is prefixed `PH/` and is listed on the `00 Cover` page.
+  14. The string "Zhvillues i Ueb-it dhe Aplikacioneve Mobile" renders fully, without clipping or truncation, in the navbar dropdown, the program card,
+  the program page `H1`, the breadcrumb, and the application form's select field.

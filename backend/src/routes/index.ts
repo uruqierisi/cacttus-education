@@ -14,10 +14,15 @@
  *   GET  /api/public/posts/:slug                     public
  *   GET  /api/public/forms/:slug                     public
  *   POST /api/public/forms/:slug/submissions         public (rate limited)
+ *   GET  /api/public/trainings?category=&city=       public
+ *   GET  /api/public/trainings/filters               public
+ *   GET  /api/public/trainings/:slug                 public
  *
  *   /api/admin/forms         (bearer)                CRUD + soft delete/restore
+ *   /api/admin/trainings     (bearer)                CRUD + soft delete + form-options
  *   /api/admin/submissions   (bearer)                list/filter/status/export/stats
  *   /api/admin/posts         (bearer)                CRUD + stats
+ *   /api/admin/uploads       (bearer)                cover image + syllabus PDF
  */
 import { Router } from 'express';
 import { healthRouter } from './health.routes';

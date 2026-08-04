@@ -13,7 +13,7 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../lib/async-handler';
 import { csvRateLimiter } from '../../middleware/rate-limit';
-import { uploadImageFile } from '../../middleware/upload';
+import { uploadImageFile, uploadPdfFile } from '../../middleware/upload';
 import * as uploadsController from '../../controllers/uploads.controller';
 
 const router = Router();
@@ -23,5 +23,12 @@ const router = Router();
 // Middleware order matters: the rate limiter runs BEFORE multer, so a throttled caller is
 // rejected without the server reading the upload body.
 router.post('/', csvRateLimiter, uploadImageFile, asyncHandler(uploadsController.uploadImage));
+
+// POST /api/admin/uploads/pdf   multipart, field "file"  -> 201 { url, bytes }
+//
+// A separate route rather than a mode flag on the one above: the two differ in size cap,
+// in what validation can prove (see uploads.service.ts), and in how the result is served.
+// Collapsing them behind a parameter would hide all three differences behind a boolean.
+router.post('/pdf', csvRateLimiter, uploadPdfFile, asyncHandler(uploadsController.uploadPdf));
 
 export const adminUploadsRouter = router;

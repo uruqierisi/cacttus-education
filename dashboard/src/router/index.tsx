@@ -21,6 +21,7 @@ const DashboardPage = lazy(() => import('@/pages/dashboard-page'));
 const FormsListPage = lazy(() => import('@/pages/forms/forms-list-page'));
 const FormEditorPage = lazy(() => import('@/pages/forms/form-editor-page'));
 const TrainingsPage = lazy(() => import('@/pages/trainings-page'));
+const TrainingEditorPage = lazy(() => import('@/pages/trainings/training-editor-page'));
 const SubmissionsListPage = lazy(() => import('@/pages/submissions/submissions-list-page'));
 const SubmissionDetailPage = lazy(() => import('@/pages/submissions/submission-detail-page'));
 const PostsListPage = lazy(() => import('@/pages/posts/posts-list-page'));
@@ -49,6 +50,9 @@ const routes: RouteObject[] = [
           { path: 'aplikimet', element: withSuspense(<SubmissionsListPage />) },
           { path: 'aplikimet/:id', element: withSuspense(<SubmissionDetailPage />) },
           { path: 'trajnimet', element: withSuspense(<TrainingsPage />) },
+          // `i-ri` MUST precede `:id`, or "create" is parsed as an id and 404s on load.
+          { path: 'trajnimet/i-ri', element: withSuspense(<TrainingEditorPage />) },
+          { path: 'trajnimet/:id', element: withSuspense(<TrainingEditorPage />) },
           { path: 'format', element: withSuspense(<FormsListPage />) },
           { path: 'format/e-re', element: withSuspense(<FormEditorPage />) },
           { path: 'format/:id', element: withSuspense(<FormEditorPage />) },

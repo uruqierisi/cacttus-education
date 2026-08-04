@@ -27,6 +27,7 @@ import sharp from 'sharp';
 import { IMAGE_UPLOAD } from '../config/constants';
 import { ApiError } from '../lib/api-error';
 import { detectImageType } from '../lib/image-type';
+import { detectPdf } from '../lib/pdf-type';
 import { storage } from '../lib/storage';
 import { logger } from '../lib/logger';
 
@@ -34,6 +35,12 @@ export type UploadedImage = {
   readonly url: string;
   readonly width: number;
   readonly height: number;
+  readonly bytes: number;
+};
+
+/** A non-image upload. No dimensions — the only two facts a caller needs. */
+export type UploadedDocument = {
+  readonly url: string;
   readonly bytes: number;
 };
 
@@ -112,4 +119,44 @@ export async function storeCoverImage(file: Express.Multer.File): Promise<Upload
     height: normalised.height,
     bytes: normalised.data.length,
   };
+}
+
+/**
+ * Syllabus PDF intake ("Shkarko planprogramin").
+ *
+ * DELIBERATELY SHORTER THAN THE IMAGE PATH ABOVE, AND THAT IS THE POINT.
+ * The image path's third step — sharp re-encoding the pixels so the stored bytes are
+ * ours — has no counterpart here. Re-writing a PDF safely requires a real sanitiser,
+ * and pretending a partial one is equivalent would be worse than being explicit: what
+ * lands on disk is the uploader's bytes, unmodified.
+ *
+ * What still holds:
+ *   1. multer capped the byte count while the request streamed;
+ *   2. `detectPdf` sniffed the header AND the trailer, so a renamed executable or an
+ *      HTML polyglot does not get stored under a .pdf name;
+ *   3. StorageAdapter assigns a random-UUID filename — the client contributes nothing;
+ *   4. delivery is inert: nosniff, CSP sandbox, and `Content-Disposition: attachment`
+ *      so the browser downloads instead of running it in its viewer (see app.ts).
+ * Combined with the endpoint being staff-only, that is the containment. It is a
+ * distribution channel for a document an admin chose to publish, not a sandbox.
+ *
+ * NOT AUDITED, for the same reason cover images are not: an upload nobody references
+ * is invisible. The meaningful event is the TRAINING_CREATED / TRAINING_UPDATED that
+ * adopts the URL, and trainings.service.ts records `syllabusPdf` in that metadata.
+ */
+export async function storeSyllabusPdf(file: Express.Multer.File): Promise<UploadedDocument> {
+  if (!file?.buffer || file.buffer.length === 0) {
+    throw ApiError.badRequest('Nuk u dërgua asnjë skedë.');
+  }
+
+  const detected = detectPdf(file.buffer);
+
+  if (!detected) {
+    // Does not echo the client's filename or mime back — attacker-controlled text.
+    throw ApiError.badRequest('Kjo skedë nuk është një PDF i vlefshëm. Lejohet vetëm PDF.');
+  }
+
+  const url = await storage.save({ buffer: file.buffer, extension: detected.extension });
+
+  return { url, bytes: file.buffer.length };
 }

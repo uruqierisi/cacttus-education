@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-ssr/
+build/
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
+Thumbs.db
+
+# Standardized on pnpm - see pnpm-lock.yaml
+yarn.lock
+package-lock.json

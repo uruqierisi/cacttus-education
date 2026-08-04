@@ -7,10 +7,12 @@
 import { Router } from 'express';
 import { publicPostsRouter } from './posts.routes';
 import { publicFormsRouter } from './forms.routes';
+import { publicTrainingsRouter } from './trainings.routes';
 
 const router = Router();
 
 router.use('/posts', publicPostsRouter);
 router.use('/forms', publicFormsRouter);
+router.use('/trainings', publicTrainingsRouter);
 
 export const publicRouter = router;

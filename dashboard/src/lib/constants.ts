@@ -1,4 +1,5 @@
 /** Shared constants — route paths, enums mirrored from the API, and UI limits. */
+import { config } from './config';
 
 export const ROUTES = {
   LOGIN: '/login',
@@ -15,6 +16,8 @@ export const ROUTES = {
   AUDIT: '/regjistri',
   USERS: '/perdoruesit',
   SETTINGS: '/cilesimet',
+  TRAINING_NEW: '/trajnimet/i-ri',
+  TRAINING_EDIT: (id: string) => `/trajnimet/${id}`,
 } as const;
 
 export const FORM_TYPES = ['ZHVAM', 'CYBER', 'TRAINING', 'SCHOOL'] as const;
@@ -70,6 +73,41 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 /** Field types that require an option list. */
 export const CHOICE_FIELD_TYPES: readonly FieldType[] = ['select', 'multiselect', 'radio'];
 
+export const TRAINING_CATEGORIES = [
+  'PROGRAMIM',
+  'ADMINISTRIM',
+  'SIGURI_KIBERNETIKE',
+  'MARKETING_DIZAJN',
+  'MENAXHIM_PROJEKTEVE',
+  'AFTESI_TE_BUTA',
+] as const;
+export type TrainingCategoryValue = (typeof TRAINING_CATEGORIES)[number];
+
+/**
+ * Albanian display labels for the catalogue taxonomy.
+ *
+ * The enum values are stable machine strings; these are what an admin and a visitor
+ * read. Keeping the mapping here — rather than storing pretty text in the database —
+ * means renaming a category is a code change in two frontends, never a data migration.
+ */
+export const TRAINING_CATEGORY_LABELS: Record<TrainingCategoryValue, string> = {
+  PROGRAMIM: 'Programim',
+  ADMINISTRIM: 'Administrim',
+  SIGURI_KIBERNETIKE: 'Siguri Kibernetike',
+  MARKETING_DIZAJN: 'Marketing & Dizajn',
+  MENAXHIM_PROJEKTEVE: 'Menaxhim i Projekteve',
+  AFTESI_TE_BUTA: 'Aftësi të buta',
+};
+
+export const TRAINING_FORMATS = ['KLASE', 'HIBRID', 'ONLINE'] as const;
+export type TrainingFormatValue = (typeof TRAINING_FORMATS)[number];
+
+export const TRAINING_FORMAT_LABELS: Record<TrainingFormatValue, string> = {
+  KLASE: 'Klasë',
+  HIBRID: 'Hibrid',
+  ONLINE: 'Online',
+};
+
 export const ROLES = ['ADMIN', 'EDITOR'] as const;
 export type Role = (typeof ROLES)[number];
 
@@ -101,10 +139,18 @@ export const ALL_FILTER_VALUE = 'all';
  * declared here so that when the marketing site settles on its final route, ONE
  * constant changes and every copy button follows.
  */
-export const PUBLIC_SITE_URL = 'https://cacttus.education';
+export const PUBLIC_SITE_URL = config.publicSiteUrl;
 export const PUBLIC_FORM_PATH = '/forma';
+
+/** Detail page of a training on the marketing site. Mirrors the API's `applyUrl`. */
+export const PUBLIC_TRAINING_PATH = '/trajnime';
 
 /** The shareable public URL of a form. */
 export function publicFormUrl(slug: string): string {
   return `${PUBLIC_SITE_URL}${PUBLIC_FORM_PATH}/${slug}`;
+}
+
+/** The public URL of a training's detail page — the editor's "Shiko faqen" link. */
+export function publicTrainingUrl(slug: string): string {
+  return `${PUBLIC_SITE_URL}${PUBLIC_TRAINING_PATH}/${slug}`;
 }

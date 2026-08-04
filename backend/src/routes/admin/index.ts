@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/auth';
 import { adminFormsRouter } from './forms.routes';
+import { adminTrainingsRouter } from './trainings.routes';
 import { adminSubmissionsRouter } from './submissions.routes';
 import { adminPostsRouter } from './posts.routes';
 import { adminUsersRouter } from './users.routes';
@@ -25,6 +26,8 @@ router.use((_req, res, next) => {
 });
 
 router.use('/forms', adminFormsRouter);
+// ADMIN + EDITOR for CRUD; DELETE is admin-gated inside, like forms.
+router.use('/trainings', adminTrainingsRouter);
 router.use('/submissions', adminSubmissionsRouter);
 router.use('/posts', adminPostsRouter);
 // Self-gated with requireAdmin inside — EDITORs get 403 on every verb.

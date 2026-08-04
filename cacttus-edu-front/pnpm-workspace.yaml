@@ -1,0 +1,33 @@
+packages:
+  - '.'
+# Both ship a native binary and need their install script to run; without this
+# pnpm blocks the build and Vite fails to start.
+allowBuilds:
+  '@tailwindcss/oxide': true
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@typescript-eslint/eslint-plugin@8.66.0'
+  - '@typescript-eslint/parser@8.66.0'
+  - '@typescript-eslint/project-service@8.66.0'
+  - '@typescript-eslint/scope-manager@8.66.0'
+  - '@typescript-eslint/tsconfig-utils@8.66.0'
+  - '@typescript-eslint/type-utils@8.66.0'
+  - '@typescript-eslint/types@8.66.0'
+  - '@typescript-eslint/typescript-estree@8.66.0'
+  - '@typescript-eslint/utils@8.66.0'
+  - '@typescript-eslint/visitor-keys@8.66.0'
+  - typescript-eslint@8.66.0
+# Which platforms' optional native binaries to fetch. `win32` is required for local
+# development on Windows — without it pnpm skips @rollup/rollup-win32-x64-msvc and
+# @tailwindcss/oxide-win32-x64-msvc, and `vite` dies at startup with a misleading
+# "npm has a bug related to optional dependencies" message. `linux` stays so a
+# lockfile produced here still installs correctly on the Linux server / CI.
+supportedArchitectures:
+  os:
+    - linux
+    - win32
+  cpu:
+    - x64
+    - arm64
+  libc:
+    - glibc

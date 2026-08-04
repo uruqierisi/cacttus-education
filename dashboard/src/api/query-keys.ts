@@ -15,6 +15,12 @@ export const queryKeys = {
     detail: (id: string) => ['forms', 'detail', id] as const,
     fieldTypes: ['forms', 'field-types'] as const,
   },
+  trainings: {
+    all: ['trainings'] as const,
+    list: (filters: Record<string, unknown>) => ['trainings', 'list', filters] as const,
+    detail: (id: string) => ['trainings', 'detail', id] as const,
+    formOptions: ['trainings', 'form-options'] as const,
+  },
   submissions: {
     all: ['submissions'] as const,
     list: (filters: Record<string, unknown>) => ['submissions', 'list', filters] as const,

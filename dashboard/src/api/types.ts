@@ -154,3 +154,49 @@ export type StatsByType = {
   readonly total: number;
   readonly items: readonly ByTypePoint[];
 };
+
+export type TrainingCategory =
+  | 'PROGRAMIM'
+  | 'ADMINISTRIM'
+  | 'SIGURI_KIBERNETIKE'
+  | 'MARKETING_DIZAJN'
+  | 'MENAXHIM_PROJEKTEVE'
+  | 'AFTESI_TE_BUTA';
+
+export type TrainingFormat = 'KLASE' | 'HIBRID' | 'ONLINE';
+
+/**
+ * A catalogue entry. NOT a Form — a Training points AT a form via `formSlug`, and the
+ * two have separate lifecycles: several trainings may share one application form, and a
+ * form shared on social media belongs to no training at all.
+ */
+export type Training = {
+  readonly id: string;
+  readonly slug: string;
+  readonly title: string;
+  readonly category: TrainingCategory;
+  /** ISO instant, or null. Rendered as a date — the time component is always midnight. */
+  readonly startDate: string | null;
+  readonly format: TrainingFormat;
+  readonly hours: number | null;
+  readonly instructor: string | null;
+  readonly city: string | null;
+  readonly description: string | null;
+  readonly strengths: readonly string[];
+  readonly syllabusPdf: string | null;
+  readonly formSlug: string;
+  /** Null when `formSlug` no longer resolves — the editor surfaces this as a warning. */
+  readonly formTitle: string | null;
+  readonly isActive: boolean;
+  readonly isDeleted: boolean;
+  readonly order: number;
+  readonly submissionCount: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+/** One entry of the editor's "Forma e aplikimit" dropdown. */
+export type FormOption = {
+  readonly slug: string;
+  readonly title: string;
+};

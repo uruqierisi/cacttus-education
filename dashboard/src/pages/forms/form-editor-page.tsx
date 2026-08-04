@@ -159,6 +159,31 @@ export default function FormEditorPage(): JSX.Element {
     });
   };
 
+  /*
+   * Renaming a field's STORAGE KEY is supported, but it is not a rename in the data:
+   * answers already collected live in `Submission.data` under the old key and nothing
+   * migrates them. Renaming the QUESTION TEXT has no such cost. The builder cannot know
+   * which the admin meant, so it says so instead of guessing — silently orphaning past
+   * answers is the failure this exists to prevent.
+   *
+   * Compared against the SERVER's copy, not against a local snapshot, so the warning
+   * tracks what is actually persisted.
+   */
+  const renamedKeys = (() => {
+    const original = formQuery.data?.fields;
+
+    if (!isEditing || !original) {
+      return [];
+    }
+
+    return state.fields
+      .map((field, index) => ({ from: original[index]?.name, to: field.name }))
+      .filter(
+        (change): change is { from: string; to: string } =>
+          change.from !== undefined && change.from !== change.to,
+      );
+  })();
+
   if (isEditing && formQuery.isPending) {
     return <LoadingRows rows={6} />;
   }
@@ -194,6 +219,28 @@ export default function FormEditorPage(): JSX.Element {
             <p className="text-sm font-semibold">Forma u krijua. Ky është linku publik:</p>
           </div>
           <CopyUrlButton url={publicFormUrl(createdForm.slug)} />
+        </div>
+      ) : null}
+
+      {renamedKeys.length > 0 ? (
+        <div
+          role="status"
+          className="mb-6 rounded-xl border border-warning/40 bg-warning/5 p-5 text-sm"
+        >
+          <p className="font-semibold">Ke ndryshuar çelësin e ruajtjes te disa fusha</p>
+          <p className="mt-1 text-muted-foreground">
+            Përgjigjet e mëparshme janë ruajtur nën çelësin e vjetër dhe nuk zhvendosen
+            automatikisht — te aplikimet e vjetra ato do të duken si përgjigje pa fushë.
+            Ndryshimi i tekstit të pyetjes është gjithmonë i sigurt; ky paralajmërim vlen
+            vetëm për çelësin.
+          </p>
+          <ul className="mt-2 list-inside list-disc font-mono text-xs text-muted-foreground">
+            {renamedKeys.map((change) => (
+              <li key={change.from}>
+                {change.from} → {change.to}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

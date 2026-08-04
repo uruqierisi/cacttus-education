@@ -82,11 +82,25 @@ export function createApp(): Express {
       dotfiles: 'ignore',
       fallthrough: true,
       maxAge: 0,
-      setHeaders: (response) => {
+      setHeaders: (response, filePath) => {
         response.setHeader('Cache-Control', IMAGE_UPLOAD.CACHE_CONTROL);
         response.setHeader('X-Content-Type-Options', 'nosniff');
         response.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
         response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+        /*
+         * Syllabus PDFs are DOWNLOADED, never rendered in place.
+         *
+         * Unlike an uploaded image, a PDF is not re-encoded on the way in (see the
+         * PDF_UPLOAD note in config/constants.ts), so its contents are the uploader's
+         * bytes. `attachment` keeps the browser's PDF viewer — a large scripting
+         * surface — from ever running it inside a document served from our origin.
+         * The filename is a server-generated UUID, so there is nothing to quote or
+         * escape here.
+         */
+        if (filePath.toLowerCase().endsWith('.pdf')) {
+          response.setHeader('Content-Disposition', 'attachment');
+        }
       },
     }),
   );

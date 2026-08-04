@@ -42,6 +42,25 @@ enum SubmissionStatus {
   ARCHIVED
 }
 
+// Catalogue taxonomy for trainings. Stored as an enum rather than free text because the
+// public site renders these as FILTER CHIPS: a typo in a city is a cosmetic bug, but a
+// typo in a category silently creates a chip nobody can click twice. The Albanian display
+// labels live in the frontends — this is the stable machine value.
+enum TrainingCategory {
+  PROGRAMIM
+  ADMINISTRIM
+  SIGURI_KIBERNETIKE
+  MARKETING_DIZAJN
+  MENAXHIM_PROJEKTEVE
+  AFTESI_TE_BUTA
+}
+
+enum TrainingFormat {
+  KLASE
+  HIBRID
+  ONLINE
+}
+
 enum AuditAction {
   LOGIN_SUCCESS
   LOGIN_FAILED
@@ -65,6 +84,10 @@ enum AuditAction {
   POST_CREATED
   POST_UPDATED
   POST_DELETED
+  // Training catalog (marketing site) — same soft-delete / staff-only shape as Form.
+  TRAINING_CREATED
+  TRAINING_UPDATED
+  TRAINING_DELETED
 }
 
 model User {
@@ -134,6 +157,17 @@ model Submission {
   data   Json             @default("{}")
   status SubmissionStatus @default(NEW)
 
+  // PROVENANCE, not the application path — every application still goes through a Form
+  // (formId above stays required and unchanged). This records that the applicant landed
+  // via a training's detail page rather than a bare form link shared elsewhere (e.g.
+  // social media). Null means "came from the form directly". `onDelete: Restrict`
+  // mirrors `formId`'s reasoning: a Training with submissions is soft-deleted
+  // (deletedAt) and never hard-deleted, so this constraint can never actually fire — it
+  // exists only to turn an accidental hard delete into a loud error instead of silently
+  // orphaning submissions.
+  trainingId String?
+  training   Training? @relation(fields: [trainingId], references: [id], onDelete: Restrict)
+
   createdAt DateTime @default(now())
 
   // Foreign-key lookups: "show me every submission for this form".
@@ -145,7 +179,64 @@ model Submission {
   // Covering index for the main inbox query shape:
   // WHERE formId = ? AND status = ? ORDER BY createdAt DESC.
   @@index([formId, status, createdAt])
+  // "Every application that came from this training's detail page".
+  @@index([trainingId])
   @@map("submissions")
+}
+
+model Training {
+  id    String           @id @default(cuid())
+  slug  String           @unique
+  title String
+  category TrainingCategory
+
+  // --- Catalog card (marketing site listing) ---
+  startDate  DateTime?
+  format     TrainingFormat
+  hours      Int?
+  // The card's "Ligjëruesi" (instructor) text ONLY — there is no trainer-bio section or
+  // Trainer entity anywhere in this schema. Free text because the marketing site has
+  // never needed to link an instructor across trainings, filter by them, or show a
+  // profile; adding that structure now would be speculative.
+  instructor String?
+  city       String?
+
+  // --- Detail page, all optional: the admin fills only what a given training needs ---
+  description String? @db.Text // "Çfarë do të mësosh" — free text.
+  /// string[] — "Pikat e Forta" bullet list. Each entry is one bullet's plain text; no
+  /// nested structure, matching the simplicity of Form.fields' documented contract.
+  strengths   Json?
+  syllabusPdf String? // Public URL of an uploaded PDF, not the file itself.
+
+  // Slug (not a foreign key) of the Form the detail page's "Apliko" button submits to.
+  // This is a DELIBERATE denormalisation for read speed on the public detail page: the
+  // URL already carries the training slug, so resolving the form by slug in the same
+  // request avoids a second indexed lookup keyed on anything else. The cost is that
+  // renaming a Form's slug later would orphan this reference — Form.slug has no
+  // reverse-reference back to trainings that point at it. The SERVICE layer (not this
+  // schema) owns the contract that keeps that safe: (a) on write, validate that
+  // formSlug names a Form that exists, is active, and is not soft-deleted; (b) on read,
+  // degrade gracefully — the public detail endpoint must still return the training with
+  // the form/Apliko section simply absent, never a 500, if the slug no longer resolves.
+  formSlug String
+
+  isActive Boolean   @default(true)
+  order    Int       @default(0)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions Submission[]
+
+  // The public catalog's category filter tabs.
+  @@index([category])
+  // The public catalog's city filter.
+  @@index([city])
+  // Every list query (admin default + public catalog) filters on this pair; the public
+  // catalog additionally requires isActive = true, deletedAt IS NULL, same shape as Form.
+  @@index([isActive, deletedAt])
+  @@map("trainings")
 }
 
 model Post {

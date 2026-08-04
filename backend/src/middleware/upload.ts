@@ -20,7 +20,7 @@
  */
 import type { RequestHandler } from 'express';
 import multer, { MulterError } from 'multer';
-import { CSV_IMPORT, ERROR_CODE, HTTP_STATUS, IMAGE_UPLOAD } from '../config/constants';
+import { CSV_IMPORT, ERROR_CODE, HTTP_STATUS, IMAGE_UPLOAD, PDF_UPLOAD } from '../config/constants';
 import { ApiError } from '../lib/api-error';
 
 /** Multipart field name the CSV must be uploaded under. */
@@ -181,5 +181,64 @@ export const uploadImageFile: RequestHandler = (req, res, next) => {
     }
 
     next(translateImageUploadError(error));
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Training syllabus PDFs
+// ---------------------------------------------------------------------------
+
+/**
+ * Same shape as the image handler, same reason for having no `fileFilter`: the client's
+ * mime and filename prove nothing, and `detectPdf` reads the real header downstream.
+ * Only the ceiling differs — a planprogram is text, but PDFs carry fonts and scans, so
+ * 10 MB rather than the image path's 5.
+ */
+const pdfUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: PDF_UPLOAD.MAX_FILE_BYTES,
+    files: 1,
+    fields: 4,
+    fieldSize: 8 * 1024,
+    parts: 6,
+  },
+});
+
+function translatePdfUploadError(error: unknown): unknown {
+  if (error instanceof ApiError) {
+    return error;
+  }
+
+  if (!(error instanceof MulterError)) {
+    return error;
+  }
+
+  const megabytes = Math.floor(PDF_UPLOAD.MAX_FILE_BYTES / (1024 * 1024));
+
+  switch (error.code) {
+    case 'LIMIT_FILE_SIZE':
+      return new ApiError(
+        HTTP_STATUS.PAYLOAD_TOO_LARGE,
+        ERROR_CODE.VALIDATION_FAILED,
+        `Skeda është më e madhe se ${megabytes} MB. Ngarko një PDF më të vogël.`,
+      );
+    case 'LIMIT_FILE_COUNT':
+    case 'LIMIT_UNEXPECTED_FILE':
+      return ApiError.badRequest(`Ngarko vetëm një skedë, në fushën "${PDF_UPLOAD.FIELD_NAME}".`);
+    default:
+      return ApiError.badRequest('Ngarkimi i planprogramit dështoi. Provo përsëri.');
+  }
+}
+
+/** Accept a single syllabus PDF. Type validation happens downstream, by content. */
+export const uploadPdfFile: RequestHandler = (req, res, next) => {
+  pdfUpload.single(PDF_UPLOAD.FIELD_NAME)(req, res, (error: unknown) => {
+    if (!error) {
+      next();
+      return;
+    }
+
+    next(translatePdfUploadError(error));
   });
 };

@@ -61,3 +61,43 @@ export async function uploadImage(
 
   return response.data.data;
 }
+
+export type UploadedDocument = {
+  readonly url: string;
+  readonly bytes: number;
+};
+
+/** Mirrors the server allowlist; sets the file picker's `accept` filter. */
+export const ACCEPTED_PDF_TYPES = ['application/pdf'] as const;
+
+/** Mirrors the server cap (10 MB). Client-side check is a courtesy; the server re-enforces. */
+export const MAX_PDF_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Syllabus PDF upload. Same `UPLOAD_HEADERS` dance as the image path above — the JSON
+ * default must be cleared or the multipart boundary is never generated.
+ */
+export async function uploadPdf(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<UploadedDocument> {
+  const body = new FormData();
+  // Must match PDF_UPLOAD.FIELD_NAME / upload.single(...) on the backend.
+  body.append('file', file);
+
+  const response = await apiClient.post<ApiEnvelope<UploadedDocument>>(
+    '/api/admin/uploads/pdf',
+    body,
+    {
+      headers: UPLOAD_HEADERS,
+      onUploadProgress: (event: AxiosProgressEvent) => {
+        if (!onProgress || !event.total) {
+          return;
+        }
+        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      },
+    },
+  );
+
+  return response.data.data;
+}

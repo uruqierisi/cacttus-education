@@ -23,6 +23,15 @@ export const createSubmissionSchema = z.object({
    * A filled value is accepted with 201 and silently discarded (see the service).
    */
   website: z.string().max(200).optional(),
+  /**
+   * OPTIONAL provenance: the training whose detail page this application was sent from.
+   *
+   * Additive by design — every existing caller (a form link shared on social media) omits
+   * it and behaves exactly as before, so the public submit contract is unchanged. The
+   * service validates that the id names a live training before storing it; see
+   * `assertTrainingIdIsLive` for why this is deliberately not treated as trustworthy.
+   */
+  trainingId: z.string().trim().min(1).max(64).optional(),
 });
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
 

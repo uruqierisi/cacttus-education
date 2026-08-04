@@ -10,6 +10,7 @@ import { recordAuditWithin, type AuditContext } from '../lib/audit';
 import { EXPORT_MAX_ROWS } from '../config/constants';
 import { getActiveFormBySlug } from './forms.service';
 import { validateSubmissionData } from './form-fields.service';
+import { assertTrainingIdIsLive } from './trainings.service';
 import type {
   CreateSubmissionInput,
   ExportSubmissionsQuery,
@@ -187,6 +188,13 @@ export async function createSubmissionForSlug(
 
   const data = validateSubmissionData(form.fields, input.data);
 
+  // Provenance is checked BEFORE the insert so a bad id is a 400 rather than a foreign
+  // key violation surfacing as an opaque 500. Absent id = the ordinary path (a form link
+  // shared on social media), which is left completely untouched.
+  if (input.trainingId) {
+    await assertTrainingIdIsLive(input.trainingId);
+  }
+
   const created = await prisma.submission.create({
     data: {
       formId: form.id,
@@ -194,6 +202,7 @@ export async function createSubmissionForSlug(
       email: input.email,
       phone: input.phone,
       data: data as Prisma.InputJsonValue,
+      trainingId: input.trainingId ?? null,
     },
     select: { id: true, createdAt: true },
   });
