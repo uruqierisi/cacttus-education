@@ -1859,7 +1859,7 @@ function PageBallina() {
                   <RotatingWord words={["programim.", "siguri kibernetike.", "teknologji."]} />
                 </h1>
                 <p className="text-lg leading-relaxed mb-6 max-w-lg" style={{ color: C.muted }}>
-                  Shkolla e parë profesionale e teknologjisë në Kosovë. Studime dyvjeçare të akredituara, trajnime praktike dhe ligjërues nga industria.
+                  Shkolla e dyte profesionale e teknologjisë në Kosovë. Studime dyvjeçare të akredituara, trajnime praktike dhe ligjërues nga industria.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link to="/#apliko"><PrimaryBtn>Apliko tani</PrimaryBtn></Link>
