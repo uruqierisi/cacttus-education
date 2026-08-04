@@ -1,0 +1,215 @@
+// Cacttus Education — Prisma schema
+//
+// Design notes
+// ------------
+// * Forms are GENERIC: one `Form` row per public form, with its field definitions
+//   stored as JSON. Adding a new form (or a new question) is a data change, never a
+//   migration.
+// * Forms are SOFT deleted (`deletedAt`). Nothing in the admin API ever issues a
+//   hard `DELETE` on a form, so historical submissions always keep a valid parent.
+// * `Submission` promotes name / email / phone to real columns because every form
+//   collects them and every admin workflow (filter, export, contact) needs them
+//   indexable; everything else lives in the `data` JSONB blob.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pooled (PgBouncer) endpoint — used by the running app.
+  url       = env("DATABASE_URL")
+  // Direct, non-pooled endpoint — Neon's pooler cannot run DDL, so migrations
+  // must bypass it. Prisma uses this automatically for `migrate` / `db push`.
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum FormType {
+  ZHVAM
+  CYBER
+  TRAINING
+  SCHOOL
+}
+
+enum SubmissionStatus {
+  NEW
+  CONTACTED
+  ARCHIVED
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGED
+  PASSWORD_RESET
+  USER_CREATED
+  USER_UPDATED
+  USER_DEACTIVATED
+  USER_DELETED
+  FORM_CREATED
+  FORM_UPDATED
+  FORM_DELETED
+  FORM_RESTORED
+  SUBMISSION_STATUS_CHANGED
+  // Bulk CSV movements of the lead inbox. Both are STAFF actions on a set of rows
+  // rather than on one row, so their `entityId` is null and the row count lives in
+  // `metadata` — never the exported/imported PII itself.
+  SUBMISSIONS_EXPORTED
+  SUBMISSIONS_IMPORTED
+  POST_CREATED
+  POST_UPDATED
+  POST_DELETED
+}
+
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+  name         String
+  role         Role   @default(EDITOR)
+
+  // Deactivation instead of deletion. A user who has authored posts cannot be hard
+  // deleted (Post.authorId is onDelete: Restrict), and losing the byline on published
+  // articles would be worse than keeping a dormant row. `requireAuth` rejects an
+  // inactive account on the very next request.
+  isActive Boolean @default(true)
+
+  // Stateless session revocation. Any token whose `iat` predates this instant is
+  // refused, which is what makes an admin password reset actually evict a compromised
+  // session instead of leaving its refresh cookie alive until TTL. Bumped on both
+  // self-service change-password and admin reset.
+  passwordChangedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  posts Post[]
+
+  // Back-relation only. Deleting a user nulls `AuditLog.actorId` rather than blocking
+  // the delete, so this relation never keeps a user row alive — see AuditLog.
+  auditLogs AuditLog[]
+
+  // The user list defaults to active accounts only.
+  @@index([isActive])
+  @@map("users")
+}
+
+model Form {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  title     String
+  type      FormType
+  /// FormFieldDefinition[] — see src/services/form-fields.service.ts for the contract.
+  fields    Json      @default("[]")
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  submissions Submission[]
+
+  // Every admin list query filters `deletedAt IS NULL`; every public lookup filters
+  // `deletedAt IS NULL AND isActive = true`. Indexing the nullable column keeps the
+  // default "live forms" scan cheap as the soft-deleted tail grows.
+  @@index([deletedAt])
+  // The dashboard groups forms by product line (ZHVAM / CYBER / TRAINING / SCHOOL).
+  @@index([type])
+  @@map("forms")
+}
+
+model Submission {
+  id     String @id @default(cuid())
+  formId String
+  form   Form   @relation(fields: [formId], references: [id], onDelete: Restrict)
+
+  name   String
+  email  String
+  phone  String
+  /// Answers keyed by FormFieldDefinition.name.
+  data   Json             @default("{}")
+  status SubmissionStatus @default(NEW)
+
+  createdAt DateTime @default(now())
+
+  // Foreign-key lookups: "show me every submission for this form".
+  @@index([formId])
+  // The inbox default view is `status = NEW`, ordered newest first.
+  @@index([status])
+  // Global "latest submissions" widget + date-range CSV export.
+  @@index([createdAt])
+  // Covering index for the main inbox query shape:
+  // WHERE formId = ? AND status = ? ORDER BY createdAt DESC.
+  @@index([formId, status, createdAt])
+  @@map("submissions")
+}
+
+model Post {
+  id         String  @id @default(cuid())
+  slug       String  @unique
+  title      String
+  coverImage String?
+  content    String  @db.Text
+  published  Boolean @default(false)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // The public marketing feed only ever reads `published = true`.
+  @@index([published])
+  // Same feed, but ordered — lets Postgres satisfy filter + sort from one index.
+  @@index([published, createdAt])
+  // "Posts by this author" in the dashboard.
+  @@index([authorId])
+  @@map("posts")
+}
+
+// APPEND-ONLY by design. Nothing anywhere in the codebase ever issues an `update` or a
+// `delete` against this table — the only write is `create`. That is also why
+// `actorEmail` / `actorRole` are denormalised snapshot columns rather than a join:
+// reading the trail must never depend on the actor row still existing, and it must show
+// who the actor WAS at the time of the action, not who they are now.
+model AuditLog {
+  id String @id @default(cuid())
+
+  // Nullable on purpose. `onDelete: SetNull` requires an optional FK field in Prisma,
+  // and SetNull is exactly the point here: this deliberately differs from
+  // `Post.authorId` (onDelete: Restrict), which blocks the delete to protect a published
+  // byline. An audit trail must instead OUTLIVE the user it describes — a deleted
+  // account may not erase the record of what it did, so the log row survives with a
+  // null `actorId` and the `actorEmail` / `actorRole` snapshot carries the identity.
+  actorId    String?
+  actorEmail String
+  actorRole  Role
+
+  action     AuditAction
+  /// "Form" | "Submission" | "User" | "Post" | "Auth"
+  entityType String
+  // Null for auth events, which act on a session rather than on a row.
+  entityId   String?
+  /// Small structured diff / context. NEVER passwords, tokens, or full PII.
+  metadata   Json?
+
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  // The default trail view is global, newest first.
+  @@index([createdAt])
+  // "Everything this user did", newest first.
+  @@index([actorId, createdAt])
+  // "History of this specific row" — the per-entity timeline.
+  @@index([entityType, entityId])
+  // Filtered views such as "all failed logins", newest first.
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}

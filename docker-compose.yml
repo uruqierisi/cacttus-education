@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# Cacttus Education — local PostgreSQL for the backend (Prisma).
+#
+# PORTABILITY: MOVING THIS TO THE RDP / SERVER
+# -------------------------------------------
+# Nothing in THIS FILE changes. It is environment-agnostic by design — every
+# value that differs per machine is interpolated from the `.env` file sitting
+# next to it. On the server you change exactly two things:
+#
+#   1. ./.env  → set a real POSTGRES_PASSWORD (never reuse the dev one).
+#   2. backend/.env → set DATABASE_URL / DIRECT_DATABASE_URL to match, and
+#      point the HOST at the right place:
+#
+#        * Backend runs on the same host, outside Docker (npm run dev / pm2):
+#            host stays `localhost` — the 5432:5432 port mapping below exposes it.
+#        * Backend runs as its own container on this same compose network:
+#            host becomes `db` (the service name), port 5432. Do NOT use
+#            localhost — inside a container that resolves to the container itself.
+#        * Backend runs on a DIFFERENT machine:
+#            host becomes the server's IP or DNS name. In that case ALSO
+#            restrict the port mapping below to a private interface, e.g.
+#            "10.0.0.5:5432:5432", and open 5432 only to that peer in the
+#            firewall. Never expose 5432 to the public internet.
+#
+# The named volume keeps data across `docker compose down`. Only `down -v`
+# destroys it.
+# ---------------------------------------------------------------------------
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: cacttus-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cacttus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — see .env}
+      POSTGRES_DB: ${POSTGRES_DB:-cacttus}
+      # Deterministic initdb settings so a volume created on Windows behaves
+      # identically to one created on the Linux server.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+
+    ports:
+      # host:container. See the portability note above before changing this.
+      - "${POSTGRES_PORT:-5432}:5432"
+
+    volumes:
+      # NAMED volume — survives `docker compose down`, wiped by `down -v`.
+      - cacttus-pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      # `pg_isready` returns 0 only once the server accepts connections, so
+      # `docker compose ps` shows (healthy) and dependents can gate on it.
+      # -U/-d are required: without them pg_isready probes the `root` role and
+      # reports a false negative during init.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cacttus} -d ${POSTGRES_DB:-cacttus}"]
+      interval: 5s
+      timeout: 5s
+      # Generous retries: first boot runs initdb, which is slower than restarts.
+      retries: 12
+      start_period: 10s
+
+volumes:
+  cacttus-pgdata:
+    name: cacttus-pgdata

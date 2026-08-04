@@ -1,0 +1,20 @@
+# Secrets — the root .env holds the Postgres password for docker-compose.
+.env
+.env.*
+!.env.example
+
+# Dependencies / build output (per-app .gitignore files cover their own trees)
+node_modules/
+dist/
+build/
+coverage/
+
+# Logs / OS noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# NOTE: the Postgres data lives in the NAMED Docker volume `cacttus-pgdata`,
+# managed by Docker outside this directory — there is no bind-mounted data
+# folder to ignore. Inspect it with `docker volume inspect cacttus-pgdata`.

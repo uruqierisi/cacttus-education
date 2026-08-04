@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Cacttus Education design tokens — LIGHT THEME ONLY (client-locked).
+ *
+ *   primary   #823685  -> hsl(298 42% 37%)
+ *   secondary #91478d  -> hsl(303 34% 42%)
+ *   base      #FFFFFF  -> hsl(0 0% 100%)
+ *
+ * Values are stored as bare HSL channels so Tailwind can apply opacity modifiers.
+ */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 296 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 296 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 296 20% 12%;
+
+    --primary: 298 42% 37%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 303 34% 42%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 300 20% 96%;
+    --muted-foreground: 296 8% 42%;
+
+    --accent: 300 30% 95%;
+    --accent-foreground: 298 42% 30%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 55% 32%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 88% 42%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 300 14% 89%;
+    --input: 300 14% 89%;
+    --ring: 298 42% 37%;
+
+    --radius: 0.625rem;
+
+    /*
+     * Sidebar surface.
+     *
+     * NOT a second palette — every value below is the locked primary hue (298) held
+     * fixed while only lightness moves, so the dark rail reads as the same brand
+     * colour turned down rather than as an unrelated navy. The theme stays light-only;
+     * this is one deliberately dark component, not a dark mode.
+     */
+    --sidebar: 298 38% 13%;
+    --sidebar-foreground: 300 16% 90%;
+    --sidebar-muted: 300 10% 66%;
+    --sidebar-accent: 298 40% 22%;
+    --sidebar-border: 298 26% 22%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Every interactive element gets the same visible focus ring. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Rendered blog HTML inside the post preview. */
+  .rich-text {
+    @apply text-sm leading-relaxed text-foreground;
+  }
+  .rich-text h1 { @apply mb-3 mt-6 text-2xl font-semibold; }
+  .rich-text h2 { @apply mb-3 mt-6 text-xl font-semibold; }
+  .rich-text h3 { @apply mb-2 mt-5 text-lg font-semibold; }
+  .rich-text p { @apply mb-4; }
+  .rich-text ul { @apply mb-4 list-disc pl-6; }
+  .rich-text ol { @apply mb-4 list-decimal pl-6; }
+  .rich-text a { @apply text-primary underline underline-offset-2; }
+  .rich-text img { @apply my-4 max-w-full rounded-md; }
+  .rich-text blockquote { @apply mb-4 border-l-4 border-border pl-4 italic text-muted-foreground; }
+  .rich-text pre { @apply mb-4 overflow-x-auto rounded-md bg-muted p-4 font-mono text-xs; }
+}

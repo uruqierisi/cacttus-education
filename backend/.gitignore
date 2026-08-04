@@ -1,0 +1,21 @@
+node_modules/
+dist/
+coverage/
+
+# Secrets — only .env.example is tracked
+.env
+.env.*
+!.env.example
+
+# Logs / OS noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Prisma local artifacts
+prisma/*.db
+prisma/*.db-journal
+
+# Uploaded cover images — user content, never committed
+uploads/
