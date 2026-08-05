@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import heroGraduates from "../imports/image.png";
+import heroGraduates from "../imports/group4.png";
 import studimePhoto from "../imports/Bursa_Redesign.png";
 import logoImg from "../imports/logo-180px.png";
 import {
@@ -182,7 +182,7 @@ type DropdownId = "studime" | "projektet" | "biznese" | "rreth" | null;
 ══════════════════════════════════════════ */
 
 /* 1.1 — TOP BANNER: deep brand purple #823685 */
-function TopBanner({ onClose }: { onClose: () => void }) {
+function TopBanner({ onClose, onApplyClick }: { onClose: () => void; onApplyClick: () => void }) {
   return (
     <div
       className="w-full flex items-center justify-center px-4 relative"
@@ -191,20 +191,15 @@ function TopBanner({ onClose }: { onClose: () => void }) {
       <p className="text-white text-sm font-medium text-center">
         Regjistrohu me <span className="font-bold">20%</span> zbritje
       </p>
-      <div className="absolute right-4 top-0 h-full flex items-center gap-3">
-        <Link
-          to="/#apliko"
+      <div className="absolute right-7 top-0 h-full flex items-center gap-3">
+        {/* A button, not a Link: it opens the popup instead of navigating. */}
+        <button
+          type="button"
+          onClick={onApplyClick}
           className="hidden md:flex items-center gap-1 text-white text-xs font-medium px-3 py-1 rounded-full transition-all hover:bg-white/20"
           style={{ border: "1px solid rgba(255,255,255,0.5)" }}
         >
           Apliko tani <ArrowRight size={12} />
-        </Link>
-        <button
-          onClick={onClose}
-          className="text-white/70 hover:text-white transition-colors"
-          aria-label="Mbyll"
-        >
-          <X size={15} />
         </button>
       </div>
     </div>
@@ -216,10 +211,12 @@ function Navbar({
   showBanner,
   mobileMenuOpen,
   setMobileMenuOpen,
+  onApplyClick,
 }: {
   showBanner: boolean;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (v: boolean) => void;
+  onApplyClick: () => void;
 }) {
   const [activeDropdown, setActiveDropdown] = useState<DropdownId>(null);
   const [sticky, setSticky] = useState(false);
@@ -330,7 +327,8 @@ function Navbar({
         </nav>
 
         <div className="hidden lg:block">
-          <Link to="/#apliko"><PrimaryBtn>Apliko tani</PrimaryBtn></Link>
+          {/* Link removed: this opens the popup, it no longer navigates. */}
+          <PrimaryBtn onClick={onApplyClick}>Apliko tani</PrimaryBtn>
         </div>
 
         <button
@@ -707,6 +705,251 @@ function PageWrapper({ children, withFooter = true }: { children: React.ReactNod
       {children}
       {withFooter && <Footer />}
     </>
+  );
+}
+
+/* ══════════════════════════════════════════
+   POPUP FORM — controlled by Layout
+
+   Layout owns the open/closed state, because the banner and Navbar buttons need
+   to open this too and they are siblings of it, not children.
+   Fully static: nothing is fetched, nothing is submitted anywhere.
+══════════════════════════════════════════ */
+
+const POPUP_DREJTIMET = [
+  "Zhvillim i Ueb dhe Aplikacioneve Mobile",
+  "Siguri Kibernetike",
+];
+
+/* ─── Motion timings. POPUP_EXIT_MS also gates the delayed unmount below. ─── */
+const POPUP_ENTER_MS = 400;        // the card arriving
+const POPUP_EXIT_MS = 180;         // the card leaving
+const POPUP_ROW_MS = 280;          // one staggered row
+const POPUP_ROW_STAGGER_MS = 50;   // gap between consecutive rows
+const POPUP_ROW_START_MS = 100;    // rows begin while the card is still settling
+const POPUP_REDUCED_MS = 150;      // reduced motion: one plain quick fade
+
+/* The 1.56 overshoots past the final value before easing back to it, so the card
+   grows a touch past full size and settles. Last row lands at 100+8*50+280=780ms. */
+const POPUP_ENTER_EASE = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const POPUP_ROW_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  /* `mounted` = present in the DOM. `visible` = in its open visual state.
+     `entered` stays true through the exit, so rows leave with the card, not before it. */
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [emri, setEmri] = useState("");
+  const [mbiemri, setMbiemri] = useState("");
+  const [drejtimi, setDrejtimi] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefoni, setTelefoni] = useState("");
+
+  /* A handle on the card element, so we can focus its first input on open. */
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  /* ─── Mount first, animate second; on the way out, animate first, unmount second ─── */
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);                     // in the DOM, still in its closed look
+      let second = 0;
+      const first = requestAnimationFrame(() => {          // let the closed look paint once
+        second = requestAnimationFrame(() => {             // now flip: browser animates
+          setVisible(true);
+          setEntered(true);                                // starts the row stagger
+        });
+      });
+      return () => { cancelAnimationFrame(first); cancelAnimationFrame(second); };
+    }
+    setVisible(false);                      // play the exit transition...
+    const timer = window.setTimeout(() => {
+      setMounted(false);                    // ...and only then leave the DOM
+      setEntered(false);                    // rearm the stagger for the next open
+    }, POPUP_EXIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [isOpen]);
+
+  /* An inline style cannot hold a media query, so the preference is read in JS. */
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduceMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  /* Escape closes. Kept separate because it depends on the parent's callback. */
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  /* Scroll lock is its own effect: if it re-ran it would capture "hidden" as the
+     value to restore, and the page would stay frozen forever. */
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [isOpen]);
+
+  /* Focus waits on `mounted` — the card does not exist in the DOM before that. */
+  useEffect(() => {
+    if (!mounted) return;
+    cardRef.current?.querySelector("input")?.focus();
+  }, [mounted]);
+
+  /* Reopening should ask again, not still be showing the thank-you screen. */
+  useEffect(() => {
+    if (isOpen) { setSent(false); setError(""); }
+  }, [isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();                     // stop the browser's default page reload
+    if (!emri.trim() || !mbiemri.trim() || !drejtimi) {
+      setError("Ju lutem plotësoni fushat e detyrueshme.");
+      return;
+    }
+    console.log("Aplikim nga popup-i:", { emri, mbiemri, drejtimi, email, telefoni });
+    setSent(true);
+  };
+
+  if (!mounted) return null;                // fully closed = nothing in the DOM
+
+  /* Reduced motion: no travel, no scaling, no blur, no stagger — just a fade. */
+  const enterMs = reduceMotion ? POPUP_REDUCED_MS : POPUP_ENTER_MS;
+  const exitMs = reduceMotion ? POPUP_REDUCED_MS : POPUP_EXIT_MS;
+  const blur = visible && !reduceMotion ? "blur(6px)" : "blur(0px)";
+
+  const backdropStyle: React.CSSProperties = {
+    transitionProperty: "opacity, backdrop-filter",
+    transitionDuration: `${visible ? enterMs : exitMs}ms`,
+    transitionTimingFunction: visible ? "ease-out" : "ease-in",
+    backdropFilter: blur,                   // the one non-compositor property we animate
+    WebkitBackdropFilter: blur,             // Safari still wants the prefix
+  };
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: C.n0,
+    transitionProperty: "opacity, transform, scale, translate",
+    transitionDuration: `${visible ? enterMs : exitMs}ms`,
+    transitionTimingFunction: visible && !reduceMotion ? POPUP_ENTER_EASE : visible ? "ease-out" : "ease-in",
+  };
+
+  /* Two different resting looks: far away before arriving, close by when leaving. */
+  const cardRest = reduceMotion
+    ? "opacity-0"
+    : entered
+      ? "opacity-0 scale-[0.96] translate-y-2"
+      : "opacity-0 scale-[0.9] translate-y-7";
+
+  /* One formula instead of nine hand-written delays: row i waits 50ms longer than row i-1. */
+  const rowStyle = (i: number): React.CSSProperties => ({
+    transitionProperty: "opacity, transform, translate",
+    transitionDuration: `${reduceMotion ? POPUP_REDUCED_MS : POPUP_ROW_MS}ms`,
+    transitionTimingFunction: POPUP_ROW_EASE,
+    transitionDelay: entered && !reduceMotion ? `${POPUP_ROW_START_MS + i * POPUP_ROW_STAGGER_MS}ms` : "0ms",
+  });
+  const rowClass = entered ? "opacity-100 translate-y-0" : `opacity-0 ${reduceMotion ? "" : "translate-y-3"}`;
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center px-5"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="popup-title"
+    >
+      {/* Backdrop — sits behind the card and closes on click. */}
+      <div
+        className={`absolute inset-0 bg-black/50 ${visible ? "opacity-100" : "opacity-0"}`}
+        style={backdropStyle}
+        onClick={onClose}
+      />
+
+      <div
+        ref={cardRef}
+        className={`relative w-full max-w-[440px] max-h-[90vh] overflow-y-auto rounded-2xl p-6 sm:p-7 shadow-2xl ${visible ? "opacity-100 scale-100 translate-y-0" : cardRest}`}
+        /* Only compositor-friendly properties — never width/height/top/left. */
+        style={cardStyle}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Mbyll"
+          className="absolute right-4 top-4 transition-colors hover:opacity-70"
+          style={{ color: C.n500 }}
+        >
+          <X size={20} />
+        </button>
+
+        {sent ? (
+          /* Thank-you state: same card, different contents. */
+          <div className="text-center py-6">
+            <div className="mx-auto mb-4 flex items-center justify-center rounded-full" style={{ backgroundColor: C.brandLight, width: 56, height: 56 }}>
+              <Check size={28} style={{ color: C.brand }} />
+            </div>
+            <h2 id="popup-title" className="text-xl font-bold mb-2" style={{ color: C.n900 }}>Faleminderit!</h2>
+            <p className="text-sm mb-6" style={{ color: C.n600 }}>Aplikimi juaj u regjistrua. Do t'ju kontaktojmë së shpejti.</p>
+            <PrimaryBtn onClick={onClose}>Mbyll</PrimaryBtn>
+          </div>
+        ) : (
+          <>
+            {/* Rows 0-8: same classes, only the delay inside rowStyle(i) differs. */}
+            <div className={rowClass} style={rowStyle(0)}><Overline>Apliko tani</Overline></div>
+            <h2 id="popup-title" className={`text-xl font-bold mb-1 ${rowClass}`} style={{ color: C.n900, ...rowStyle(1) }}>Fillo rrugëtimin tënd</h2>
+            <p className={`text-sm mb-5 ${rowClass}`} style={{ color: C.n600, ...rowStyle(2) }}>Plotëso të dhënat dhe ekipi ynë të kontakton.</p>
+
+            {/* noValidate: we run our own Albanian validation instead of the browser's. */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+              <div className={rowClass} style={rowStyle(3)}>
+                <FormField label="Emri *" value={emri} onChange={setEmri} placeholder="Emri juaj" />
+              </div>
+              <div className={rowClass} style={rowStyle(4)}>
+                <FormField label="Mbiemri *" value={mbiemri} onChange={setMbiemri} placeholder="Mbiemri juaj" />
+              </div>
+
+              {/* Own <select>: shared FormSelect hard-codes a different placeholder. */}
+              <div className={rowClass} style={rowStyle(5)}>
+                <label htmlFor="popup-drejtimi" className="block text-sm font-medium mb-1" style={{ color: C.n700 }}>Drejtimi *</label>
+                <select
+                  id="popup-drejtimi"
+                  value={drejtimi}
+                  onChange={(e) => setDrejtimi(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
+                  style={{ border: `1px solid ${C.n300}`, backgroundColor: C.n0, color: drejtimi ? C.n800 : C.n400, height: 52 }}
+                  onFocus={(e) => (e.target.style.borderColor = C.brand)}
+                  onBlur={(e) => (e.target.style.borderColor = C.n300)}
+                >
+                  <option value="" disabled>Zgjedh drejtimin</option>
+                  {POPUP_DREJTIMET.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+
+              <div className={rowClass} style={rowStyle(6)}>
+                <FormField label="Email" type="email" value={email} onChange={setEmail} placeholder="email@shembull.com" />
+              </div>
+              <div className={rowClass} style={rowStyle(7)}>
+                <FormField label="Numri i telefonit" type="tel" value={telefoni} onChange={setTelefoni} placeholder="+383 4X XXX XXX" />
+              </div>
+
+              {/* Renders only when `error` is a non-empty string. Not staggered:
+                  it appears on submit, long after the entrance has finished. */}
+              {error && <p className="text-sm" style={{ color: C.danger }}>{error}</p>}
+
+              <div className={rowClass} style={rowStyle(8)}>
+                <PrimaryBtn type="submit" className="w-full justify-center mt-1">Apliko</PrimaryBtn>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1698,9 +1941,15 @@ function RotatingWord({ words }: { words: string[] }) {
     return () => clearInterval(interval);
   }, [words]);
 
+  /* md+: text-[0.78em] shrinks the phrase enough that the longest one ("siguri
+     kibernetike.") fits the column, nowrap guarantees one line, and min-h
+     1.25em reserves exactly that one line so nothing below can shift.
+     Below md the column is too narrow for one line, so it may wrap and min-h
+     2.5em reserves two. All em-based, so both breakpoints stay in sync.
+     align-top makes the reserved height independent of baseline alignment. */
   return (
     <span
-      className="inline-block transition-all duration-300"
+      className="inline-block align-top transition-all duration-300 min-h-[2.5em] md:min-h-[1.25em] md:whitespace-nowrap md:text-[0.90em]"
       style={{ color: C.brand, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(8px)", minWidth: 280 }}
     >
       {words[idx]}
@@ -1836,32 +2085,28 @@ function PageBallina() {
   return (
     <PageWrapper>
       {/* Hero */}
-      <section style={{ backgroundColor: C.brandSoft }}>
-        <div className="max-w-[1200px] mx-auto px-5">
-          <div className="grid grid-cols-1 lg:grid-cols-[52fr_48fr] items-stretch" style={{ minHeight: 720 }}>
+      {/* overflow-hidden lets the photo bleed past the bottom edge and be cropped
+          there, instead of spilling over the section below it. */}
+      <section className="overflow-hidden" style={{ backgroundColor: C.brandSoft }}>
+        <div className="max-w-[1250px] mx-auto px-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[40fr_60fr] items-stretch" style={{ minHeight: 700 }}>
 
             {/* Left — flex column: spacer → text block → stats */}
             <div className="flex flex-col pb-12">
               {/* Top spacer: pushes text slightly above center */}
-              <div style={{ flex: "0 0 14%" }} />
+              <div style={{ flex: "0 0 16%" }} />
 
               {/* Text block: chips + headline + body + buttons */}
               <div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <MetaChip>Akredituar MAS</MetaChip>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#E6F9F2", color: C.success }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: C.success }} />
-                    Regjistrime të hapura
-                  </span>
-                </div>
-                <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-3" style={{ color: C.n900, letterSpacing: "-0.015em" }}>
+               
+                <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-5" style={{ color: C.n900, letterSpacing: "-0.015em" }}>
                   Ndërto karrierën tënde në<br />
                   <RotatingWord words={["programim.", "siguri kibernetike.", "teknologji."]} />
                 </h1>
-                <p className="text-lg leading-relaxed mb-6 max-w-lg" style={{ color: C.muted }}>
+                <p className="text-lg leading-relaxed mb-10 max-w-lg" style={{ color: C.muted }}>
                   Shkolla e parë profesionale e teknologjisë në Kosovë. Studime dyvjeçare të akredituara, trajnime praktike dhe ligjërues nga industria.
                 </p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-5">
                   <Link to="/#apliko"><PrimaryBtn>Apliko tani</PrimaryBtn></Link>
                   <SecondaryBtn>Shiko programet</SecondaryBtn>
                 </div>
@@ -1869,8 +2114,8 @@ function PageBallina() {
 
               {/* Stats directly below buttons */}
               <div className="mt-8">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6" style={{ borderTop: `1px solid ${C.n200}` }}>
-                  {[["500+", "Studentë të diplomuar"], ["80%", "Bursa deri në"], ["9 vite", "Përvojë në treg"], ["40+", "Partnerë nga industria"]].map(([num, label]) => (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-7 pt-6" style={{ borderTop: `1px solid ${C.n200}` }}>
+                  {[["500+", "Studentë të diplomuar"], ["20%", "Zbritje në studime "], ["9 vite", "Përvojë në treg të punës"], ["40+", "Partnerë nga industria"]].map(([num, label]) => (
                     <div key={label}>
                       <p className="text-2xl font-bold" style={{ color: C.brand }}>{num}</p>
                       <p className="text-sm mt-0.5" style={{ color: C.n500 }}>{label}</p>
@@ -1883,8 +2128,8 @@ function PageBallina() {
             {/* Right — image pulled back within section, slightly smaller */}
             
               <div
-  className="self-stretch hidden lg:flex items-center justify-end"
-  style={{ paddingLeft: 32, marginRight: "-8vw" }} /* Pushed further to the right */
+  className="self-stretch hidden lg:flex items-end justify-end"
+  style={{ paddingLeft: 5, marginRight: "-12vw" }} /* Bleeds past the grid on the right */
 >
   <img
     src={heroGraduates}
@@ -1892,14 +2137,14 @@ function PageBallina() {
     className="select-none pointer-events-none"
     style={{
       height: "auto",
-      width: "120%", /* Made it bigger */
-      maxHeight: 850, /* Increased max height threshold */
+      width: "160%", /* Landscape 908x611 — wider than the old portrait asset */
+      maxHeight: 700,
       objectFit: "contain",
-      filter: "drop-shadow(0 16px 40px rgba(130,54,133,0.11))",
-      display: "block",
-      transform: "translateY(45px)", /* Shifted it lower (down) */
+      display: "block", /* No drop-shadow: reads as one flat cut-out photo */
+      marginBottom: -28, /* Stands on the section floor, cropped slightly below it */
     }}
-  />
+
+/>
             </div>
 
           </div>
@@ -4110,15 +4355,60 @@ function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
+  /* Owned here, not in the popup: the banner and Navbar buttons need it too. */
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  /* In-memory only: stops the auto-trigger re-firing, but dies on refresh. */
+  const popupShownThisLoad = useRef(false);
+
+  /* useCallback keeps one stable identity across renders, so the popup's effects
+     do not tear themselves down and rebuild every time Layout re-renders. */
+  const openPopup = useCallback(() => {
+    popupShownThisLoad.current = true;
+    setIsPopupOpen(true);
+  }, []);
+  const closePopup = useCallback(() => setIsPopupOpen(false), []);
+
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
+
+  /* ─── Auto-trigger: two downward scroll bursts, homepage only ─── */
+  useEffect(() => {
+    if (location.pathname !== "/") return;   // every other route: no listener at all
+    if (isPopupOpen || popupShownThisLoad.current) return; // already had its turn
+
+    let lastY = window.scrollY;
+    let bursts = 0;
+    let idleTimer: number | undefined;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      const goingDown = y > lastY;
+      lastY = y;
+      if (!goingDown) return;               // scrolling back up never counts
+
+      window.clearTimeout(idleTimer);       // still moving: this burst isn't over
+      idleTimer = window.setTimeout(() => { // 300ms of stillness ends the burst
+        bursts += 1;
+        if (bursts >= 2) openPopup();       // the same door the buttons use
+      }, 300);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {                          // cleanup: never leave a listener behind
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(idleTimer);
+    };
+  }, [isPopupOpen, openPopup, location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ fontFamily: "Inter, sans-serif", backgroundColor: C.n0, color: C.n700 }}>
       <style>{globalStyle}</style>
-      {showBanner && <TopBanner onClose={() => setShowBanner(false)} />}
-      <Navbar showBanner={showBanner} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      {showBanner && <TopBanner onClose={() => setShowBanner(false)} onApplyClick={openPopup} />}
+      <Navbar showBanner={showBanner} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} onApplyClick={openPopup} />
       <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       <main className="flex-1">{children}</main>
+      {/* Lives in Layout so it is available on every route, not just the homepage. */}
+      <ScrollPopupForm isOpen={isPopupOpen} onClose={closePopup} />
     </div>
   );
 }
