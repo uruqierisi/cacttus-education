@@ -310,3 +310,55 @@ export function getTrainingFilters(): Promise<TrainingFilters> {
 export function getTraining(slug: string): Promise<TrainingDetail> {
   return request<TrainingDetail>(`/api/public/trainings/${encodeURIComponent(slug)}`)
 }
+
+/* ─── Posts (lajme) ─── */
+
+export type PostAuthor = {
+  readonly id: string
+  readonly name: string
+}
+
+/**
+ * A feed card. Carries `excerpt` — server-derived plain text — and NOT `content`.
+ *
+ * That asymmetry is the endpoint's, not a simplification here: the list route returns
+ * summaries so a six-card grid does not ship six full article bodies, and it means no
+ * card ever holds HTML that would need sanitising to render.
+ */
+export type PostCard = {
+  readonly slug: string
+  readonly title: string
+  readonly coverImage: string | null
+  readonly excerpt: string
+  readonly author: PostAuthor
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+/**
+ * A full article. `content` is HTML authored in the dashboard's Tiptap editor.
+ *
+ * It is sanitised server-side on the way in (`sanitizeRichText`), and sanitised AGAIN
+ * before it reaches `dangerouslySetInnerHTML` — see `renderSafeHtml` in App.tsx. The
+ * second pass is not redundancy for its own sake: stored rows were sanitised by whatever
+ * allowlist was in effect the day they were saved, and the renderer is the last point
+ * that can still refuse.
+ */
+export type PostDetail = PostCard & {
+  readonly id: string
+  readonly content: string
+  readonly published: boolean
+}
+
+/**
+ * The published feed. Only `published = true` rows are ever returned — the filter lives
+ * in the endpoint, so an unpublished draft is not something this client can request.
+ */
+export function getPublicPosts(): Promise<readonly PostCard[]> {
+  return request<readonly PostCard[]>('/api/public/posts')
+}
+
+/** One article. Throws `PublicApiError` with `isNotFound` for an unknown or unpublished slug. */
+export function getPublicPost(slug: string): Promise<PostDetail> {
+  return request<PostDetail>(`/api/public/posts/${encodeURIComponent(slug)}`)
+}

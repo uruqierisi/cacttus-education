@@ -11,17 +11,22 @@ import {
   useLocation,
   useParams,
 } from "react-router";
+import DOMPurify from "dompurify";
 import {
   getPublicForm,
   submitPublicForm,
   getPublicTrainings,
   getTraining,
   getTrainingFilters,
+  getPublicPosts,
+  getPublicPost,
   PublicApiError,
   type ApiErrorDetail,
   type PublicForm,
   type PublicFormField,
   type PublicFormFieldType,
+  type PostCard as PostCardData,
+  type PostDetail,
   type TrainingCard as TrainingCardData,
   type TrainingCategory,
   type TrainingDetail,
@@ -69,6 +74,84 @@ function formatTrainingDate(iso: string | null): string {
 
   return `${day}.${month}.${date.getUTCFullYear()}`;
 }
+
+/**
+ * `5 shkurt 2026` — the longer form, for article bylines.
+ *
+ * Separate from `formatTrainingDate` rather than a flag on it: a training's date is a
+ * scheduling fact that must stay compact inside a meta row, an article's is prose. Month
+ * names are a literal table for the reason given above — `Intl` cannot be trusted to have
+ * Albanian, and a byline that reads "February" on some browsers is worse than no byline.
+ *
+ * Read in UTC to match the rest of this file, so the displayed day never shifts by one
+ * for a visitor west of Greenwich.
+ */
+const ALBANIAN_MONTHS = [
+  "janar", "shkurt", "mars", "prill", "maj", "qershor",
+  "korrik", "gusht", "shtator", "tetor", "nëntor", "dhjetor",
+];
+
+function formatPostDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return `${date.getUTCDate()} ${ALBANIAN_MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+/**
+ * Sanitise operator-authored HTML immediately before it is handed to
+ * `dangerouslySetInnerHTML`.
+ *
+ * The body is ALREADY sanitised server-side on write (`sanitizeRichText` in
+ * backend/src/lib/html.ts), so this is the second of two passes, and it is deliberate:
+ *
+ *  - Stored rows carry whatever the allowlist permitted the day they were saved. Widening
+ *    that allowlist later cannot retroactively re-clean them; this pass runs against
+ *    today's rules on every render.
+ *  - This is the marketing origin. A stored payload that slipped through — via a direct
+ *    DB edit, a restored backup, or a future endpoint that forgets to sanitise — must not
+ *    become script execution on the public site.
+ *
+ * `ALLOWED_*` mirrors the server's list rather than being laxer, so the two passes cannot
+ * disagree in the direction that matters.
+ *
+ * `ADD_URI_SAFE_ATTR` is not optional here, and the reason is unobvious: DOMPurify applies
+ * `ALLOWED_URI_REGEXP` to EVERY attribute it does not consider URI-safe, not only to
+ * `href`/`src`. Without this line the regexp is handed `_blank` and `noopener noreferrer`,
+ * neither of which is a URI, so it silently strips `target` and `rel` from every link the
+ * editor marked as opening in a new tab. Listing them exempts those two from the URL check
+ * while `href` and `src` are still validated — verified against `javascript:` and `data:`
+ * payloads, which remain stripped. Neither attribute is fetched or executed, so exempting
+ * them costs nothing: `target` only names a browsing context.
+ */
+const ALLOWED_HTML_TAGS = [
+  "p", "br", "hr",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "strong", "b", "em", "i", "u", "s", "sub", "sup",
+  "ul", "ol", "li",
+  "blockquote", "pre", "code",
+  "a", "img", "figure", "figcaption",
+  "table", "thead", "tbody", "tr", "th", "td",
+  "span", "div",
+];
+
+const ALLOWED_HTML_ATTR = [
+  "href", "title", "target", "rel",
+  "src", "alt", "width", "height", "loading",
+  "class",
+];
+
+function renderSafeHtml(html: string): { __html: string } {
+  return {
+    __html: DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ALLOWED_HTML_TAGS,
+      ALLOWED_ATTR: ALLOWED_HTML_ATTR,
+      // Belt and braces against `javascript:` / `data:` payloads surviving in an href.
+      ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):|^[/#]/i,
+      ADD_URI_SAFE_ATTR: ["target", "rel"],
+    }),
+  };
+}
 import {
   ChevronDown,
   ChevronRight,
@@ -93,11 +176,9 @@ import {
   Laptop,
   Globe,
   ChevronLeft,
-  Link as LinkIcon,
   Wifi,
   Monitor,
   Wind,
-  Camera,
   Star,
   TrendingUp,
   Target,
@@ -107,12 +188,10 @@ import {
   Building,
   FileText,
   UserCheck,
-  Search,
   MessageSquare,
   GraduationCap,
   DollarSign,
   BarChart,
-  HeartHandshake,
   Projector,
 } from "lucide-react";
 
@@ -182,7 +261,7 @@ type DropdownId = "studime" | "projektet" | "biznese" | "rreth" | null;
 ══════════════════════════════════════════ */
 
 /* 1.1 — TOP BANNER: deep brand purple #823685 */
-function TopBanner({ onClose, onApplyClick }: { onClose: () => void; onApplyClick: () => void }) {
+function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
   return (
     <div
       className="w-full flex items-center justify-center px-4 relative"
@@ -209,12 +288,10 @@ function TopBanner({ onClose, onApplyClick }: { onClose: () => void; onApplyClic
 /* 1.2 — NAVBAR: Rreth Nesh moved BEFORE Kontakti */
 function Navbar({
   showBanner,
-  mobileMenuOpen,
   setMobileMenuOpen,
   onApplyClick,
 }: {
   showBanner: boolean;
-  mobileMenuOpen: boolean;
   setMobileMenuOpen: (v: boolean) => void;
   onApplyClick: () => void;
 }) {
@@ -1537,6 +1614,50 @@ function HorizontalApplicationBand({ preselected = "" }: { preselected?: string 
    white page. Merging them would mean a component whose every rule is conditional on a
    variant flag, which is harder to read than two focused ones.
 ══════════════════════════════════════════ */
+/**
+ * Label + error wrapper for `PublicApplicationForm`'s fields.
+ *
+ * MUST stay at module scope. Declared inside the form component it would be a NEW
+ * component type on every render, so React would unmount and remount the input on each
+ * keystroke — the field loses focus after one character and the form reads as untypeable.
+ * The error text arrives as a prop for exactly that reason: closing over `fieldErrors`
+ * is what tempts this back inside the component.
+ *
+ * Sibling of `ApplyFieldShell`, which does the same job for the dark band; the two differ
+ * only in colour, so they stay separate rather than growing a variant flag.
+ */
+function PublicFieldShell({
+  name,
+  label,
+  required,
+  helpText,
+  error,
+  children,
+}: {
+  name: string;
+  label: string;
+  required: boolean;
+  helpText?: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label htmlFor={`f-${name}`} className="block text-sm font-medium mb-1.5" style={{ color: C.n700 }}>
+        {label}
+        {required && <span style={{ color: C.brand }}> *</span>}
+      </label>
+      {children}
+      {helpText && <p className="text-xs mt-1" style={{ color: C.n500 }}>{helpText}</p>}
+      {error && (
+        <p className="text-xs mt-1 font-medium" style={{ color: C.danger }}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function PublicApplicationForm({
   slug,
   trainingId,
@@ -1678,45 +1799,21 @@ function PublicApplicationForm({
   };
   const errorBorder: React.CSSProperties = { border: `1.5px solid ${C.danger}` };
 
-  function Shell({
-    name,
-    label,
-    required,
-    helpText,
-    children,
-  }: {
-    name: string;
-    label: string;
-    required: boolean;
-    helpText?: string;
-    children: React.ReactNode;
-  }) {
-    return (
-      <div>
-        <label htmlFor={`f-${name}`} className="block text-sm font-medium mb-1.5" style={{ color: C.n700 }}>
-          {label}
-          {required && <span style={{ color: C.brand }}> *</span>}
-        </label>
-        {children}
-        {helpText && <p className="text-xs mt-1" style={{ color: C.n500 }}>{helpText}</p>}
-        {fieldErrors[name] && (
-          <p className="text-xs mt-1 font-medium" style={{ color: C.danger }}>
-            {fieldErrors[name]}
-          </p>
-        )}
-      </div>
-    );
-  }
-
   function renderField(field: PublicFormField) {
     const id = `f-${field.name}`;
     const value = answers[field.name];
     const style = fieldErrors[field.name] ? { ...inputStyle, ...errorBorder } : inputStyle;
-    const shell = { name: field.name, label: field.label, required: field.required, helpText: field.helpText };
+    const shell = {
+      name: field.name,
+      label: field.label,
+      required: field.required,
+      helpText: field.helpText,
+      error: fieldErrors[field.name],
+    };
 
     if (field.type === "checkbox") {
       return (
-        <Shell key={field.name} {...shell}>
+        <PublicFieldShell key={field.name} {...shell}>
           <label htmlFor={id} className="inline-flex items-center gap-2.5 text-sm cursor-pointer" style={{ color: C.n700 }}>
             <input
               id={id}
@@ -1728,14 +1825,14 @@ function PublicApplicationForm({
             />
             {field.placeholder || "Po"}
           </label>
-        </Shell>
+        </PublicFieldShell>
       );
     }
 
     if (field.type === "multiselect" || field.type === "radio") {
       const selected = Array.isArray(value) ? value : [];
       return (
-        <Shell key={field.name} {...shell}>
+        <PublicFieldShell key={field.name} {...shell}>
           <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
             {field.options.map((option) => (
               <label key={option.value} className="inline-flex items-center gap-2 text-sm cursor-pointer" style={{ color: C.n700 }}>
@@ -1759,14 +1856,14 @@ function PublicApplicationForm({
               </label>
             ))}
           </div>
-        </Shell>
+        </PublicFieldShell>
       );
     }
 
     if (field.type === "select") {
       const selected = typeof value === "string" ? value : "";
       return (
-        <Shell key={field.name} {...shell}>
+        <PublicFieldShell key={field.name} {...shell}>
           <select
             id={id}
             value={selected}
@@ -1778,13 +1875,13 @@ function PublicApplicationForm({
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-        </Shell>
+        </PublicFieldShell>
       );
     }
 
     if (field.type === "textarea") {
       return (
-        <Shell key={field.name} {...shell}>
+        <PublicFieldShell key={field.name} {...shell}>
           <textarea
             id={id}
             rows={5}
@@ -1793,12 +1890,12 @@ function PublicApplicationForm({
             placeholder={field.placeholder}
             style={{ ...style, height: "auto", padding: "14px 16px", resize: "vertical" }}
           />
-        </Shell>
+        </PublicFieldShell>
       );
     }
 
     return (
-      <Shell key={field.name} {...shell}>
+      <PublicFieldShell key={field.name} {...shell}>
         <input
           id={id}
           type={TEXT_INPUT_TYPES[field.type] ?? "text"}
@@ -1807,7 +1904,7 @@ function PublicApplicationForm({
           placeholder={field.placeholder}
           style={style}
         />
-      </Shell>
+      </PublicFieldShell>
     );
   }
 
@@ -1864,7 +1961,7 @@ function PublicApplicationForm({
       </p>
 
       <div className="flex flex-col gap-4">
-        <Shell name="name" label="Emri dhe mbiemri" required>
+        <PublicFieldShell name="name" label="Emri dhe mbiemri" required error={fieldErrors.name}>
           <input
             id="f-name"
             type="text"
@@ -1873,8 +1970,8 @@ function PublicApplicationForm({
             onChange={(e) => setContact({ ...contact, name: e.target.value })}
             style={fieldErrors.name ? { ...inputStyle, ...errorBorder } : inputStyle}
           />
-        </Shell>
-        <Shell name="email" label="Email" required>
+        </PublicFieldShell>
+        <PublicFieldShell name="email" label="Email" required error={fieldErrors.email}>
           <input
             id="f-email"
             type="email"
@@ -1883,8 +1980,8 @@ function PublicApplicationForm({
             onChange={(e) => setContact({ ...contact, email: e.target.value })}
             style={fieldErrors.email ? { ...inputStyle, ...errorBorder } : inputStyle}
           />
-        </Shell>
-        <Shell name="phone" label="Numri i telefonit" required>
+        </PublicFieldShell>
+        <PublicFieldShell name="phone" label="Numri i telefonit" required error={fieldErrors.phone}>
           <input
             id="f-phone"
             type="tel"
@@ -1893,7 +1990,7 @@ function PublicApplicationForm({
             onChange={(e) => setContact({ ...contact, phone: e.target.value })}
             style={fieldErrors.phone ? { ...inputStyle, ...errorBorder } : inputStyle}
           />
-        </Shell>
+        </PublicFieldShell>
 
         {sorted.map(renderField)}
       </div>
@@ -2000,47 +2097,41 @@ function SuccessCarousel() {
   );
 }
 
-/* ── PROGRAM CARD ── */
-function ProgramCard({ title, desc, chips, to, imgUrl }: { title: string; desc: string; chips: string[]; to: string; imgUrl?: string }) {
-  const navigate = useNavigate();
-  return (
-    <div
-      className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl group"
-      style={{ border: `1px solid ${C.cardBorder}`, backgroundColor: C.n0 }}
-      onClick={() => navigate(to)}
-    >
-      <div className="aspect-[16/10] overflow-hidden" style={{ backgroundColor: C.n100 }}>
-        {imgUrl
-          ? <img src={imgUrl} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: C.brandLight }}><Code size={40} style={{ color: C.p300 }} /></div>
-        }
-      </div>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold mb-2 leading-snug" style={{ color: C.n900 }}>{title}</h3>
-        <p className="text-sm mb-4" style={{ color: C.muted }}>{desc}</p>
-        <div className="flex flex-wrap gap-2 mb-4">{chips.map((c) => <MetaChip key={c}>{c}</MetaChip>)}</div>
-        <GhostBtn>Shiko programin</GhostBtn>
-      </div>
-    </div>
-  );
-}
-
 /* ── TRAINING CARD ── */
 
 /* ── ARTICLE CARD ── */
-function ArticleCard({ article, to }: { article: { title: string; chip: string; date: string; imgUrl?: string }; to: string }) {
-  const navigate = useNavigate();
+/**
+ * A card in the /lajme grid.
+ *
+ * A real `<Link>` rather than a `div` with an onClick, which is what this was while the
+ * feed was mock data: the card is a navigation, so it must be middle-clickable,
+ * keyboard-reachable and readable by a screen reader as a link.
+ *
+ * There is no category chip because `Post` has no category column — see the note on
+ * PageLajme. Showing an invented one would be the card lying about the data.
+ */
+function ArticleCard({ post }: { post: PostCardData }) {
   return (
-    <div className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }} onClick={() => navigate(to)}>
+    <Link
+      to={`/lajme/${post.slug}`}
+      className="block rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
+      style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}
+    >
       <div className="aspect-[16/9] overflow-hidden" style={{ backgroundColor: C.n100 }}>
-        {article.imgUrl ? <img src={article.imgUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <div className="w-full h-full" style={{ backgroundColor: C.brandSoft }} />}
+        {post.coverImage ? (
+          <img src={post.coverImage} alt={post.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : (
+          <div className="w-full h-full" style={{ backgroundColor: C.brandSoft }} />
+        )}
       </div>
       <div className="p-5">
-        <MetaChip>{article.chip}</MetaChip>
-        <h4 className="text-sm font-semibold mt-3 mb-2 leading-snug line-clamp-2" style={{ color: C.n900 }}>{article.title}</h4>
-        <p className="text-xs" style={{ color: C.n400 }}>{article.date}</p>
+        <h4 className="text-sm font-semibold mb-2 leading-snug line-clamp-2" style={{ color: C.n900 }}>{post.title}</h4>
+        {post.excerpt && (
+          <p className="text-xs mb-3 leading-relaxed line-clamp-3" style={{ color: C.muted }}>{post.excerpt}</p>
+        )}
+        <p className="text-xs" style={{ color: C.n400 }}>{formatPostDate(post.createdAt)}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -4070,19 +4161,49 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
   );
 }
 
-const ARTICLES = [
-  { title: "Si duket një ditë në klasat e Cacttus Education", chip: "Lajmet", date: "5 shkurt 2026", imgUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=480&h=270&fit=crop&auto=format" },
-  { title: "Pesë gjuhët e programimit që kërkohen më shumë në 2026", chip: "Teknologji", date: "28 janar 2026", imgUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=480&h=270&fit=crop&auto=format" },
-  { title: "Nga studenti te zhvilluesi: rrugëtimi i një të diplomuari", chip: "Karriera", date: "20 janar 2026", imgUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=480&h=270&fit=crop&auto=format" },
-  { title: "Përfundon cikli i parë i trajnimeve në kuadër të projektit KODE", chip: "Projekte", date: "14 janar 2026", imgUrl: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=480&h=270&fit=crop&auto=format" },
-  { title: "Siguria kibernetike: pse çdo kompani ka nevojë për një specialist", chip: "Teknologji", date: "8 janar 2026", imgUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=480&h=270&fit=crop&auto=format" },
-  { title: "Cacttus Education nënshkruan partneritet të ri me industrinë", chip: "Lajmet", date: "22 dhjetor 2025", imgUrl: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=480&h=270&fit=crop&auto=format" },
-];
+/* ══════════════════════════════════════════
+   LAJME — the blog, /lajme and /lajme/:slug
 
+   Backed by `GET /api/public/posts`, which only ever returns `published = true` rows.
+   Until this was wired the two pages rendered a hard-coded `ARTICLES` array and every
+   card linked to a single static `/lajme/artikull` mock, so a post published in the
+   dashboard could never appear here no matter how correct the backend was.
+
+   NO CATEGORY CHIPS. The mock had "Lajmet / Teknologji / Karriera / Projekte", but `Post`
+   has no category column (see schema.prisma), so those filters cannot be backed by data.
+   Inventing one per post would make the filter lie; the chips are gone until the model
+   grows a field to support them.
+══════════════════════════════════════════ */
 function PageLajme() {
-  const [chip, setChip] = useState("Të gjitha");
-  const CHIPS = ["Të gjitha", "Lajmet", "Teknologji", "Karriera", "Projekte"];
-  const filtered = ARTICLES.filter((a) => chip === "Të gjitha" || a.chip === chip);
+  const [posts, setPosts] = useState<readonly PostCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    setLoadError("");
+
+    getPublicPosts()
+      .then((data) => {
+        if (active) setPosts(data);
+      })
+      .catch(() => {
+        if (active) setLoadError("Lajmet nuk mund të ngarkohen për momentin.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [reloadKey]);
+
+  // The newest post gets the wide treatment; the rest fill the grid beneath it.
+  const [featured, ...rest] = posts;
+
   return (
     <PageWrapper>
       <section className="py-16" style={{ backgroundColor: C.brandSoft }}>
@@ -4091,94 +4212,211 @@ function PageLajme() {
           <p className="text-lg" style={{ color: C.muted }}>Njoftime, histori dhe risi nga Cacttus Education.</p>
         </div>
       </section>
+
       <section className="py-16" style={{ backgroundColor: C.n0 }}>
         <div className="max-w-[1200px] mx-auto px-5">
-          <div className="flex gap-2 flex-wrap mb-10">
-            {CHIPS.map((c) => (
-              <button key={c} onClick={() => setChip(c)} className="px-4 py-2 rounded-full text-sm font-medium transition-all" style={{ backgroundColor: chip === c ? C.brand : C.n100, color: chip === c ? "#fff" : C.n700, border: chip === c ? `1px solid ${C.brand}` : `1px solid ${C.n200}` }}>{c}</button>
-            ))}
-          </div>
-          <Link to="/lajme/artikull" className="block mb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-[58fr_42fr] gap-8 p-6 rounded-2xl hover:shadow-md transition-all" style={{ border: `1px solid ${C.n200}` }}>
-              <div className="aspect-video rounded-xl overflow-hidden" style={{ backgroundColor: C.n100 }}>
-                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&h=450&fit=crop&auto=format" alt="Artikulli kryesor" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex flex-col justify-center">
-                <MetaChip>Lajmet</MetaChip>
-                <h2 className="text-2xl font-bold mt-4 mb-3 leading-snug" style={{ color: C.n900 }}>Cacttus Education hap regjistrimet për vitin akademik 2026/27</h2>
-                <p className="text-sm mb-4" style={{ color: C.muted }}>Regjistrimet për të dy programet dyvjeçare janë të hapura. Bursat arrijnë deri në 80% të tarifës vjetore.</p>
-                <p className="text-xs mb-4" style={{ color: C.n400 }}>12 shkurt 2026 · 4 min lexim</p>
-                <GhostBtn>Lexo artikullin</GhostBtn>
+          {isLoading ? (
+            <div aria-live="polite">
+              <div className="rounded-2xl animate-pulse mb-12" style={{ height: 280, backgroundColor: C.n100 }} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-2xl animate-pulse" style={{ height: 300, backgroundColor: C.n100 }} />
+                ))}
               </div>
             </div>
-          </Link>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((a) => <ArticleCard key={a.title} article={a} to="/lajme/artikull" />)}
-          </div>
-          <div className="flex items-center justify-center gap-2 mt-12">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: `1px solid ${C.n200}` }}><ChevronLeft size={18} style={{ color: C.n500 }} /></button>
-            {[1, 2, 3].map((n) => (
-              <button key={n} className="w-10 h-10 rounded-full text-sm font-semibold transition-all" style={{ backgroundColor: n === 1 ? C.brand : "transparent", color: n === 1 ? "#fff" : C.n700, border: n === 1 ? `1px solid ${C.brand}` : `1px solid ${C.n200}` }}>{n}</button>
-            ))}
-            <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: `1px solid ${C.n200}` }}><ChevronRight size={18} style={{ color: C.n500 }} /></button>
-          </div>
+          ) : loadError ? (
+            <div className="py-16 text-center flex flex-col items-center gap-4" role="alert">
+              <p className="text-lg font-medium" style={{ color: C.n900 }}>{loadError}</p>
+              <p className="text-sm" style={{ color: C.n500 }}>Provo përsëri pas pak.</p>
+              <SecondaryBtn onClick={() => setReloadKey((k) => k + 1)}>Provo përsëri</SecondaryBtn>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="py-20 text-center">
+              <p className="text-lg" style={{ color: C.n700 }}>Ende nuk ka lajme të publikuara</p>
+              <p className="text-sm mt-2" style={{ color: C.n500 }}>Kthehu së shpejti — po punojmë në përmbajtje të re.</p>
+            </div>
+          ) : (
+            <>
+              {featured && (
+                <Link to={`/lajme/${featured.slug}`} className="block mb-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-[58fr_42fr] gap-8 p-6 rounded-2xl hover:shadow-md transition-all" style={{ border: `1px solid ${C.n200}` }}>
+                    <div className="aspect-video rounded-xl overflow-hidden" style={{ backgroundColor: C.n100 }}>
+                      {featured.coverImage ? (
+                        <img src={featured.coverImage} alt={featured.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full" style={{ backgroundColor: C.brandSoft }} />
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-center">
+                      <h2 className="text-2xl font-bold mb-3 leading-snug" style={{ color: C.n900 }}>{featured.title}</h2>
+                      {featured.excerpt && (
+                        <p className="text-sm mb-4 leading-relaxed line-clamp-4" style={{ color: C.muted }}>{featured.excerpt}</p>
+                      )}
+                      <p className="text-xs mb-4" style={{ color: C.n400 }}>
+                        {formatPostDate(featured.createdAt)} · {featured.author.name}
+                      </p>
+                      <GhostBtn>Lexo artikullin</GhostBtn>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {rest.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {rest.map((post) => <ArticleCard key={post.slug} post={post} />)}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
     </PageWrapper>
   );
 }
 
-function PageArtikull() {
+/* ══════════════════════════════════════════
+   /lajme/:slug — one article
+
+   The body is operator-authored HTML from the Tiptap editor. It is sanitised server-side
+   on write AND again by `renderSafeHtml` here, immediately before it reaches
+   `dangerouslySetInnerHTML` — the reasoning for both passes is on that function.
+══════════════════════════════════════════ */
+function PageArtikulli() {
+  const { slug } = useParams<{ slug: string }>();
+  const [post, setPost] = useState<PostDetail | null>(null);
+  const [related, setRelated] = useState<readonly PostCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    if (!slug) return;
+
+    let active = true;
+    setIsLoading(true);
+    setNotFound(false);
+    setLoadError("");
+
+    getPublicPost(slug)
+      .then((data) => {
+        if (active) setPost(data);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (error instanceof PublicApiError && error.isNotFound) {
+          setNotFound(true);
+        } else {
+          setLoadError("Artikulli nuk mund të ngarkohet për momentin.");
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  // "Artikuj të ngjashëm" is simply the newest few, minus this one. A failure here must
+  // not cost the reader the article, so it degrades to an empty list in silence.
+  useEffect(() => {
+    let active = true;
+
+    getPublicPosts()
+      .then((data) => {
+        if (active) setRelated(data.filter((entry) => entry.slug !== slug).slice(0, 3));
+      })
+      .catch(() => {
+        if (active) setRelated([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (isLoading) {
+    return (
+      <PageWrapper>
+        <section className="py-24" aria-live="polite">
+          <div className="max-w-[760px] mx-auto px-5 flex flex-col gap-4">
+            <div className="rounded-xl animate-pulse" style={{ height: 44, width: "70%", backgroundColor: C.n100 }} />
+            <div className="rounded-2xl animate-pulse" style={{ height: 320, backgroundColor: C.n100 }} />
+            <div className="rounded-xl animate-pulse" style={{ height: 160, backgroundColor: C.n100 }} />
+          </div>
+        </section>
+      </PageWrapper>
+    );
+  }
+
+  if (notFound || loadError || !post) {
+    return (
+      <PageWrapper>
+        <section className="py-24">
+          <div className="max-w-[900px] mx-auto px-5 text-center flex flex-col items-center gap-4">
+            <h1 className="text-3xl font-bold" style={{ color: C.n900 }}>
+              {notFound ? "Ky artikull nuk u gjet" : loadError}
+            </h1>
+            <p style={{ color: C.n500 }}>
+              {notFound ? "Ndoshta është hequr ose linku është i vjetër." : "Provo përsëri pas pak."}
+            </p>
+            <Link to="/lajme"><PrimaryBtn>Shiko të gjitha lajmet</PrimaryBtn></Link>
+          </div>
+        </section>
+      </PageWrapper>
+    );
+  }
+
   return (
     <PageWrapper>
       <div className="max-w-[1200px] mx-auto px-5 py-16">
         <div className="max-w-[760px] mx-auto">
-          <Breadcrumb items={[{ label: "Ballina", path: "/" }, { label: "Lajme", path: "/lajme" }, { label: "Artikulli" }]} />
-          <MetaChip>Lajmet</MetaChip>
-          <h1 className="text-3xl md:text-4xl font-bold mt-4 mb-5 leading-tight" style={{ color: C.n900, letterSpacing: "-0.01em" }}>Cacttus Education hap regjistrimet për vitin akademik 2026/27</h1>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: C.brandLight }}><div className="w-full h-full flex items-center justify-center"><span className="font-bold text-sm" style={{ color: C.brand }}>CE</span></div></div>
-            <span className="text-sm" style={{ color: C.muted }}>Cacttus Education</span>
+          <Breadcrumb items={[{ label: "Ballina", path: "/" }, { label: "Lajme", path: "/lajme" }, { label: post.title }]} />
+          <h1 className="text-3xl md:text-4xl font-bold mt-4 mb-5 leading-tight" style={{ color: C.n900, letterSpacing: "-0.01em" }}>
+            {post.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: C.brandLight }}>
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="font-bold text-sm" style={{ color: C.brand }}>CE</span>
+              </div>
+            </div>
+            <span className="text-sm" style={{ color: C.muted }}>{post.author.name}</span>
             <span style={{ color: C.n300 }}>·</span>
-            <span className="text-sm" style={{ color: C.n500 }}>12 shkurt 2026</span>
-            <span style={{ color: C.n300 }}>·</span>
-            <span className="text-sm" style={{ color: C.n500 }}>4 min lexim</span>
+            <span className="text-sm" style={{ color: C.n500 }}>{formatPostDate(post.createdAt)}</span>
           </div>
         </div>
-        <div className="aspect-video rounded-2xl overflow-hidden mb-10" style={{ backgroundColor: C.n100 }}>
-          <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&h=675&fit=crop&auto=format" alt="Cacttus Education" className="w-full h-full object-cover" />
-        </div>
+
+        {post.coverImage && (
+          <div className="aspect-video rounded-2xl overflow-hidden mb-10" style={{ backgroundColor: C.n100 }}>
+            <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+          </div>
+        )}
+
         <div className="max-w-[700px] mx-auto">
-          <p className="text-lg leading-loose mb-6" style={{ color: C.n700 }}>Cacttus Education ka hapur regjistrimet për vitin akademik 2026/27 në të dy programet dyvjeçare të akredituara: Zhvillues i Ueb-it dhe Aplikacioneve Mobile dhe Siguria Kibernetike.</p>
-          <p className="text-lg leading-loose mb-8" style={{ color: C.n700 }}>Programet tona kombinojnë teorinë akademike me praktikën profesionale, duke siguruar se studentët dalin të gatshëm për tregun e punës.</p>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: C.n900 }}>Bursa deri në 80%</h2>
-          <p className="text-lg leading-loose mb-6" style={{ color: C.n700 }}>Cacttus Education ofron bursa deri në 80% të tarifës vjetore për studentët e merituar dhe ata me nevojë financiare.</p>
-          <blockquote className="pl-5 py-1 mb-8" style={{ borderLeft: `4px solid ${C.brand}` }}>
-            <p className="text-lg italic font-medium leading-relaxed" style={{ color: C.n800 }}>"Qëllimi ynë është që çdo i ri me talent të ketë qasje në arsim cilësor të teknologjisë, pavarësisht mundësive financiare."</p>
-          </blockquote>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: C.n900 }}>Si të aplikosh</h2>
-          <ul className="flex flex-col gap-2 mb-8">
-            {["Plotëso formularin online", "Dërgo dokumentet e kërkuara", "Merr pjesë në intervistën orientuese"].map((item) => (
-              <li key={item} className="flex items-center gap-3 text-lg" style={{ color: C.n700 }}><span style={{ color: C.brand }}>•</span> {item}</li>
-            ))}
-          </ul>
-          <div className="aspect-video rounded-2xl overflow-hidden mb-3" style={{ backgroundColor: C.n100 }}>
-            <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=700&h=394&fit=crop&auto=format" alt="Studentë" className="w-full h-full object-cover" />
-          </div>
-          <p className="text-sm mb-8" style={{ color: C.n400 }}>Studentët e gjeneratës 2025 gjatë punëtorisë praktike.</p>
-          <div className="flex items-center gap-3 py-6" style={{ borderTop: `1px solid ${C.n200}` }}>
-            <span className="text-xs font-semibold" style={{ color: C.n500 }}>Shpërnda:</span>
-            {[Facebook, Linkedin, Twitter, LinkIcon].map((Icon, i) => (
-              <button key={i} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}><Icon size={15} style={{ color: C.n600 }} /></button>
-            ))}
+          {/*
+            Sanitised on the line above the injection, not somewhere upstream where a later
+            refactor could route around it. Styling lives in styles/post-body.css because
+            this markup arrives without utility classes.
+          */}
+          <div className="post-body" dangerouslySetInnerHTML={renderSafeHtml(post.content)} />
+
+          <div className="flex items-center gap-3 py-6 mt-10" style={{ borderTop: `1px solid ${C.n200}` }}>
+            <Link to="/lajme" className="text-sm font-semibold" style={{ color: C.brand }}>
+              ← Kthehu te lajmet
+            </Link>
           </div>
         </div>
-        <div className="max-w-[1160px] mx-auto mt-12">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: C.n900 }}>Artikuj të ngjashëm</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {ARTICLES.slice(0, 3).map((a) => <ArticleCard key={a.title} article={a} to="/lajme/artikull" />)}
+
+        {related.length > 0 && (
+          <div className="max-w-[1160px] mx-auto mt-12">
+            <h2 className="text-2xl font-bold mb-6" style={{ color: C.n900 }}>Artikuj të ngjashëm</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {related.map((entry) => <ArticleCard key={entry.slug} post={entry} />)}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </PageWrapper>
   );
@@ -4351,7 +4589,7 @@ function PageLigjërueit() {
    ROOT LAYOUT + ROUTING
 ══════════════════════════════════════════ */
 function Layout({ children }: { children: React.ReactNode }) {
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner] = useState(true); /* TopBanner has no close button, so no setter */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -4403,8 +4641,8 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ fontFamily: "Inter, sans-serif", backgroundColor: C.n0, color: C.n700 }}>
       <style>{globalStyle}</style>
-      {showBanner && <TopBanner onClose={() => setShowBanner(false)} onApplyClick={openPopup} />}
-      <Navbar showBanner={showBanner} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} onApplyClick={openPopup} />
+      {showBanner && <TopBanner onApplyClick={openPopup} />}
+      <Navbar showBanner={showBanner} setMobileMenuOpen={setMobileMenuOpen} onApplyClick={openPopup} />
       <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       <main className="flex-1">{children}</main>
       {/* Lives in Layout so it is available on every route, not just the homepage. */}
@@ -4441,7 +4679,12 @@ export default function App() {
                   <Route key={p.path} path={p.path} element={<ProjectDetailPage project={p} />} />
                 ))}
                 <Route path="/lajme" element={<PageLajme />} />
-                <Route path="/lajme/artikull" element={<PageArtikull />} />
+                {/* Detail page. Declared after the exact "/lajme" so the feed keeps that
+                    path, exactly as /trajnime/:slug is declared after /trajnime. This
+                    replaces the old static "/lajme/artikull" mock route — that path now
+                    resolves here as a slug and 404s honestly, which is correct: it never
+                    named a real post. */}
+                <Route path="/lajme/:slug" element={<PageArtikulli />} />
                 <Route path="/kontakti" element={<PageKontakti />} />
                 <Route path="/ekipi" element={<PageEkipi />} />
                 <Route path="/ligjërueit" element={<PageLigjërueit />} />

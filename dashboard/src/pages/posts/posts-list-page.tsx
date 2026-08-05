@@ -50,7 +50,7 @@ export default function PostsListPage(): JSX.Element {
   const filters = {
     page,
     pageSize: DEFAULT_PAGE_SIZE,
-    search: debouncedSearch || undefined,
+    search: debouncedSearch.trim() || undefined,
     sort: 'updatedAt' as const,
     order: 'desc' as const,
   };
