@@ -18,3 +18,4 @@ Thumbs.db
 # NOTE: the Postgres data lives in the NAMED Docker volume `cacttus-pgdata`,
 # managed by Docker outside this directory — there is no bind-mounted data
 # folder to ignore. Inspect it with `docker volume inspect cacttus-pgdata`.
+cacttus-edu-front/.vite/
