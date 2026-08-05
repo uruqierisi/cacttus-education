@@ -1,0 +1,169 @@
+/*
+ * Typography for operator-authored article bodies (`Post.content`).
+ *
+ * The body arrives as a raw HTML string from the dashboard's Tiptap editor and is injected
+ * with `dangerouslySetInnerHTML`, so its tags carry no utility classes and Tailwind's
+ * preflight has already stripped every default margin and heading size. Without this file
+ * an article renders as one undifferentiated wall of text.
+ *
+ * A stylesheet rather than the `@tailwindcss/typography` plugin: the plugin is not a
+ * dependency of this project, and adding one to style a single surface is a heavier change
+ * than the ~40 declarations it would replace. Colours mirror the `C` palette in App.tsx.
+ *
+ * Scoped entirely under `.post-body` so it can never leak into the design-system pages.
+ */
+
+.post-body {
+  color: #3f3f46; /* C.n700 */
+  font-size: 1.0625rem;
+  line-height: 1.85;
+}
+
+.post-body > *:first-child {
+  margin-top: 0;
+}
+
+.post-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.post-body p {
+  margin: 0 0 1.4em;
+}
+
+.post-body h1,
+.post-body h2,
+.post-body h3,
+.post-body h4,
+.post-body h5,
+.post-body h6 {
+  color: #18181b; /* C.n900 */
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 2em 0 0.6em;
+}
+
+.post-body h1 { font-size: 1.875rem; }
+.post-body h2 { font-size: 1.5rem; }
+.post-body h3 { font-size: 1.25rem; }
+.post-body h4,
+.post-body h5,
+.post-body h6 { font-size: 1.0625rem; }
+
+.post-body strong,
+.post-body b {
+  color: #27272c; /* C.n800 */
+  font-weight: 600;
+}
+
+.post-body a {
+  color: #823685; /* C.brand */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.post-body a:hover {
+  color: #6a2a6d; /* C.brandDark */
+}
+
+.post-body ul,
+.post-body ol {
+  margin: 0 0 1.4em;
+  padding-left: 1.4em;
+}
+
+.post-body ul { list-style: disc; }
+.post-body ol { list-style: decimal; }
+
+.post-body li {
+  margin-bottom: 0.5em;
+}
+
+.post-body li::marker {
+  color: #823685; /* C.brand */
+}
+
+.post-body blockquote {
+  margin: 1.6em 0;
+  padding: 0.2em 0 0.2em 1.25rem;
+  border-left: 4px solid #823685; /* C.brand */
+  color: #27272c; /* C.n800 */
+  font-style: italic;
+}
+
+/*
+ * Editors do use headings inside a quote, and the generic heading rule above would give
+ * the first one a 2em top margin that pushes it off the quote bar.
+ */
+.post-body blockquote > *:first-child { margin-top: 0; }
+.post-body blockquote > *:last-child { margin-bottom: 0; }
+
+.post-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  margin: 1.6em 0;
+}
+
+.post-body figure {
+  margin: 1.6em 0;
+}
+
+.post-body figcaption {
+  margin-top: 0.6em;
+  color: #9e9ea9; /* C.n400 */
+  font-size: 0.875rem;
+}
+
+.post-body pre {
+  margin: 1.6em 0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background-color: #f4f4f6; /* C.n100 */
+  overflow-x: auto;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.post-body code {
+  background-color: #f4f4f6; /* C.n100 */
+  border-radius: 0.375rem;
+  padding: 0.15em 0.4em;
+  font-size: 0.9em;
+}
+
+.post-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.post-body hr {
+  margin: 2.4em 0;
+  border: 0;
+  border-top: 1px solid #e6e6ea; /* C.n200 */
+}
+
+/* Wide tables must scroll inside the article rather than widening the page. */
+.post-body table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 1.6em 0;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.post-body th,
+.post-body td {
+  border: 1px solid #e6e6ea; /* C.n200 */
+  padding: 0.6em 0.85em;
+  text-align: left;
+}
+
+.post-body th {
+  background-color: #fafafb; /* C.n50 */
+  font-weight: 600;
+  color: #27272c; /* C.n800 */
+}

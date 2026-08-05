@@ -52,7 +52,7 @@ export default function FormsListPage(): JSX.Element {
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
 
   const debouncedSearch = useDebouncedValue(search);
-  const filters = { page, pageSize: DEFAULT_PAGE_SIZE, search: debouncedSearch || undefined };
+  const filters = { page, pageSize: DEFAULT_PAGE_SIZE, search: debouncedSearch.trim() || undefined };
 
   const activeQuery = useQuery({
     queryKey: queryKeys.forms.list(filters),

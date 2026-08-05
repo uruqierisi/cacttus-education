@@ -101,7 +101,7 @@ export default function UsersPage(): JSX.Element {
   const filters = {
     page,
     pageSize: DEFAULT_PAGE_SIZE,
-    search: debouncedSearch || undefined,
+    search: debouncedSearch.trim() || undefined,
     sort: 'createdAt' as const,
     order: 'desc' as const,
   };

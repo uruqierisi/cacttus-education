@@ -34,8 +34,26 @@ export const paginationQuerySchema = z.object({
 
 export const sortOrderSchema = z.enum(['asc', 'desc']).default('desc');
 
-/** Free-text search box. Bounded so it cannot become a giant ILIKE pattern. */
-export const searchSchema = z.string().trim().min(1).max(120).optional();
+/**
+ * Free-text search box. Bounded so it cannot become a giant ILIKE pattern.
+ *
+ * A whitespace-only search collapses to `undefined` — "no filter" — rather than failing
+ * validation. This was previously `.min(1)` AFTER `.trim()`, so typing a single space in
+ * any list page's search box trimmed to `""`, failed the check, and 400'd the whole
+ * request: the table emptied because the user pressed the space bar. Same reasoning as
+ * `strengthsSchema` in training.schema.ts — a blank entry the UI can produce by design is
+ * a UI state, not a client error.
+ *
+ * Fixing it here rather than in each caller is deliberate: six list endpoints share this
+ * schema, and the dashboard had already grown `\.trim() || undefined` in two of its five
+ * search pages, which is the symptom being patched one page at a time.
+ */
+export const searchSchema = z
+  .string()
+  .trim()
+  .max(120)
+  .transform((value) => (value === '' ? undefined : value))
+  .optional();
 
 /** ISO date-time bound used by the submission date filters. */
 export const isoDateSchema = z.coerce.date();
