@@ -97,7 +97,6 @@ import {
   Wifi,
   Monitor,
   Wind,
-  Camera,
   Star,
   TrendingUp,
   Target,
@@ -107,12 +106,10 @@ import {
   Building,
   FileText,
   UserCheck,
-  Search,
   MessageSquare,
   GraduationCap,
   DollarSign,
   BarChart,
-  HeartHandshake,
   Projector,
 } from "lucide-react";
 
@@ -182,7 +179,7 @@ type DropdownId = "studime" | "projektet" | "biznese" | "rreth" | null;
 ══════════════════════════════════════════ */
 
 /* 1.1 — TOP BANNER: deep brand purple #823685 */
-function TopBanner({ onClose, onApplyClick }: { onClose: () => void; onApplyClick: () => void }) {
+function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
   return (
     <div
       className="w-full flex items-center justify-center px-4 relative"
@@ -209,12 +206,10 @@ function TopBanner({ onClose, onApplyClick }: { onClose: () => void; onApplyClic
 /* 1.2 — NAVBAR: Rreth Nesh moved BEFORE Kontakti */
 function Navbar({
   showBanner,
-  mobileMenuOpen,
   setMobileMenuOpen,
   onApplyClick,
 }: {
   showBanner: boolean;
-  mobileMenuOpen: boolean;
   setMobileMenuOpen: (v: boolean) => void;
   onApplyClick: () => void;
 }) {
@@ -1995,31 +1990,6 @@ function SuccessCarousel() {
         <button onClick={() => setCurrent((c) => (c + 1) % STUDENT_PHOTOS.length)} className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:shadow-md" style={{ border: `1.5px solid ${C.n200}`, backgroundColor: C.n0 }}>
           <ChevronRight size={20} style={{ color: C.n700 }} />
         </button>
-      </div>
-    </div>
-  );
-}
-
-/* ── PROGRAM CARD ── */
-function ProgramCard({ title, desc, chips, to, imgUrl }: { title: string; desc: string; chips: string[]; to: string; imgUrl?: string }) {
-  const navigate = useNavigate();
-  return (
-    <div
-      className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl group"
-      style={{ border: `1px solid ${C.cardBorder}`, backgroundColor: C.n0 }}
-      onClick={() => navigate(to)}
-    >
-      <div className="aspect-[16/10] overflow-hidden" style={{ backgroundColor: C.n100 }}>
-        {imgUrl
-          ? <img src={imgUrl} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: C.brandLight }}><Code size={40} style={{ color: C.p300 }} /></div>
-        }
-      </div>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold mb-2 leading-snug" style={{ color: C.n900 }}>{title}</h3>
-        <p className="text-sm mb-4" style={{ color: C.muted }}>{desc}</p>
-        <div className="flex flex-wrap gap-2 mb-4">{chips.map((c) => <MetaChip key={c}>{c}</MetaChip>)}</div>
-        <GhostBtn>Shiko programin</GhostBtn>
       </div>
     </div>
   );
@@ -4351,7 +4321,7 @@ function PageLigjërueit() {
    ROOT LAYOUT + ROUTING
 ══════════════════════════════════════════ */
 function Layout({ children }: { children: React.ReactNode }) {
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner] = useState(true); /* TopBanner has no close button, so no setter */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -4403,8 +4373,8 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ fontFamily: "Inter, sans-serif", backgroundColor: C.n0, color: C.n700 }}>
       <style>{globalStyle}</style>
-      {showBanner && <TopBanner onClose={() => setShowBanner(false)} onApplyClick={openPopup} />}
-      <Navbar showBanner={showBanner} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} onApplyClick={openPopup} />
+      {showBanner && <TopBanner onApplyClick={openPopup} />}
+      <Navbar showBanner={showBanner} setMobileMenuOpen={setMobileMenuOpen} onApplyClick={openPopup} />
       <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       <main className="flex-1">{children}</main>
       {/* Lives in Layout so it is available on every route, not just the homepage. */}
