@@ -21,6 +21,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    // Bind to all interfaces so other devices on the LAN/Wi-Fi can reach the dev
+    // server at http://<this-machine-lan-ip>:5174, not just localhost.
+    host: true,
     port: DEV_PORT,
     strictPort: true,
   },

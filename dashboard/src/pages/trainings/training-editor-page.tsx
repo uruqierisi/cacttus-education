@@ -17,6 +17,8 @@ import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/page-header';
 import { ErrorState, LoadingRows } from '@/components/common/state-views';
+import { CoverImageField } from '@/components/posts/cover-image-field';
+import { JobRoleTagInput } from '@/components/trainings/job-role-tag-input';
 import { StrengthListEditor } from '@/components/trainings/strength-list-editor';
 import { SyllabusPdfField } from '@/components/trainings/syllabus-pdf-field';
 import { Button } from '@/components/ui/button';
@@ -45,12 +47,18 @@ import {
   ROUTES,
   TRAINING_CATEGORIES,
   TRAINING_CATEGORY_LABELS,
+  TRAINING_STATUSES,
+  TRAINING_STATUS_LABELS,
+  type TrainingStatusValue,
   TRAINING_FORMATS,
   TRAINING_FORMAT_LABELS,
   publicTrainingUrl,
 } from '@/lib/constants';
 import { describeApiError } from '@/lib/api-error';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+
+/** Matches the API's `FIELD_LIMITS.INSTRUCTOR_BIO_MAX`. */
+const INSTRUCTOR_BIO_MAX = 600;
 
 type EditorState = {
   title: string;
@@ -59,9 +67,14 @@ type EditorState = {
   format: TrainingFormat;
   hours: string;
   instructor: string;
+  instructorPhoto: string;
+  instructorBio: string;
   city: string;
+  price: string;
   description: string;
   strengths: readonly string[];
+  jobRoles: readonly string[];
+  status: TrainingStatusValue;
   syllabusPdf: string;
   formSlug: string;
   isActive: boolean;
@@ -75,9 +88,14 @@ const INITIAL_STATE: EditorState = {
   format: 'KLASE',
   hours: '',
   instructor: '',
+  instructorPhoto: '',
+  instructorBio: '',
   city: '',
+  price: '',
   description: '',
   strengths: [],
+  jobRoles: [],
+  status: 'ACTIVE',
   syllabusPdf: '',
   formSlug: '',
   isActive: true,
@@ -109,11 +127,18 @@ function toPayload(state: EditorState): TrainingPayload {
     format: state.format,
     hours: state.hours.trim() === '' ? null : Number(state.hours),
     instructor: orNull(state.instructor),
+    instructorPhoto: orNull(state.instructorPhoto),
+    instructorBio: orNull(state.instructorBio),
     city: orNull(state.city),
+    price: state.price.trim() === '' ? null : Number(state.price),
     description: orNull(state.description),
     // Blank rows are the add-button's doing, not the admin's intent; the API strips
     // them too, but sending them would make the saved count disagree with what is typed.
     strengths: state.strengths.map((entry) => entry.trim()).filter((entry) => entry !== ''),
+    // Always sent, even when empty: the column is a scalar list with no null state, so
+    // `[]` is how an admin removes the last role.
+    jobRoles: state.jobRoles,
+    status: state.status,
     syllabusPdf: orNull(state.syllabusPdf),
     formSlug: state.formSlug,
     isActive: state.isActive,
@@ -134,6 +159,9 @@ function validate(state: EditorState): string | null {
   }
   if (state.order.trim() !== '' && !Number.isFinite(Number(state.order))) {
     return 'Radha duhet të jetë numër.';
+  }
+  if (state.price.trim() !== '' && !Number.isFinite(Number(state.price))) {
+    return 'Çmimi duhet të jetë numër.';
   }
   return null;
 }
@@ -176,9 +204,14 @@ export default function TrainingEditorPage(): JSX.Element {
       format: training.format,
       hours: training.hours === null ? '' : String(training.hours),
       instructor: training.instructor ?? '',
+      instructorPhoto: training.instructorPhoto ?? '',
+      instructorBio: training.instructorBio ?? '',
       city: training.city ?? '',
+      price: training.price === null ? '' : String(training.price),
       description: training.description ?? '',
       strengths: training.strengths,
+      jobRoles: training.jobRoles,
+      status: training.status,
       syllabusPdf: training.syllabusPdf ?? '',
       formSlug: training.formSlug,
       isActive: training.isActive,
@@ -408,6 +441,19 @@ export default function TrainingEditorPage(): JSX.Element {
                 onChange={(event) => update('city', event.target.value)}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="training-price">Çmimi (€)</Label>
+              <Input
+                id="training-price"
+                type="number"
+                min={0}
+                value={state.price}
+                disabled={isSaving}
+                placeholder="p.sh. 250"
+                onChange={(event) => update('price', event.target.value)}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -439,11 +485,57 @@ export default function TrainingEditorPage(): JSX.Element {
               onChange={(strengths) => update('strengths', strengths)}
             />
 
+            <JobRoleTagInput
+              jobRoles={state.jobRoles}
+              disabled={isSaving}
+              onChange={(jobRoles) => update('jobRoles', jobRoles)}
+            />
+
             <SyllabusPdfField
               value={state.syllabusPdf}
               disabled={isSaving}
               onChange={(url) => update('syllabusPdf', url)}
             />
+
+            {/*
+              The trainer block. Grouped here rather than beside "Ligjëruesi" in the card
+              section because these two only ever render on the DETAIL page — the
+              catalogue card shows the name alone. The name itself stays above, where the
+              card that uses it is edited.
+            */}
+            <div className="space-y-4 border-t pt-6">
+              <div className="space-y-1">
+                <Label>Fotoja e ligjëruesit</Label>
+                <p className="text-xs text-muted-foreground">
+                  Shfaqet majtas biografisë në fund të faqes së trajnimit.
+                </p>
+              </div>
+
+              <CoverImageField
+                value={state.instructorPhoto}
+                disabled={isSaving}
+                inputId="training-instructor-photo"
+                previewAlt="Pamje paraprake e fotos së ligjëruesit"
+                onChange={(url) => update('instructorPhoto', url)}
+              />
+
+              <div className="space-y-2">
+                <Label htmlFor="training-instructor-bio">Biografia e ligjëruesit</Label>
+                <Textarea
+                  id="training-instructor-bio"
+                  rows={4}
+                  maxLength={INSTRUCTOR_BIO_MAX}
+                  value={state.instructorBio}
+                  disabled={isSaving}
+                  placeholder="Dy-tri fjali: përvoja, ku punon, çfarë e bën të veçantë…"
+                  onChange={(event) => update('instructorBio', event.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {state.instructorBio.trim().length}/{INSTRUCTOR_BIO_MAX} karaktere — mbaje të
+                  shkurtër, është një bllok i vogël pranë fotos.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -495,6 +587,39 @@ export default function TrainingEditorPage(): JSX.Element {
               />
               <p className="text-xs text-muted-foreground">
                 Më e vogla shfaqet e para në listën publike.
+              </p>
+            </div>
+
+            {/*
+              Lifecycle. A two-option group rather than a Switch, because a switch reads
+              as on/off and these are two NAMED states — "off" is not a fair description
+              of a training that finished. Sits above the publish switch so the pair reads
+              as "what stage is it in" then "is it visible", which are different questions.
+            */}
+            <div className="space-y-2 pt-8">
+              <Label>Statusi</Label>
+              <div
+                role="group"
+                aria-label="Statusi i trajnimit"
+                className="grid grid-cols-2 gap-2"
+              >
+                {TRAINING_STATUSES.map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={state.status === value ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={isSaving}
+                    aria-pressed={state.status === value}
+                    onClick={() => update('status', value)}
+                  >
+                    {TRAINING_STATUS_LABELS[value]}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                «Përfunduar» e shënon trajnimin si të mbaruar. Mbetet i dukshëm në faqen
+                publike, vetëm me etiketë tjetër.
               </p>
             </div>
 

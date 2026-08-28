@@ -39,3 +39,31 @@ export const searchSchema = z.string().trim().min(1).max(120).optional();
 
 /** ISO date-time bound used by the submission date filters. */
 export const isoDateSchema = z.coerce.date();
+
+/**
+ * Digits, optionally preceded by one `+` for an international prefix (+383, +355, …).
+ *
+ * Checked AFTER whitespace is stripped, which is why the pattern itself has no allowance
+ * for spaces: `"+383 44 123 456"` and `"+38344123456"` are the same number, and the one
+ * that reaches the database should not depend on how the visitor happened to space it.
+ * Nothing else is tolerated — letters, parentheses, dashes and slashes are rejected
+ * rather than quietly stripped, because stripping them would mean silently accepting a
+ * value the operator then has to guess the original of.
+ */
+const PHONE_PATTERN = /^\+?[0-9]{5,}$/;
+
+/**
+ * The one phone rule for the whole API.
+ *
+ * Deliberately a single exported schema rather than a regex each caller re-applies: the
+ * public form, the dynamic `phone` field type and the CSV importer all validate contact
+ * numbers, and three hand-copied rules are three rules that eventually disagree.
+ */
+export const phoneSchema = z
+  .string()
+  .trim()
+  .max(FIELD_LIMITS.PHONE_MAX)
+  .transform((value) => value.replace(/\s+/g, ''))
+  .refine((value) => PHONE_PATTERN.test(value), {
+    message: 'must be digits, optionally starting with + (e.g. +38344123456)',
+  });

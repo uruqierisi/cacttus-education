@@ -11,4 +11,4 @@
  * The form must be ACTIVE in the dashboard; `/api/public/forms/:slug` returns 404 for
  * an inactive or deleted one, and the band renders its "form unavailable" state.
  */
-export const APPLICATION_FORM_SLUG = 'aplikim-2026'
+export const APPLICATION_FORM_SLUG = 'regjistrimi-kiber-siguri'

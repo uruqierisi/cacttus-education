@@ -4,6 +4,7 @@ import { FIELD_LIMITS } from '../config/constants';
 import {
   isoDateSchema,
   paginationQuerySchema,
+  phoneSchema,
   searchSchema,
   sortOrderSchema,
 } from './common.schema';
@@ -16,7 +17,7 @@ import {
 export const createSubmissionSchema = z.object({
   name: z.string().trim().min(2).max(FIELD_LIMITS.NAME_MAX),
   email: z.string().trim().toLowerCase().email().max(FIELD_LIMITS.EMAIL_MAX),
-  phone: z.string().trim().min(5).max(FIELD_LIMITS.PHONE_MAX),
+  phone: phoneSchema,
   data: z.record(z.unknown()).default({}),
   /**
    * Honeypot. Real browsers leave it empty; bots fill every input they find.

@@ -52,9 +52,14 @@ export type TrainingDto = {
   readonly format: Training['format'];
   readonly hours: number | null;
   readonly instructor: string | null;
+  readonly instructorPhoto: string | null;
+  readonly instructorBio: string | null;
   readonly city: string | null;
+  readonly price: number | null;
+  readonly status: Training['status'];
   readonly description: string | null;
   readonly strengths: readonly string[];
+  readonly jobRoles: readonly string[];
   readonly syllabusPdf: string | null;
   readonly formSlug: string;
   /** Title of the linked form, or null when the slug no longer resolves. */
@@ -102,9 +107,16 @@ function toDto(row: TrainingRow, formTitle: string | null): TrainingDto {
     format: row.format,
     hours: row.hours,
     instructor: row.instructor,
+    instructorPhoto: row.instructorPhoto,
+    instructorBio: row.instructorBio,
     city: row.city,
+    price: row.price,
+    status: row.status,
     description: row.description,
     strengths: parseStrengths(row.strengths),
+    // No parse step: unlike `strengths`, this is a native text[] column, so Prisma has
+    // already handed back a string list. Rows predating the column read as [].
+    jobRoles: row.jobRoles,
     syllabusPdf: row.syllabusPdf,
     formSlug: row.formSlug,
     formTitle,
@@ -302,9 +314,14 @@ export async function createTraining(
         format: input.format,
         hours: input.hours ?? null,
         instructor: input.instructor ?? null,
+        instructorPhoto: input.instructorPhoto ?? null,
+        instructorBio: input.instructorBio ?? null,
         city: input.city ?? null,
+        price: input.price ?? null,
+        status: input.status,
         description: input.description ?? null,
         strengths: (input.strengths ?? []) as unknown as Prisma.InputJsonValue,
+        jobRoles: input.jobRoles ?? [],
         syllabusPdf: input.syllabusPdf ?? null,
         formSlug: input.formSlug,
         isActive: input.isActive,
@@ -325,10 +342,12 @@ export async function createTraining(
         slug: created.slug,
         title: created.title,
         category: created.category,
+        status: created.status,
         formSlug: created.formSlug,
         isActive: created.isActive,
         order: created.order,
         strengthCount: input.strengths?.length ?? 0,
+        jobRoleCount: input.jobRoles?.length ?? 0,
         hasDescription: Boolean(created.description),
         syllabusPdf: created.syllabusPdf,
       },
@@ -377,11 +396,16 @@ export async function updateTraining(
     ...(input.format === undefined ? {} : { format: input.format }),
     ...(input.hours === undefined ? {} : { hours: input.hours }),
     ...(input.instructor === undefined ? {} : { instructor: input.instructor }),
+    ...(input.instructorPhoto === undefined ? {} : { instructorPhoto: input.instructorPhoto }),
+    ...(input.instructorBio === undefined ? {} : { instructorBio: input.instructorBio }),
     ...(input.city === undefined ? {} : { city: input.city }),
+    ...(input.price === undefined ? {} : { price: input.price }),
+    ...(input.status === undefined ? {} : { status: input.status }),
     ...(input.description === undefined ? {} : { description: input.description }),
     ...(input.strengths === undefined
       ? {}
       : { strengths: input.strengths as unknown as Prisma.InputJsonValue }),
+    ...(input.jobRoles === undefined ? {} : { jobRoles: input.jobRoles }),
     ...(input.syllabusPdf === undefined ? {} : { syllabusPdf: input.syllabusPdf }),
     ...(input.formSlug === undefined ? {} : { formSlug: input.formSlug }),
     ...(input.isActive === undefined ? {} : { isActive: input.isActive }),
@@ -404,9 +428,11 @@ export async function updateTraining(
         slug: updated.slug,
         title: updated.title,
         changed: Object.keys(data).join(','),
+        status: updated.status,
         formSlug: updated.formSlug,
         isActive: updated.isActive,
         ...(input.strengths === undefined ? {} : { strengthCount: input.strengths.length }),
+        ...(input.jobRoles === undefined ? {} : { jobRoleCount: input.jobRoles.length }),
         ...(input.syllabusPdf === undefined ? {} : { syllabusPdf: updated.syllabusPdf }),
       },
     });
@@ -478,6 +504,11 @@ export type PublicTrainingCard = {
   readonly hours: number | null;
   readonly instructor: string | null;
   readonly city: string | null;
+  /**
+   * On the CARD, not the detail payload: every catalogue card draws a status badge, so
+   * withholding it here would mean a second request per card just to render a pill.
+   */
+  readonly status: Training['status'];
   /** Where the card's "Apliko" leads: the DETAIL page, never the form directly. */
   readonly applyUrl: string;
 };
@@ -492,8 +523,26 @@ export type PublicTrainingDetail = PublicTrainingCard & {
    * has no use for it, so it is not shipped there.
    */
   readonly id: string;
+  /**
+   * Detail payload only. The catalogue grid renders a card, not a price list, so shipping
+   * it there would grow every list response for something no card draws.
+   */
+  readonly price: number | null;
+  /**
+   * The detail page's trainer block. `instructor` (the name) already rides along on the
+   * card; only the portrait and the bio are detail-only, and the page renders the block
+   * at all only when there is something beyond the bare name to show.
+   */
+  readonly instructorPhoto: string | null;
+  readonly instructorBio: string | null;
   readonly description: string | null;
   readonly strengths: readonly string[];
+  /**
+   * Detail payload only, like `price`: the catalogue card has no room for a role list,
+   * so shipping it on every card would grow the list response for something no card
+   * draws. Empty when unset, which is the page's signal to render no section.
+   */
+  readonly jobRoles: readonly string[];
   readonly syllabusPdf: string | null;
   readonly formSlug: string;
   /**
@@ -515,6 +564,7 @@ function toCard(row: Training): PublicTrainingCard {
     hours: row.hours,
     instructor: row.instructor,
     city: row.city,
+    status: row.status,
     applyUrl: trainingDetailPath(row.slug),
   };
 }
@@ -527,6 +577,8 @@ export async function listPublicTrainings(
       ...publiclyVisible(),
       ...(query.category ? { category: query.category } : {}),
       ...(query.city ? { city: query.city } : {}),
+      // Absent means "both": a finished training still belongs in the catalogue, badged.
+      ...(query.status ? { status: query.status } : {}),
     },
     orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
   });
@@ -559,8 +611,12 @@ export async function getPublicTrainingBySlug(slug: string): Promise<PublicTrain
   return {
     ...toCard(row),
     id: row.id,
+    price: row.price,
+    instructorPhoto: row.instructorPhoto,
+    instructorBio: row.instructorBio,
     description: row.description,
     strengths: parseStrengths(row.strengths),
+    jobRoles: row.jobRoles,
     syllabusPdf: row.syllabusPdf,
     formSlug: row.formSlug,
     form,

@@ -184,6 +184,14 @@ export const FIELD_LIMITS = {
   URL_MAX: 2_048,
   CONTENT_MAX: 200_000,
   TEXT_ANSWER_MAX: 5_000,
+  /**
+   * The trainer bio on a training's detail page. Deliberately far tighter than
+   * `CONTENT_MAX`: that block is a few sentences beside a portrait, and its layout only
+   * holds up while the text stays short. Enforcing brevity here — rather than trusting
+   * the admin to be brief — is what keeps the section from turning into a second
+   * description that overruns the photo beside it.
+   */
+  INSTRUCTOR_BIO_MAX: 600,
   FORM_FIELDS_MAX: 60,
 } as const;
 

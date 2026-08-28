@@ -249,6 +249,12 @@ export type TrainingCategory =
 
 export type TrainingFormat = 'KLASE' | 'HIBRID' | 'ONLINE'
 
+/**
+ * Lifecycle, not visibility. An unpublished training never reaches this API at all; a
+ * COMPLETED one does, and the catalogue shows it with a different badge.
+ */
+export type TrainingStatus = 'ACTIVE' | 'COMPLETED'
+
 /** A catalogue card. `applyUrl` is a PATH into this same SPA, not the form's URL. */
 export type TrainingCard = {
   readonly slug: string
@@ -259,14 +265,23 @@ export type TrainingCard = {
   readonly hours: number | null
   readonly instructor: string | null
   readonly city: string | null
+  /** Drives the card's status badge. */
+  readonly status: TrainingStatus
   readonly applyUrl: string
 }
 
 export type TrainingDetail = TrainingCard & {
   /** Sent back as `trainingId` when applying, so the lead records where it came from. */
   readonly id: string
+  /** Whole euros. Null when the price is not settled yet — rendered as "—". */
+  readonly price: number | null
+  /** The trainer block. The NAME lives on `instructor`, which the card already carries. */
+  readonly instructorPhoto: string | null
+  readonly instructorBio: string | null
   readonly description: string | null
   readonly strengths: readonly string[]
+  /** Job titles this training prepares for. Empty when unset — render no section. */
+  readonly jobRoles: readonly string[]
   readonly syllabusPdf: string | null
   readonly formSlug: string
   /** Null when the linked form was renamed or switched off — hide the apply section. */
@@ -281,6 +296,7 @@ export type TrainingFilters = {
 export type TrainingQuery = {
   readonly category?: TrainingCategory
   readonly city?: string
+  readonly status?: TrainingStatus
 }
 
 function toQueryString(query: TrainingQuery): string {
@@ -288,6 +304,7 @@ function toQueryString(query: TrainingQuery): string {
 
   if (query.category) params.set('category', query.category)
   if (query.city) params.set('city', query.city)
+  if (query.status) params.set('status', query.status)
 
   const encoded = params.toString()
   return encoded === '' ? '' : `?${encoded}`

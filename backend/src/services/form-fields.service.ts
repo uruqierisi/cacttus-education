@@ -23,6 +23,7 @@
 import { z } from 'zod';
 import { FIELD_LIMITS } from '../config/constants';
 import { ApiError, type ErrorDetail } from '../lib/api-error';
+import { phoneSchema } from '../schemas/common.schema';
 
 export const FIELD_TYPES = [
   'text',
@@ -143,7 +144,9 @@ function answerSchemaFor(field: FieldDefinition): z.ZodTypeAny {
     case 'email':
       return z.string().trim().toLowerCase().email().max(FIELD_LIMITS.EMAIL_MAX);
     case 'phone':
-      return z.string().trim().min(5).max(FIELD_LIMITS.PHONE_MAX);
+      // The same rule the promoted `Submission.phone` column is held to — a question an
+      // admin marked as a phone number must not be laxer than the built-in one.
+      return phoneSchema;
     case 'number':
       return z.coerce.number().finite().min(-MAX_NUMBER_ANSWER).max(MAX_NUMBER_ANSWER);
     case 'date':
