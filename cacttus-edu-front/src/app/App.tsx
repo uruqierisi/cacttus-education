@@ -201,7 +201,13 @@ import {
   type TrainingDetail,
   type TrainingFormat,
 } from "../marketing/lib/public-api";
-import { APPLICATION_FORM_SLUG } from "../marketing/lib/forms.config";
+import {
+  APPLICATION_FORM_SLUG,
+  BUSINESS_FORM_SLUG,
+  BUSINESS_REQUEST_TYPES,
+  CONTACT_FORM_SLUG,
+  STUDY_PROGRAMME_VALUES,
+} from "../marketing/lib/forms.config";
 
 /* ─── Albanian labels for the catalogue taxonomy ───
    The API stores stable machine values; these are what a visitor reads. Renaming a
@@ -1350,6 +1356,20 @@ const POPUP_DREJTIMET = [
   "Siguri Kibernetike",
 ];
 
+/**
+ * The popup's dropdown wording → the `programi` option VALUES the API accepts.
+ *
+ * These two lists read almost the same but are NOT identical ("Ueb" vs "Ueb-it",
+ * "Siguri" vs "Siguria"), and a select answer is validated against `option.value`
+ * exactly, so sending the visible label straight through would 400. The visible strings
+ * above are Ernata's copy and stay untouched; this table is the only thing that moves if
+ * either side is reworded.
+ */
+const POPUP_PROGRAMME_VALUES: Record<string, string> = {
+  "Zhvillim i Ueb dhe Aplikacioneve Mobile": STUDY_PROGRAMME_VALUES.ZHVAM,
+  "Siguri Kibernetike": STUDY_PROGRAMME_VALUES.CYBER,
+};
+
 /* ─── Motion timings. POPUP_EXIT_MS also gates the delayed unmount below. ─── */
 const POPUP_ENTER_MS = 400;        // the card arriving
 const POPUP_EXIT_MS = 180;         // the card leaving
@@ -1376,6 +1396,7 @@ function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const [reduceMotion, setReduceMotion] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [emri, setEmri] = useState("");
   const [mbiemri, setMbiemri] = useState("");
   const [drejtimi, setDrejtimi] = useState("");
@@ -1465,19 +1486,62 @@ function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     if (isOpen) { setSent(false); setError(""); }
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Sends the lead to the SAME application form the "Apliko tani" band posts to
+   * (APPLICATION_FORM_SLUG), so the popup is a second door onto one path rather than a
+   * parallel one — an admin sees both in a single list.
+   *
+   * `sent` flips only after the POST resolves. A rejection leaves the card open with
+   * every value still in it, so nothing has to be retyped.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();                     // stop the browser's default page reload
+    // The button stays enabled, so a second Enter before the first POST settles would
+    // otherwise send the lead twice.
+    if (isSubmitting) return;
+
     if (!emri.trim() || !mbiemri.trim() || !drejtimi) {
       setError("Ju lutem plotësoni fushat e detyrueshme.");
       return;
     }
-    // Optional here, so only a FILLED number is judged — an empty one is not an error.
-    if (telefoni.trim() && !isValidPhone(telefoni)) {
+    // Email and phone are REQUIRED by the API — they become real Submission columns —
+    // even though these two labels carry no asterisk. Checked here so the visitor gets an
+    // Albanian sentence instead of a 400 from the server.
+    if (!email.trim() || !telefoni.trim()) {
+      setError("Email dhe numri i telefonit janë të detyrueshëm.");
+      return;
+    }
+    if (!isValidPhone(telefoni)) {
       setError(PHONE_ERROR);
       return;
     }
-    console.log("Aplikim nga popup-i:", { emri, mbiemri, drejtimi, email, telefoni });
-    setSent(true);
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await submitPublicForm(APPLICATION_FORM_SLUG, {
+        // One `name` column server-side, so the two inputs are joined for it.
+        name: `${emri.trim()} ${mbiemri.trim()}`,
+        email: email.trim(),
+        phone: telefoni.trim(),
+        // Mapped, not passed through: the dropdown's wording is not the option value.
+        data: { programi: POPUP_PROGRAMME_VALUES[drejtimi] ?? drejtimi },
+      });
+      setSent(true);
+    } catch (cause: unknown) {
+      if (cause instanceof PublicApiError) {
+        setError(
+          cause.isValidation
+            ? "Disa fusha nuk janë të vlefshme. Kontrollo të dhënat dhe provo përsëri."
+            : cause.message,
+        );
+      } else {
+        setError("Diçka shkoi keq. Provo përsëri.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!mounted) return null;                // fully closed = nothing in the DOM
@@ -1607,7 +1671,7 @@ function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
               {error && <p className="text-sm" style={{ color: C.danger }}>{error}</p>}
 
               <div className={rowClass} style={rowStyle(8)}>
-                <PrimaryBtn type="submit" className="w-full justify-center mt-1">Apliko</PrimaryBtn>
+                <PrimaryBtn type="submit" className="w-full justify-center mt-1">{isSubmitting ? "Duke dërguar…" : "Apliko"}</PrimaryBtn>
               </div>
             </form>
           </>
@@ -5182,10 +5246,74 @@ function PageBiznese() {
 /* ── 5.1 TRAJNIME TË PERSONALIZUARA ── */
 /* `object-position` for the framed image in this component. Second number is the
    vertical one — raise it to push the image DOWN inside its frame. */
+/**
+ * Submit state and POST for the /biznese lead boxes.
+ *
+ * The three boxes ask for different things but do the same job, so the transport,
+ * validation and error wording live here once. `requestType` is the ONLY thing that
+ * differs at the API level: it becomes `tipi_kerkeses`, which is how the inbox tells a
+ * trainings enquiry from a partnership one from a room booking.
+ *
+ * `extra` holds that page's optional answers. Empty ones are sent as-is and dropped
+ * server-side (an unanswered optional field is simply absent from the stored data), so a
+ * caller does not have to prune them.
+ */
+function useBusinessLead(requestType: string) {
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function submit(
+    contact: { name: string; email: string; phone: string },
+    extra: Record<string, string>,
+  ) {
+    // The buttons stay enabled, so a double click would otherwise send the lead twice.
+    if (isSubmitting) return;
+
+    if (!contact.name.trim() || !contact.email.trim() || !contact.phone.trim()) {
+      setError("Ju lutemi plotësoni emrin, email-in dhe numrin e telefonit.");
+      return;
+    }
+    if (!isValidPhone(contact.phone)) {
+      setError(PHONE_ERROR);
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await submitPublicForm(BUSINESS_FORM_SLUG, {
+        name: contact.name.trim(),
+        email: contact.email.trim(),
+        phone: contact.phone.trim(),
+        data: { tipi_kerkeses: requestType, ...extra },
+      });
+      setSent(true);
+    } catch (cause: unknown) {
+      if (cause instanceof PublicApiError) {
+        setError(
+          cause.isValidation
+            ? "Disa fusha nuk janë të vlefshme. Kontrollo të dhënat dhe provo përsëri."
+            : cause.message,
+        );
+      } else {
+        setError("Diçka shkoi keq. Provo përsëri.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return { sent, error, isSubmitting, submit };
+}
+
 const BIZNESE_TRAJNIME_IMG_POSITION = "center 50%";
 
 function PageBizneseTrajnime() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.TRAININGS);
+  const [biz, setBiz] = useState({ kompania: "", personi: "", email: "", telefoni: "" });
   const faqs = [
     ["Sa zgjat një trajnim i personalizuar?", "Kohëzgjatja përcaktohet sipas temës, nivelit të pjesëmarrësve dhe objektivave të kompanisë."],
     ["Si mund të kërkojmë një ofertë?", "Na kontaktoni duke përshkruar nevojat, fushën e trajnimit dhe numrin e pjesëmarrësve. Ekipi ynë do t’ju propozojë zgjidhjen dhe ofertën përkatëse."],
@@ -5361,14 +5489,26 @@ function PageBizneseTrajnime() {
           <div className="rounded-3xl px-8 md:px-12 py-12" style={{ background: `linear-gradient(135deg, ${C.brand} 0%, ${C.secondary} 100%)` }}>
             <h2 className="text-2xl font-bold text-white mb-2">Keni nevojë për trajnime të personalizuara?</h2>
             <p className="text-white/70 text-sm mb-8">Na kontaktoni dhe do t'ju ofrojmë një propozim brenda 48 orëve.</p>
+            {lead.sent ? (
+              <p className="text-white text-sm font-semibold">Faleminderit! Kërkesa u dërgua — do t'ju kontaktojmë brenda 48 orëve.</p>
+            ) : (
+              <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-              {["Emri i kompanisë", "Personi kontaktues", "Email", "Telefoni"].map((ph) => (
-                <input key={ph} type="text" placeholder={ph} className="px-4 text-sm rounded-xl" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
+              {([
+                { ph: "Emri i kompanisë", key: "kompania" },
+                { ph: "Personi kontaktues", key: "personi" },
+                { ph: "Email", key: "email" },
+                { ph: "Telefoni", key: "telefoni" },
+              ] as const).map(({ ph, key }) => (
+                <input key={ph} type="text" placeholder={ph} value={biz[key]} onChange={(e) => setBiz({ ...biz, [key]: key === "telefoni" ? sanitizePhone(e.target.value) : e.target.value })} className="px-4 text-sm rounded-xl" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
               ))}
-              <button className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white transition-all hover:brightness-110 whitespace-nowrap" style={{ backgroundColor: "#fff", color: C.brand }}>
-                Kontaktoni ne
+              <button onClick={() => lead.submit({ name: biz.personi, email: biz.email, phone: biz.telefoni }, { kompania: biz.kompania })} className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white transition-all hover:brightness-110 whitespace-nowrap" style={{ backgroundColor: "#fff", color: C.brand }}>
+                {lead.isSubmitting ? "Duke dërguar…" : "Kontaktoni ne"}
               </button>
             </div>
+                {lead.error && <p className="text-white text-sm mt-3">{lead.error}</p>}
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -5794,6 +5934,10 @@ function TalentCarousel({ people }: { people: readonly TalentPerson[] }) {
 }
 
 function PageBizneseTalente() {
+  const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.PARTNERSHIP);
+  /* No separate contact-person input on this box, so the COMPANY is the lead's `name`.
+     It is also sent as `kompania` so the inbox shows it under its own label. */
+  const [talente, setTalente] = useState({ kompania: "", email: "", telefoni: "", fusha: "" });
   /* Which category the list on the left has selected, and therefore whose people the
      carousel beside it shows. An INDEX into TALENT_CATEGORIES rather than a role string:
      the index cannot drift out of sync with a renamed category, and it is what the
@@ -5951,12 +6095,24 @@ function PageBizneseTalente() {
       <section className="py-16" style={{ backgroundColor: C.brand }}>
         <div className="max-w-[900px] mx-auto px-5">
           <h2 className="text-2xl font-bold text-white text-center mb-8">Regjistrohu si punëdhënës partner</h2>
+          {lead.sent ? (
+            <p className="text-white text-sm font-semibold text-center">Faleminderit! Regjistrimi u dërgua — do t'ju kontaktojmë së shpejti.</p>
+          ) : (
+            <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            {["Kompania", "Email", "Fusha e interesit"].map((ph) => (
-              <input key={ph} type="text" placeholder={ph} className="px-4 text-sm rounded-xl" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
+            {([
+              { ph: "Kompania", key: "kompania" },
+              { ph: "Email", key: "email" },
+              { ph: "Telefoni", key: "telefoni" },
+              { ph: "Fusha e interesit", key: "fusha" },
+            ] as const).map(({ ph, key }) => (
+              <input key={ph} type="text" placeholder={ph} value={talente[key]} onChange={(e) => setTalente({ ...talente, [key]: key === "telefoni" ? sanitizePhone(e.target.value) : e.target.value })} className="px-4 text-sm rounded-xl" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
             ))}
-            <button className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>Regjistrohu në rrjet</button>
+            <button onClick={() => lead.submit({ name: talente.kompania, email: talente.email, phone: talente.telefoni }, { kompania: talente.kompania, fusha_interesit: talente.fusha })} className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Regjistrohu në rrjet"}</button>
           </div>
+              {lead.error && <p className="text-white text-sm mt-3 text-center">{lead.error}</p>}
+            </>
+          )}
         </div>
       </section>
     </PageWrapper>
@@ -6216,6 +6372,9 @@ Si sponsor, kompania juaj fiton njohje publike, qasje prioritare në rrjetin e s
 const KLASA_HERO_IMG_POSITION = "center 50%";
 
 function PageBiznestKlasa() {
+  const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.ROOM_BOOKING);
+  const [klasa, setKlasa] = useState({ emri: "", email: "", telefoni: "", data: "", pjesemarres: "" });
+
   return (
     <PageWrapper>
       <style>{globalStyle}</style>
@@ -6442,12 +6601,25 @@ function PageBiznestKlasa() {
           <div className="rounded-3xl px-8 md:px-12 py-14" style={{ background: `linear-gradient(135deg, ${C.brand} 0%, ${C.secondary} 100%)` }}>
             <h2 className="text-2xl font-bold text-white mb-2">Rezervo hapësirën tënde</h2>
             <p className="text-white/70 text-sm mb-8">Plotëso formularin dhe do të kontaktohesh brenda 24 orëve.</p>
+            {lead.sent ? (
+              <p className="text-white text-sm font-semibold">Faleminderit! Rezervimi u dërgua — do të kontaktohesh brenda 24 orëve.</p>
+            ) : (
+              <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
-              {["Emri", "Email", "Telefoni", "Data e dëshiruar", "Nr. i pjesëmarrësve"].map((ph) => (
-                <input key={ph} type="text" placeholder={ph} className="px-4 text-sm rounded-xl col-span-1" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
+              {([
+                { ph: "Emri", key: "emri" },
+                { ph: "Email", key: "email" },
+                { ph: "Telefoni", key: "telefoni" },
+                { ph: "Data e dëshiruar", key: "data" },
+                { ph: "Nr. i pjesëmarrësve", key: "pjesemarres" },
+              ] as const).map(({ ph, key }) => (
+                <input key={ph} type="text" placeholder={ph} value={klasa[key]} onChange={(e) => setKlasa({ ...klasa, [key]: key === "telefoni" ? sanitizePhone(e.target.value) : e.target.value })} className="px-4 text-sm rounded-xl col-span-1" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
               ))}
-              <button className="h-[52px] px-5 rounded-xl font-semibold text-sm text-white col-span-1 whitespace-nowrap" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>Rezervo tani</button>
+              <button onClick={() => lead.submit({ name: klasa.emri, email: klasa.email, phone: klasa.telefoni }, { data_deshiruar: klasa.data, nr_pjesemarresve: klasa.pjesemarres })} className="h-[52px] px-5 rounded-xl font-semibold text-sm text-white col-span-1 whitespace-nowrap" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Rezervo tani"}</button>
             </div>
+                {lead.error && <p className="text-white text-sm mt-3">{lead.error}</p>}
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -7218,9 +7390,27 @@ function PageKontakti() {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ emri: "", email: "", telefon: "", subjekti: "", mesazhi: "" });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Posts to the generic form engine every other public form on this site already uses.
+   *
+   * This page does NOT render the form's fields from the API the way the application
+   * band does — its inputs are laid out by hand, and only the SUBMIT travels through
+   * `submitPublicForm`. The consequence is that the `data` keys below are a contract
+   * with the form record's field names, not something the server infers: it drops any
+   * key the form does not declare, so a rename in the dashboard silently empties the
+   * message unless CONTACT_FORM_SLUG's fields are renamed to match.
+   *
+   * `submitted` flips only after the POST resolves. A rejection leaves the form on
+   * screen with every value still in it, so nothing has to be retyped.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // The button stays enabled, so a second Enter press before the first POST settles
+    // would otherwise send the message twice.
+    if (isSubmitting) return;
+
     if (!form.emri.trim() || !form.email.trim() || !form.telefon.trim() || !form.subjekti || !form.mesazhi.trim()) {
       setError("Ju lutemi plotësoni të gjitha fushat.");
       return;
@@ -7230,10 +7420,32 @@ function PageKontakti() {
       return;
     }
     setError("");
-    // TODO: wire to submission API - call fetch here and drive setSubmitted(true)
-    // from its resolution (and setError from its rejection) instead of directly
-    // from this handler, once the submission endpoint exists.
-    setSubmitted(true);
+    setIsSubmitting(true);
+
+    try {
+      await submitPublicForm(CONTACT_FORM_SLUG, {
+        // name/email/phone are promoted to real Submission columns server-side; every
+        // other answer travels in `data`, keyed by the form's field names.
+        name: form.emri.trim(),
+        email: form.email.trim(),
+        phone: form.telefon.trim(),
+        data: { subjekti: form.subjekti, mesazhi: form.mesazhi.trim() },
+      });
+      setSubmitted(true);
+    } catch (cause: unknown) {
+      // Same branches as the application band, so both forms fail the same way.
+      if (cause instanceof PublicApiError) {
+        setError(
+          cause.isValidation
+            ? "Disa fusha nuk janë të vlefshme. Kontrollo të dhënat dhe provo përsëri."
+            : cause.message,
+        );
+      } else {
+        setError("Diçka shkoi keq. Provo përsëri.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -7254,7 +7466,6 @@ function PageKontakti() {
                   <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: C.brandLight }}><Check size={32} style={{ color: C.brand }} /></div>
                   <h3 className="text-xl font-bold" style={{ color: C.n900 }}>Mesazhi u dërgua.</h3>
                   <p style={{ color: C.n500 }}>Do të të përgjigjemi sa më shpejt.</p>
-                  <PrimaryBtn onClick={() => setSubmitted(false)}>Mbyll</PrimaryBtn>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -7267,7 +7478,7 @@ function PageKontakti() {
                     <textarea rows={5} value={form.mesazhi} onChange={(e) => setForm({ ...form, mesazhi: e.target.value })} className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none" style={{ border: `1px solid ${C.n300}`, backgroundColor: C.n0, color: C.n800 }} onFocus={(e) => (e.target.style.borderColor = C.brand)} onBlur={(e) => (e.target.style.borderColor = C.n300)} />
                   </div>
                   {error && <p className="text-sm font-medium" style={{ color: "#D64545" }}>{error}</p>}
-                  <PrimaryBtn type="submit">Dërgo mesazhin</PrimaryBtn>
+                  <PrimaryBtn type="submit">{isSubmitting ? "Duke dërguar…" : "Dërgo mesazhin"}</PrimaryBtn>
                 </form>
               )}
             </div>
