@@ -28,6 +28,7 @@ import {
   DEFAULT_PAGE_SIZE,
   ROUTES,
   TRAINING_CATEGORY_LABELS,
+  TRAINING_STATUS_LABELS,
   TRAINING_FORMAT_LABELS,
   publicTrainingUrl,
 } from '@/lib/constants';
@@ -154,6 +155,10 @@ export default function TrainingsPage(): JSX.Element {
                     <MetaRow label="Ligjëruesi" value={training.instructor ?? '—'} />
                     <MetaRow label="Qyteti" value={training.city ?? '—'} />
                     <MetaRow label="Forma" value={training.formTitle ?? training.formSlug} />
+                    <MetaRow
+                      label="Statusi"
+                      value={TRAINING_STATUS_LABELS[training.status]}
+                    />
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -162,6 +167,16 @@ export default function TrainingsPage(): JSX.Element {
                     ) : (
                       <Badge variant="warning">E ndalur</Badge>
                     )}
+                    {/*
+                      Only the finished state gets a badge. "Aktive" is already taken by
+                      the publish flag directly above, so badging the active lifecycle too
+                      would put the same word twice in one row meaning two different
+                      things. The MetaRow above always spells the status out; this is the
+                      at-a-glance marker for the case that differs from the default.
+                    */}
+                    {training.status === 'COMPLETED' ? (
+                      <Badge variant="secondary">Përfunduar</Badge>
+                    ) : null}
                     {/* The linked form no longer resolves — the Apliko button is dead. */}
                     {training.formTitle === null ? (
                       <Badge variant="warning">Forma mungon</Badge>

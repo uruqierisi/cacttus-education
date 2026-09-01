@@ -165,6 +165,9 @@ export type TrainingCategory =
 
 export type TrainingFormat = 'KLASE' | 'HIBRID' | 'ONLINE';
 
+/** Lifecycle. Separate from `isActive`, which is publish/unpublish. */
+export type TrainingStatus = 'ACTIVE' | 'COMPLETED';
+
 /**
  * A catalogue entry. NOT a Form — a Training points AT a form via `formSlug`, and the
  * two have separate lifecycles: several trainings may share one application form, and a
@@ -180,9 +183,17 @@ export type Training = {
   readonly format: TrainingFormat;
   readonly hours: number | null;
   readonly instructor: string | null;
+  /** Portrait URL and short bio for the detail page's trainer block. */
+  readonly instructorPhoto: string | null;
+  readonly instructorBio: string | null;
   readonly city: string | null;
+  /** Whole euros, or null when the price is not settled yet. */
+  readonly price: number | null;
+  readonly status: TrainingStatus;
   readonly description: string | null;
   readonly strengths: readonly string[];
+  /** Job titles the training prepares for. Empty when unset. */
+  readonly jobRoles: readonly string[];
   readonly syllabusPdf: string | null;
   readonly formSlug: string;
   /** Null when `formSlug` no longer resolves — the editor surfaces this as a warning. */

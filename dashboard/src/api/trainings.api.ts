@@ -1,5 +1,11 @@
 import { getData, getPaginated, patchData, postData, deleteData, type Paginated } from '@/lib/api-client';
-import type { FormOption, Training, TrainingCategory, TrainingFormat } from './types';
+import type {
+  FormOption,
+  Training,
+  TrainingCategory,
+  TrainingFormat,
+  TrainingStatus,
+} from './types';
 
 const BASE = '/api/admin/trainings';
 
@@ -33,9 +39,16 @@ export type TrainingPayload = {
   readonly format: TrainingFormat;
   readonly hours: number | null;
   readonly instructor: string | null;
+  readonly instructorPhoto: string | null;
+  readonly instructorBio: string | null;
   readonly city: string | null;
+  /** Whole euros. */
+  readonly price: number | null;
+  readonly status: TrainingStatus;
   readonly description: string | null;
   readonly strengths: readonly string[];
+  /** Sent as a whole list on every save; `[]` clears it (the column has no null state). */
+  readonly jobRoles: readonly string[];
   readonly syllabusPdf: string | null;
   readonly formSlug: string;
   readonly isActive: boolean;

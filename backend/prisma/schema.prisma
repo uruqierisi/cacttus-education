@@ -61,6 +61,19 @@ enum TrainingFormat {
   ONLINE
 }
 
+/// Where a training is in its lifecycle. English identifiers like every other enum in
+/// this schema (TrainingCategory, TrainingFormat); the Albanian labels "Aktive" and
+/// "Përfunduar" are a presentation concern and live in the two frontends.
+///
+/// Deliberately NOT folded into the existing `isActive` boolean. That flag answers
+/// "should this be published at all" — an unpublished training vanishes from the public
+/// catalogue entirely. This answers "has it finished", and a finished training is still
+/// worth showing, just badged. Two different questions, two different columns.
+enum TrainingStatus {
+  ACTIVE
+  COMPLETED
+}
+
 enum AuditAction {
   LOGIN_SUCCESS
   LOGIN_FAILED
@@ -194,18 +207,46 @@ model Training {
   startDate  DateTime?
   format     TrainingFormat
   hours      Int?
-  // The card's "Ligjëruesi" (instructor) text ONLY — there is no trainer-bio section or
-  // Trainer entity anywhere in this schema. Free text because the marketing site has
-  // never needed to link an instructor across trainings, filter by them, or show a
-  // profile; adding that structure now would be speculative.
-  instructor String?
+  // The instructor, denormalised onto the training rather than modelled as its own
+  // entity. Still free text: the marketing site has never needed to link an instructor
+  // across trainings, filter by them, or show a standalone profile page. The detail
+  // page's bio block reads these three columns and nothing else — if a person ever needs
+  // one profile shared across several trainings, THAT is when a Trainer model earns its
+  // keep, and these columns become its backfill source.
+  instructor      String?
+  // Public URL of an uploaded portrait, not the file itself — same contract as
+  // `syllabusPdf` and `Post.coverImage`, so an upload and a pasted link are one shape.
+  instructorPhoto String?
+  // A few sentences, capped at FIELD_LIMITS.INSTRUCTOR_BIO_MAX at the validation
+  // boundary. `@db.Text` only because a bounded varchar would need a migration to
+  // re-tune; the real ceiling is the Zod one.
+  instructorBio   String? @db.Text
   city       String?
+
+  // Whole euros, not cents. The catalogue has never priced anything in fractions and an
+  // Int keeps the dashboard input, the API and the rendered "250 €" the same number all
+  // the way through — no scaling step to get wrong. Nullable because a training whose
+  // price is not settled yet still belongs in the catalogue; the detail page renders "—"
+  // for it exactly like the other optional card fields.
+  price      Int?
 
   // --- Detail page, all optional: the admin fills only what a given training needs ---
   description String? @db.Text // "Çfarë do të mësosh" — free text.
   /// string[] — "Pikat e Forta" bullet list. Each entry is one bullet's plain text; no
   /// nested structure, matching the simplicity of Form.fields' documented contract.
   strengths   Json?
+
+  /// "Rolet e punës që mund t'i fitosh" — the job titles this training prepares for, one
+  /// short label per entry ("Front-End Developer").
+  ///
+  /// A native scalar list, NOT a Json column like `strengths` above. Two reasons: these
+  /// are short tokens with no chance of growing structure, and a text[] is queryable —
+  /// "which trainings lead to a QA role" is a plausible future filter that Json would
+  /// make awkward. Postgres scalar lists cannot be null, only empty, which is exactly
+  /// the optionality wanted here: a training with no roles set stores `[]` and the
+  /// detail page renders no section at all.
+  jobRoles    String[]
+
   syllabusPdf String? // Public URL of an uploaded PDF, not the file itself.
 
   // Slug (not a foreign key) of the Form the detail page's "Apliko" button submits to.
@@ -220,6 +261,10 @@ model Training {
   // the form/Apliko section simply absent, never a 500, if the slug no longer resolves.
   formSlug String
 
+  /// Defaults to ACTIVE so creating a training needs no extra decision, and so the
+  /// migration backfills every existing row as active without a data step.
+  status   TrainingStatus @default(ACTIVE)
+
   isActive Boolean   @default(true)
   order    Int       @default(0)
   deletedAt DateTime?
@@ -233,6 +278,8 @@ model Training {
   @@index([category])
   // The public catalog's city filter.
   @@index([city])
+  // The public catalog's status filter, same shape as the two above.
+  @@index([status])
   // Every list query (admin default + public catalog) filters on this pair; the public
   // catalog additionally requires isActive = true, deletedAt IS NULL, same shape as Form.
   @@index([isActive, deletedAt])

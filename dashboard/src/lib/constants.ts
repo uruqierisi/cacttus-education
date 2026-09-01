@@ -108,6 +108,19 @@ export const TRAINING_FORMAT_LABELS: Record<TrainingFormatValue, string> = {
   ONLINE: 'Online',
 };
 
+/**
+ * Lifecycle, not visibility. `isActive` already answers "is this published"; this answers
+ * "has it finished", and the two are shown side by side, so the labels must not collide —
+ * hence "Përfunduar" rather than reusing "E ndalur".
+ */
+export const TRAINING_STATUSES = ['ACTIVE', 'COMPLETED'] as const;
+export type TrainingStatusValue = (typeof TRAINING_STATUSES)[number];
+
+export const TRAINING_STATUS_LABELS: Record<TrainingStatusValue, string> = {
+  ACTIVE: 'Aktive',
+  COMPLETED: 'Përfunduar',
+};
+
 export const ROLES = ['ADMIN', 'EDITOR'] as const;
 export type Role = (typeof ROLES)[number];
 

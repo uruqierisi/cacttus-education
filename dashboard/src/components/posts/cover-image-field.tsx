@@ -28,6 +28,15 @@ type CoverImageFieldProps = {
   readonly value: string;
   readonly onChange: (url: string) => void;
   readonly disabled?: boolean;
+  /**
+   * Both default to the post-cover wording this field was written for, so every existing
+   * call site is unchanged. They exist because the upload/paste/preview behaviour is
+   * identical wherever an image URL is edited — the training editor's trainer portrait
+   * reuses it verbatim — and only the label and the alt text are ever page-specific.
+   * A duplicated copy of this component would be the same code with two strings changed.
+   */
+  readonly inputId?: string;
+  readonly previewAlt?: string;
 };
 
 const MEGABYTE = 1024 * 1024;
@@ -41,6 +50,8 @@ export function CoverImageField({
   value,
   onChange,
   disabled = false,
+  inputId = 'post-cover',
+  previewAlt = 'Pamje paraprake e ballinës',
 }: CoverImageFieldProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -129,7 +140,7 @@ export function CoverImageField({
           ) : (
             <img
               src={trimmed}
-              alt="Pamje paraprake e ballinës"
+              alt={previewAlt}
               loading="lazy"
               onError={() => setIsBroken(true)}
               className="aspect-video w-full rounded-md border object-cover"
@@ -205,11 +216,11 @@ export function CoverImageField({
       ) : null}
 
       <div className="space-y-1 border-t pt-3">
-        <Label htmlFor="post-cover" className="text-xs text-muted-foreground">
+        <Label htmlFor={inputId} className="text-xs text-muted-foreground">
           ose ngjit një URL
         </Label>
         <Input
-          id="post-cover"
+          id={inputId}
           type="url"
           placeholder="https://…"
           value={value}
