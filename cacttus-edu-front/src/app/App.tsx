@@ -141,6 +141,29 @@ const ALLOWED_HTML_ATTR = [
   "class",
 ];
 
+/**
+ * Close DOMPurify's `data:` exemption for `<img>`.
+ *
+ * `ALLOWED_URI_REGEXP` does NOT cover it: DOMPurify keeps a separate DATA_URI_TAGS
+ * allowance (img, video, audio, source, track) that lets a `data:` URL through whatever
+ * the regexp says, and it never inspects the media type. Verified: a
+ * `data:image/svg+xml;base64,…` src survived this pass before this hook existed.
+ *
+ * An `<img>` renders SVG in a non-scripting context, so that payload was inert rather
+ * than an XSS — but nothing we author needs a data: URL at all. The editor inserts
+ * uploaded http(s) URLs (Tiptap's Image extension runs with `allowBase64: false`) and
+ * the API's own pass already restricts img to http/https. Dropping the attribute costs
+ * nothing and removes the one place where the two passes disagreed.
+ *
+ * Registered at module scope: DOMPurify hooks are global and cumulative, so adding this
+ * inside `renderSafeHtml` would stack a fresh copy on every render.
+ */
+DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => {
+  if ((data.attrName === "src" || data.attrName === "href") && /^data:/i.test(data.attrValue)) {
+    data.keepAttr = false;
+  }
+});
+
 function renderSafeHtml(html: string): { __html: string } {
   return {
     __html: DOMPurify.sanitize(html, {

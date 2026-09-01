@@ -6,13 +6,21 @@
  * is convenient to produce, and a determined editor can paste anything. Never treat the
  * restricted toolbar as a security boundary.
  *
+ * BODY IMAGES go through the same `/api/admin/uploads` endpoint as the cover image — same
+ * `uploadImage` helper, same 5 MB cap, same magic-byte sniff and sharp re-encode on the
+ * server. Nothing about an inline image is a second upload path; the only difference is
+ * where the returned URL lands: an `<img>` node inside `Post.content` instead of the
+ * `coverImage` column. Both sanitiser passes (server-side `sanitizeRichText` on write,
+ * DOMPurify on the marketing site before render) already allow `img` with `src`/`alt`, so
+ * inserting one needs no widening of either allowlist.
+ *
  * The component is CONTROLLED from the outside but does not re-render on every
  * keystroke: `onChange` pushes HTML up, and the effect below only pushes content back
  * DOWN when the incoming value genuinely differs from what the editor already holds.
  * Without that guard the round-trip would reset the cursor to the top of the document
  * on every character typed.
  */
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -24,6 +32,7 @@ import {
   Heading2,
   Heading3,
   ImageIcon,
+  ImagePlus,
   Italic,
   Link2,
   Link2Off,
@@ -33,11 +42,35 @@ import {
   Redo2,
   Undo2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { describeApiError } from '@/lib/api-error';
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES, uploadImage } from '@/api/uploads.api';
 
 /** Schemes allowed in a link or image URL. Anything else is dropped. */
 const SAFE_PROTOCOLS = ['http:', 'https:', 'mailto:'];
+
+const MEGABYTE = 1024 * 1024;
+
+/**
+ * Alt text derived from the file name — `foto-e-diplomimit.jpg` becomes
+ * "foto e diplomimit".
+ *
+ * A weak default, deliberately: an empty `alt` on a body image is worse for a screen
+ * reader than an imperfect one, and the editor can always retype it. Returns '' when the
+ * name carries nothing usable, which Tiptap renders as no attribute at all.
+ */
+function toAltText(filename: string): string {
+  return filename
+    .replace(/\.[^.]+$/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+}
+
+function isAcceptedType(file: File): boolean {
+  return (ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type);
+}
 
 /**
  * Reject `javascript:` and `data:` URLs before they reach the document.
@@ -94,6 +127,10 @@ function ToolbarButton({
 }
 
 function Toolbar({ editor }: { editor: Editor }): JSX.Element {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  const isUploading = uploadPercent !== null;
+
   const setLink = useCallback(() => {
     const previous = editor.getAttributes('link').href as string | undefined;
     const input = window.prompt('Adresa e linkut (http, https ose mailto):', previous ?? 'https://');
@@ -116,7 +153,7 @@ function Toolbar({ editor }: { editor: Editor }): JSX.Element {
     editor.chain().focus().extendMarkRange('link').setLink({ href: safe }).run();
   }, [editor]);
 
-  const addImage = useCallback(() => {
+  const addImageFromUrl = useCallback(() => {
     const input = window.prompt('Adresa e fotos (https):', 'https://');
 
     if (input === null) {
@@ -131,6 +168,58 @@ function Toolbar({ editor }: { editor: Editor }): JSX.Element {
 
     editor.chain().focus().setImage({ src: safe }).run();
   }, [editor]);
+
+  /**
+   * Upload a picked file through the SAME `/api/admin/uploads` endpoint the cover image
+   * uses, then drop the returned URL in at the cursor as an image node.
+   *
+   * The type/size checks here are a courtesy that saves a round trip; the server is what
+   * actually decides, by sniffing magic bytes and re-encoding through sharp. Both messages
+   * therefore mirror the server's limits rather than defining them — and on rejection the
+   * server's own Albanian message is what the toast shows (`describeApiError`).
+   */
+  const uploadAndInsertImage = useCallback(
+    async (file: File): Promise<void> => {
+      if (!isAcceptedType(file)) {
+        toast.error('Formati i fotos nuk lejohet. Përdor PNG, JPG, WEBP ose GIF.');
+        return;
+      }
+
+      if (file.size > MAX_IMAGE_BYTES) {
+        const size = (file.size / MEGABYTE).toFixed(1);
+        toast.error(`Fotoja është ${size} MB. Maksimumi i lejuar është 5 MB.`);
+        return;
+      }
+
+      setUploadPercent(0);
+
+      try {
+        const uploaded = await uploadImage(file, setUploadPercent);
+
+        // The editor page can be closed mid-upload; inserting into a torn-down view
+        // throws. `focus()` restores the selection the toolbar click moved away from.
+        if (editor.isDestroyed) {
+          return;
+        }
+
+        editor
+          .chain()
+          .focus()
+          .setImage({ src: uploaded.url, alt: toAltText(file.name) })
+          .run();
+        toast.success('Fotoja u shtua në artikull.');
+      } catch (error: unknown) {
+        toast.error(describeApiError(error));
+      } finally {
+        setUploadPercent(null);
+        // Reset so re-picking the SAME file fires `change` again.
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    },
+    [editor],
+  );
 
   return (
     <div
@@ -207,7 +296,35 @@ function Toolbar({ editor }: { editor: Editor }): JSX.Element {
         isDisabled={!editor.isActive('link')}
         onClick={() => editor.chain().focus().unsetLink().run()}
       />
-      <ToolbarButton icon={ImageIcon} label="Shto foto" onClick={addImage} />
+      {/*
+        Hidden input rather than a visible one: the toolbar is a row of icon buttons and a
+        file control cannot be styled into that row. `accept` mirrors the server allowlist.
+      */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE_TYPES.join(',')}
+        className="hidden"
+        tabIndex={-1}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) {
+            void uploadAndInsertImage(file);
+          }
+        }}
+      />
+      <ToolbarButton
+        icon={ImageIcon}
+        label={isUploading ? 'Duke ngarkuar foton…' : 'Shto foto'}
+        isDisabled={isUploading}
+        onClick={() => fileInputRef.current?.click()}
+      />
+      <ToolbarButton
+        icon={ImagePlus}
+        label="Shto foto nga URL"
+        isDisabled={isUploading}
+        onClick={addImageFromUrl}
+      />
 
       <span className="mx-1 h-5 w-px bg-border" aria-hidden />
 
@@ -223,6 +340,18 @@ function Toolbar({ editor }: { editor: Editor }): JSX.Element {
         isDisabled={!editor.can().redo()}
         onClick={() => editor.chain().focus().redo().run()}
       />
+
+      {isUploading ? (
+        <div className="mt-1.5 w-full space-y-1" role="status" aria-live="polite">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${uploadPercent}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Duke ngarkuar foton… {uploadPercent}%</p>
+        </div>
+      ) : null}
     </div>
   );
 }

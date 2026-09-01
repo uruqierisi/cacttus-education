@@ -56,16 +56,41 @@ function registerShutdownHandlers(server: Server): void {
   });
 }
 
+/**
+ * Which interface to bind.
+ *
+ * Production keeps the original no-host `listen(PORT)`: that binds `::` with IPv4
+ * fallback, which is what the hosting platform's health check and router expect, and
+ * hard-coding `0.0.0.0` there would drop IPv6 silently.
+ *
+ * Outside production the default is `0.0.0.0`, so a phone on the same WiFi can reach the
+ * API at `http://<host-lan-ip>:4000`. `HOST` overrides either way — set `HOST=127.0.0.1`
+ * to go back to a loopback-only dev server.
+ */
+function resolveHost(): string | undefined {
+  if (env.HOST) {
+    return env.HOST;
+  }
+
+  return env.isProduction ? undefined : '0.0.0.0';
+}
+
 function start(): void {
   const app = createApp();
 
-  const server = app.listen(env.PORT, () => {
+  const host = resolveHost();
+
+  const onListening = (): void => {
     logger.info('api listening', {
+      host: host ?? '::',
       port: env.PORT,
       env: env.NODE_ENV,
       allowedOrigins: [...env.allowedOrigins],
+      credentialedOrigins: [...env.credentialedOrigins],
     });
-  });
+  };
+
+  const server = host ? app.listen(env.PORT, host, onListening) : app.listen(env.PORT, onListening);
 
   registerShutdownHandlers(server);
 }

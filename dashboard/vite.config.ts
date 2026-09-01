@@ -74,7 +74,14 @@ export default defineConfig({
     },
   },
   server: {
+    // Bind every interface so a phone on the same WiFi can open the dashboard at
+    // `http://<host-lan-ip>:5173`. Dev only — this file never affects the built bundle,
+    // which is served by whatever hosts `dist/`.
+    host: true,
     port: DEV_PORT,
+    // Load-bearing with `host: true`: the API answers exactly one origin with
+    // `Access-Control-Allow-Credentials`, and that origin names port 5173. A silent
+    // fallback to 5174 would leave login working and every refresh failing.
     strictPort: true,
   },
   preview: {

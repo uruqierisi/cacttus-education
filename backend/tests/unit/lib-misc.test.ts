@@ -225,6 +225,28 @@ describe('html sanitisation', () => {
     expect(sanitizeRichText('<a href="javascript:alert(1)">x</a>')).not.toContain('javascript:');
   });
 
+  // Inline body images are inserted by the editor's "Shto foto" button, so an <img> with
+  // an http(s) src must SURVIVE the pass — while everything executable on it does not.
+  it('keeps an uploaded inline image with src and alt', () => {
+    const clean = sanitizeRichText(
+      '<p>a</p><img src="http://localhost:4000/uploads/abc.png" alt="Foto"><p>b</p>',
+    );
+
+    expect(clean).toContain('<img src="http://localhost:4000/uploads/abc.png" alt="Foto" />');
+  });
+
+  it('strips an onerror handler from an image but keeps the image', () => {
+    const clean = sanitizeRichText('<img src="https://cdn.test/a.png" alt="x" onerror="alert(1)">');
+
+    expect(clean).not.toContain('onerror');
+    expect(clean).not.toContain('alert');
+    expect(clean).toContain('src="https://cdn.test/a.png"');
+  });
+
+  it('strips a javascript: image src', () => {
+    expect(sanitizeRichText('<img src="javascript:alert(1)" alt="x">')).not.toContain('javascript:');
+  });
+
   it('strips a data: image src', () => {
     expect(
       sanitizeRichText('<img src="data:image/svg+xml;base64,PHN2Zz4=" alt="x" />'),

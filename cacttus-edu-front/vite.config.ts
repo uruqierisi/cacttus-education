@@ -21,6 +21,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    // Bind every interface so a phone on the same WiFi can open the site at
+    // `http://<host-lan-ip>:5174`. Dev only; the production build is unaffected.
+    host: true,
     port: DEV_PORT,
     strictPort: true,
   },

@@ -31,6 +31,17 @@ const envSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: positiveInt(4000),
 
+    /**
+     * Interface to bind. Leave UNSET in production: `app.listen(PORT)` with no host binds
+     * every interface (IPv6 `::` with IPv4 fallback), which is what the platform expects,
+     * and pinning `0.0.0.0` there would quietly drop IPv6.
+     *
+     * Set it in local dev — `HOST=0.0.0.0` — when a phone or another machine on the LAN
+     * has to reach the API by the host's IP. `server.ts` defaults to `0.0.0.0` outside
+     * production for exactly that case.
+     */
+    HOST: z.string().trim().min(1).optional(),
+
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
     JWT_ACCESS_SECRET: z.string().min(MIN_SECRET_LENGTH),
@@ -45,6 +56,25 @@ const envSchema = z
     DASHBOARD_ORIGIN: originSchema,
     MARKETING_ORIGIN: originSchema,
     EXTRA_ALLOWED_ORIGINS: z.string().default(''),
+
+    /**
+     * Extra origins trusted with the refresh cookie — i.e. answered with
+     * `Access-Control-Allow-Credentials: true`. DEVELOPMENT ONLY; the superRefine below
+     * refuses to boot if this is non-empty while `NODE_ENV=production`.
+     *
+     * It exists for one narrow case: testing the dashboard from a phone on the LAN, where
+     * the browser's origin is `http://<host-lan-ip>:5173` rather than localhost. Adding
+     * that origin to EXTRA_ALLOWED_ORIGINS alone is NOT enough — that list buys access to
+     * the public endpoints and nothing else, so login would succeed and every refresh
+     * would then fail without a credentialed grant.
+     *
+     * Kept separate from EXTRA_ALLOWED_ORIGINS rather than folded into it because the two
+     * lists mean different things, and the whole point of cors.ts is that being allowed is
+     * not the same as being trusted with cookies. The marketing origin must never appear
+     * here: an XSS on the site that renders operator-authored HTML would then be able to
+     * POST /api/auth/refresh, read the response, and walk off with an admin access token.
+     */
+    EXTRA_CREDENTIALED_ORIGINS: z.string().default(''),
 
     /**
      * Where uploaded cover images are written. Relative paths resolve from the backend
@@ -93,6 +123,16 @@ const envSchema = z
       });
     }
 
+    if (value.NODE_ENV === 'production' && value.EXTRA_CREDENTIALED_ORIGINS.trim() !== '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['EXTRA_CREDENTIALED_ORIGINS'],
+        message:
+          'EXTRA_CREDENTIALED_ORIGINS is a local-development escape hatch and must be empty ' +
+          'in production. Only DASHBOARD_ORIGIN may be trusted with the refresh cookie.',
+      });
+    }
+
     if (value.COOKIE_SAMESITE === 'none' && !value.COOKIE_SECURE) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -124,6 +164,12 @@ function splitOrigins(raw: string): readonly string[] {
     .filter((entry) => entry.length > 0);
 }
 
+/**
+ * Dev-only credentialed origins. Empty in production — the schema refuses to boot
+ * otherwise — so the production value of `credentialedOrigins` is unchanged.
+ */
+const extraCredentialedOrigins = splitOrigins(parsed.EXTRA_CREDENTIALED_ORIGINS);
+
 /** Frozen, fully-typed configuration object. Import this, never `process.env`. */
 export const env = Object.freeze({
   ...parsed,
@@ -131,12 +177,20 @@ export const env = Object.freeze({
   isDevelopment: parsed.NODE_ENV === 'development',
   /** Origins allowed to call the API with credentials + the public marketing origin. */
   allowedOrigins: Object.freeze([
-    parsed.DASHBOARD_ORIGIN,
-    parsed.MARKETING_ORIGIN,
-    ...splitOrigins(parsed.EXTRA_ALLOWED_ORIGINS),
+    // A credentialed origin that was not also *allowed* would be rejected by the origin
+    // check before `credentials` was ever consulted, so it is folded in here rather than
+    // left as a trap for whoever sets only one of the two variables.
+    ...new Set([
+      parsed.DASHBOARD_ORIGIN,
+      parsed.MARKETING_ORIGIN,
+      ...splitOrigins(parsed.EXTRA_ALLOWED_ORIGINS),
+      ...extraCredentialedOrigins,
+    ]),
   ]),
   /** Only the dashboard is trusted with cookies; the marketing site is read/write-public. */
-  credentialedOrigins: Object.freeze([parsed.DASHBOARD_ORIGIN]),
+  credentialedOrigins: Object.freeze([
+    ...new Set([parsed.DASHBOARD_ORIGIN, ...extraCredentialedOrigins]),
+  ]),
 });
 
 export type Env = typeof env;
