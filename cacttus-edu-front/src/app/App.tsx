@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import heroGraduates from "../imports/group4.png";
 import studimePhoto from "../imports/Bursa_Redesign.png";
-import logoImg from "../imports/logo-180px.png";
 /* Hero photos for the two programme pages. Both are passed to `ProgramPage` as its
    `imgUrl` prop, so each page picks its own and neither can affect the other. */
 import programimHero from "../imports/programimPage.png";
@@ -572,23 +571,48 @@ type DropdownId = "studime" | "projektet" | "biznese" | "rreth" | null;
 function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
   return (
     <div
-      className="w-full flex items-center justify-center px-4 relative"
+      className="w-full flex items-center justify-between gap-2 px-4 sm:px-7 relative overflow-hidden"
       style={{ backgroundColor: C.brand, height: 40 }}
     >
-      <p className="text-white text-sm font-medium text-center">
+      {/*
+        A real flex row rather than centred text with an absolutely-positioned button,
+        because the button used to be `hidden md:flex` and a phone got nothing to tap.
+
+        `min-w-0` is what actually makes `truncate` work here. A flex item defaults to
+        `min-width: auto`, which refuses to shrink below its own text, so without this the
+        paragraph keeps its full width and pushes the button off the end of the bar. The
+        message gives up characters; the call to action never gives up space.
+      */}
+      <p className="text-white text-xs sm:text-sm font-medium truncate min-w-0">
         Regjistrohu me <span className="font-bold">20%</span> zbritje
       </p>
-      <div className="absolute right-7 top-0 h-full flex items-center gap-3">
-        {/* A button, not a Link: it opens the popup instead of navigating. */}
-        <button
-          type="button"
-          onClick={onApplyClick}
-          className="hidden md:flex items-center gap-1 text-white text-xs font-medium px-3 py-1 rounded-full transition-all hover:bg-white/20"
-          style={{ border: "1px solid rgba(255,255,255,0.5)" }}
-        >
-          Apliko tani <ArrowRight size={12} />
-        </button>
-      </div>
+      {/* A button, not a Link: it opens the popup instead of navigating — the same
+          `onApplyClick` the navbar's "Apliko tani" and the hero button already use. */}
+      <button
+        type="button"
+        onClick={onApplyClick}
+        aria-label="Apliko tani"
+        /*
+          `whitespace-nowrap` is load-bearing. The label sits in a fixed 30px-tall pill,
+          so if it is ever allowed to wrap — which it will on a device whose fallback font
+          is wider than ours before the webfont loads — the second line spills out of the
+          pill and reads as a cut-off button. This pins it to one line always.
+
+          The bar is 40px tall, so the pill itself cannot BE 44px. The hit area is widened
+          with an ::after overlay instead (30 + 2x9 = 48px). The inset is VERTICAL ONLY:
+          an -inset-x would push 8px of invisible box past the pill on each side, which at
+          the right edge of the screen counts as horizontal overflow for no benefit — the
+          pill is already ~100px wide, far past the 44px minimum.
+        */
+        className="relative shrink-0 flex items-center gap-1 whitespace-nowrap text-white text-xs font-medium px-3 rounded-full transition-all hover:bg-white/20 after:absolute after:content-[''] after:-inset-y-[9px]"
+        style={{ border: "1px solid rgba(255,255,255,0.5)", height: 30, minHeight: 30 }}
+      >
+        {/* Short label on the narrowest screens so the pill can never be squeezed at
+            375px; the full wording returns from `sm` up. */}
+        <span className="sm:hidden">Apliko</span>
+        <span className="hidden sm:inline">Apliko tani</span>
+        <ArrowRight size={12} className="shrink-0" />
+      </button>
     </div>
   );
 }
@@ -631,19 +655,29 @@ function Navbar({
         style={{ height: 64 }}
       >
         {/* Logo */}
-        <Link to="/" className="shrink-0 flex items-center" style={{ height: 52, overflow: "hidden" }}>
+        {/*
+          The true-vector lockup, replacing `logo-180px.png`. That raster was a 180x180
+          SQUARE of the mark, forced to height:130 and then cropped back to 52px by an
+          overflow-hidden box with -39px margins top and bottom, with mixBlendMode
+          "multiply" knocking out its white background. Three hacks stacked to make a
+          square icon behave like a wordmark, and it still rendered soft — 180px of source
+          for a slot that needs 2x its display width.
+
+          education-black.svg is the dark lockup for light surfaces (the navbar and the
+          drawer are both white), 12 real <path> elements, no raster, no blend mode. It
+          needs no crop, no negative margins and no overflow box: height alone sizes it,
+          and `width`/`height` carry the viewBox ratio (710.096 x 199.759, ~3.55:1) so the
+          browser reserves the correct box before load.
+        */}
+        <Link to="/" className="shrink-0 flex items-center">
           <img
-            src={logoImg}
+            src="/brand/education-black.svg"
+            width={710}
+            height={200}
             alt="Cacttus Education"
-            style={{
-              height: 130,
-              width: "auto",
-              objectFit: "contain",
-              display: "block",
-              mixBlendMode: "multiply",
-              marginTop: -39,
-              marginBottom: -39,
-            }}
+            decoding="async"
+            className="block"
+            style={{ height: 36, width: "auto" }}
           />
         </Link>
 
@@ -901,37 +935,53 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const toggle = (id: string) => setExpanded((prev) => (prev === id ? null : id));
 
   return (
-    <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+    /*
+      `overflow-hidden` is NOT cosmetic — it is the fix for a horizontal-scroll bug on iOS.
+
+      The panel below parks itself off-canvas with `translate-x-full` when closed, which
+      puts its right edge 384px (max-w-sm) past the right edge of the screen. This box is
+      `fixed inset-0`, and desktop Chrome does not count overflow inside a fixed subtree
+      toward document.scrollWidth — so every automated check here reported zero overflow
+      while a real iPhone scrolled 384px to the right into empty space, with the banner and
+      hamburger appearing cut off. iOS Safari DOES count it.
+
+      Clipping at this wrapper kills the phantom scroll at its source. The open state is
+      unaffected: at `translate-x-0` the panel sits fully inside these bounds, and it still
+      slides in from the clipped edge exactly as before.
+    */
+    <div className={`fixed inset-0 z-50 overflow-hidden transition-opacity duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         className={`absolute top-0 right-0 h-full w-full max-w-sm flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
         style={{ backgroundColor: C.n0 }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: C.n200 }}>
-          <img src={logoImg} alt="Cacttus Education" style={{ height: 32, width: "auto", objectFit: "contain", mixBlendMode: "multiply" }} />
-          <button onClick={onClose}><X size={22} style={{ color: C.n700 }} /></button>
+          {/* Same vector lockup as the navbar — the drawer header is white too. Was the
+              180px raster at 32px with mixBlendMode "multiply". */}
+          <img src="/brand/education-black.svg" width={710} height={200} alt="Cacttus Education" decoding="async" className="block" style={{ height: 34, width: "auto" }} />
+          <button onClick={onClose} aria-label="Mbyll menunë" className="p-3 -m-3"><X size={22} style={{ color: C.n700 }} /></button>
         </div>
         <div className="flex-1 overflow-y-auto py-4">
           <AccordionMobile label="Studime profesionale" id="studime" expanded={expanded} toggle={toggle}>
-            <Link to="/programim" onClick={onClose} className="py-2 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Zhvillues i Ueb-it dhe Aplikacioneve Mobile</Link>
-            <Link to="/siguria" onClick={onClose} className="py-2 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Siguria Kibernetike</Link>
+            <Link to="/programim" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Zhvillues i Ueb-it dhe Aplikacioneve Mobile</Link>
+            <Link to="/siguria" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Siguria Kibernetike</Link>
           </AccordionMobile>
           <Link to="/trajnime" onClick={onClose} className="flex px-5 py-3 text-sm font-medium" style={{ color: C.n800 }}>Trajnime profesionale</Link>
           <AccordionMobile label="Projektet" id="projektet" expanded={expanded} toggle={toggle}>
             {PROJEKTET_LIST.map((p) => (
-              <Link key={p.path} to={p.path} onClick={onClose} className="py-2 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>{p.name}</Link>
+              <Link key={p.path} to={p.path} onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>{p.name}</Link>
             ))}
           </AccordionMobile>
           <AccordionMobile label="Për biznese" id="biznese" expanded={expanded} toggle={toggle}>
             {[["Trajnime të personalizuara", "/biznese/trajnime"], ["Rrjeti i talentëve", "/biznese/talente"], ["Bursa e Impaktit", "/biznese/bursa"], ["Klasët me qera", "/biznese/klasa"]].map(([name, path]) => (
-              <Link key={path} to={path} onClick={onClose} className="py-2 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>{name}</Link>
+              <Link key={path} to={path} onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>{name}</Link>
             ))}
           </AccordionMobile>
           <Link to="/lajme" onClick={onClose} className="flex px-5 py-3 text-sm font-medium" style={{ color: C.n800 }}>Lajme</Link>
           {/* Rreth Nesh BEFORE Kontakti */}
           <AccordionMobile label="Rreth Nesh" id="rreth" expanded={expanded} toggle={toggle}>
-            <Link to="/ekipi" onClick={onClose} className="py-2 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Ekipi</Link>
-            <Link to="/ligjërueit" onClick={onClose} className="py-2 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Ligjëruesit</Link>
+            <Link to="/ekipi" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Ekipi</Link>
+            <Link to="/ligjërueit" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Ligjëruesit</Link>
           </AccordionMobile>
           <Link to="/kontakti" onClick={onClose} className="flex px-5 py-3 text-sm font-medium" style={{ color: C.n800 }}>Kontakti</Link>
         </div>
@@ -1065,33 +1115,28 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
           {/* 1 — identity */}
           <div>
             {/*
-              The official white lockup, straight onto the purple with no patch behind it.
+              The white lockup, straight onto the purple with no patch behind it.
 
-              THE COPY IN `public/brand/` IS DELIBERATELY NOT BYTE-IDENTICAL to the master
-              at `src/imports/logowhitenobgCE.svg`, and the difference is one attribute:
-              the master's canvas is `viewBox="0 0 150 150"` — SQUARE — with the wide 3.5:1
-              lockup floating in the middle of it, using only ~20% of the canvas and
-              padding the rest with transparency. Sized by height alone, as everything in
-              this file is, that renders a square box with a tiny logo adrift in it; making
-              the ART 36px tall would have meant a 153px-tall element and ~117px of dead
-              space in the footer. The served copy carries a viewBox cropped to the ink
-              (measured, not eyeballed: 98.3% coverage), so height-only sizing behaves.
-              Re-exporting the master tight would let both files be identical again.
+              THIS USES education-white.svg, NOT logowhitenobgCE.svg, and the difference
+              is not cosmetic. Despite its name, `logowhitenobgCE.svg` has no transparency
+              of its own: it is a single 709x251 PNG that is 100% OPAQUE with solid black
+              corners (verified by rasterising it), turned white and see-through only by an
+              feColorMatrix + <mask> chain at render time. Engines that skip that chain —
+              older Safari, Android WebView, some in-app browsers — paint the raw bitmap,
+              which is exactly the "white logo in a black box" that was reported on a phone.
 
-              `width`/`height` are that cropped viewBox's numbers (502 x 143, ~3.51:1), so
-              the browser reserves the right box before load — no layout shift — and only
-              the height is constrained, which makes stretching impossible.
+              education-white.svg is true vector: 12 <path> elements filled #ffffff, no
+              rasters, no filters, no masks. There is nothing in it that can fail to a
+              black rectangle. It is the same lockup the dashboard sidebar uses.
 
-              NOTE it is a RASTER inside an SVG wrapper — two 709x251 base64 PNGs recoloured
-              white by an feColorMatrix, no <path> anywhere — unlike the true-vector
-              education-white.svg it replaces. At a 38px slot the 251px source is ~6.6x
-              oversampled, so it is crisp here and on retina, but it will NOT survive being
-              scaled up much beyond this.
+              `width`/`height` are the viewBox numbers (710.096 x 199.759, ~3.55:1) so the
+              browser reserves the right box before load — no layout shift — and only the
+              height is constrained, which makes stretching impossible.
             */}
             <img
-              src="/brand/logowhitenobgCE.svg"
-              width={502}
-              height={143}
+              src="/brand/education-white.svg"
+              width={710}
+              height={200}
               alt="Cacttus Education"
               decoding="async"
               className="block mb-5"
@@ -1120,7 +1165,7 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
                   reading the number and calling it. */}
               <a
                 href="tel:+38338600237"
-                className="transition-colors hover:text-white"
+                className="py-3 lg:py-0 transition-colors hover:text-white"
                 style={{ color: "rgba(255,255,255,0.6)" }}
               >
                 Tel: +383 (0)38 600 237
@@ -1141,7 +1186,7 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
                 <Link
                   key={path}
                   to={path}
-                  className="text-sm transition-colors hover:text-white"
+                  className="text-sm py-3 lg:py-0 transition-colors hover:text-white"
                   style={{ color: "rgba(255,255,255,0.6)" }}
                 >
                   {label}
@@ -1166,7 +1211,7 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                  className="w-11 h-11 lg:w-10 lg:h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
                   style={{
                     backgroundColor: "rgba(255,255,255,0.08)",
                     border: "1px solid rgba(255,255,255,0.12)",
@@ -2913,7 +2958,7 @@ function SuccessCarousel() {
         </button>
         <div className="flex gap-2">
           {STUDENT_PHOTOS.map((_, i) => (
-            <button key={i} onClick={() => setCurrent(i)} className="transition-all rounded-full" style={{ width: i === current ? 24 : 8, height: 8, backgroundColor: i === current ? C.brand : C.n300 }} />
+            <button key={i} type="button" onClick={() => setCurrent(i)} aria-label={`Shko te fotoja ${i + 1}`} className="relative after:absolute after:content-[''] after:-inset-[18px] transition-all rounded-full" style={{ width: i === current ? 24 : 8, height: 8, backgroundColor: i === current ? C.brand : C.n300 }} />
           ))}
         </div>
         <button onClick={() => setCurrent((c) => (c + 1) % STUDENT_PHOTOS.length)} className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:shadow-md" style={{ border: `1.5px solid ${C.n200}`, backgroundColor: C.n0 }}>
@@ -2989,7 +3034,7 @@ function PersonCard({
   return (
     <div className="rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}>
       <div className={`${nameOnly ? "aspect-[6/7]" : "aspect-[4/5]"} overflow-hidden`} style={{ backgroundColor: C.n100 }}>
-        {person.imgUrl ? <img src={person.imgUrl} alt={person.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style={{ objectPosition: imgPosition }} /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: C.brandSoft }}><Users size={36} style={{ color: C.p300 }} /></div>}
+        {person.imgUrl ? <img src={person.imgUrl} alt={person.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style={{ objectPosition: imgPosition }} /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: C.brandSoft }}><Users size={36} style={{ color: C.p300 }} /></div>}
       </div>
       <div className="p-4">
         <h4 className="font-semibold text-sm" style={{ color: C.n900 }}>{person.name}</h4>
@@ -3209,38 +3254,23 @@ function StudimeProfesionaleSection() {
 
           {/* Left — framed photo with blob + badge */}
           <div className="relative flex items-center justify-center">
-            {/* Decorative blob behind frame.
-
-                `min(340px, 90%)` rather than a flat 340: the blob sits at `left: 2%` of a
-                column that is only ~326px wide on a 375px phone, so a fixed 340 pushed its
-                right edge to 366 and put a 6px horizontal scrollbar on the whole homepage.
-                Measured — it was the only thing overflowing that page.
-
-                `aspectRatio` replaces the fixed height so it stays round as the width
-                clamps. At every width from `sm` up the 340px cap wins and nothing about
-                the desktop rendering changes. */}
-            <div
-              className="absolute"
-              style={{
-                width: "min(340px, 90%)",
-                aspectRatio: "1 / 1",
-                borderRadius: "60% 40% 55% 45% / 50% 60% 40% 50%",
-                backgroundColor: C.brandLight,
-                opacity: 0.7,
-                top: "10%",
-                left: "2%",
-                zIndex: 0,
-                filter: "blur(2px)",
-              }}
-            />
-
-            {/* Photo frame */}
+            {/*
+              The decorative blurred blob that used to sit here is gone. It was a 340px
+              pale-purple ellipse with `blur(2px)`, absolutely positioned at top:10%/left:2%
+              BEHIND the photo frame. Because the frame shrinks with the column but the blob
+              did not shrink with it, on a phone the blob ended ~76px below the frame and
+              bled into the heading underneath — the "broken shadow" that was reported.
+              Depth now comes from the frame's own contained shadow instead.
+            */}
+{/* Photo frame */}
             <div
               className="relative z-10 overflow-hidden"
               style={{
                 borderRadius: 28,
                 border: `1.5px solid ${C.cardBorder}`,
-                boxShadow: "0 20px 60px rgba(130,54,133,0.14), 0 4px 16px rgba(0,0,0,0.06)",
+                /* Contained: a short, tight drop shadow that stays under the card
+                   instead of a 60px purple bloom that halos past its edges. */
+                boxShadow: "0 6px 18px rgba(45,22,55,0.10), 0 2px 6px rgba(45,22,55,0.06)",
                 maxWidth: 500,
                 width: "100%",
                 aspectRatio: "4/3",
@@ -3249,6 +3279,7 @@ function StudimeProfesionaleSection() {
               <img
                 src={studimePhoto}
                 alt="Studentë në klasë"
+                loading="lazy"
                 className="w-full h-full object-cover"
                 style={{ objectPosition: STUDIME_SECTION_IMG_POSITION }}
               />
@@ -3761,7 +3792,7 @@ function TestimonialsSection() {
                 type="button"
                 onClick={() => emblaApi?.scrollTo(i)}
                 aria-label={`Shko te dëshmia ${i + 1}`}
-                className="transition-all rounded-full"
+                className="relative after:absolute after:content-[''] after:-inset-[18px] transition-all rounded-full"
                 style={{ width: i === selected ? 24 : 8, height: 8, backgroundColor: i === selected ? C.brand : C.n300 }}
               />
             ))}
@@ -4246,8 +4277,15 @@ function ProgramPage({
         <div className="max-w-[1200px] mx-auto px-5">
           <h2 className="text-3xl font-bold mb-3" style={{ color: C.n900 }}>Ku punojnë të diplomuarit tanë?</h2>
           <p className="text-base mb-8" style={{ color: C.n500 }}>Zbuloni pozitat profesionale dhe kompanitë ku të diplomuarit tanë punojnë dhe zhvillojnë karrierën e tyre në teknologji.</p>
-          <div className="flex flex-wrap gap-3 mb-10">
-            {roles.map((r) => <span key={r} className="px-4 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: C.brandLight, color: C.brandDark }}>{r}</span>)}
+          {/*
+            Already a flex-wrap row — the ragged look was never the container, it was chip
+            WIDTH. At 375px the usable row is ~347px while these chips measure 135-180px
+            each, so only one fitted per line and every row left a hole on the right.
+            Tightening padding and type on small screens lands two per row and the block
+            reads as a deliberate cluster again. `sm:` restores the exact desktop chip.
+          */}
+          <div className="flex flex-wrap gap-2 sm:gap-3 mb-10">
+            {roles.map((r) => <span key={r} className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm rounded-full font-medium" style={{ backgroundColor: C.brandLight, color: C.brandDark }}>{r}</span>)}
           </div>
           <InfiniteLogoMarquee logos={PARTNER_LOGO_IMAGES} />
         </div>
@@ -6261,7 +6299,7 @@ function PageBizneseBursa() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-30 items-start">
             <div>
             
-              <h1 className="text-4x1 md:text-5xl font-bold mb-5 leading-tight" style={{ color: C.n900, letterSpacing: "-0.01em" }}>
+              <h1 className="text-4xl md:text-5xl font-bold mb-5 leading-tight" style={{ color: C.n900, letterSpacing: "-0.01em" }}>
                 Investoni në të ardhmen e një të riu dhe të sektorit teknologjik
               </h1>
               {/* `leading-relaxed` to match the reference paragraph. The `mb-8` below it is
@@ -6438,7 +6476,7 @@ function PageBiznestKlasa() {
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 py-16 w-full">
           <div className="max-w-md rounded-2xl p-7 shadow-2xl" style={{ backgroundColor: "#fff" }}>
             <Breadcrumb items={[{ label: "Ballina", path: "/" }, { label: "Për biznese", path: "/biznese" }, { label: "Klasët me qera" }]} />
-            <h1 className="text-2xl font-bold mb-2 leading-tight" style={{ color: C.n900 }}>Hapësira moderne për trajnimet dhe eventet tuaja</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-2 leading-tight" style={{ color: C.n900 }}>Hapësira moderne për trajnimet dhe eventet tuaja</h1>
             <p className="text-sm mb-5" style={{ color: C.muted }}>Klasa plotësisht të pajisura për trajnime, workshope, provime, takime dhe konferenca, në një lokacion të përshtatshëm.</p>
             {/* The HERO button only. The identically-labelled button further down this
                 page is a form's submit control, not a link, and is left alone. */}
@@ -6697,11 +6735,13 @@ function PageBiznestKlasa() {
    projects have real photos; SDC alone still has none and falls back to the stock images
    hard-coded in ProjectDetailPage. The delivered names differ slightly from how they were
    listed: us2/us3/us4, not us-2/us-3/us-4. */
-/* LuxDev. `1` is the large shot; 2-4 fill the strip, left to right. Note the mixed
-   extensions — luxdev1 is a .png while 2-4 are .jpeg, which is how they were
-   delivered. `luxdev.png` is something else entirely: the FUNDER LOGO for the navbar
-   dropdown, imported as `projectLuxDev` far above. Do not conflate the two. */
-import projLuxDevMain from "../imports/luxdev1.png";
+/* LuxDev. `1` is the large shot; 2-4 fill the strip, left to right. All four are .jpeg
+   now: luxdev1 was delivered as a 5208px PNG, and a PNG that wide is ~3.7MB even after
+   resizing because PNG cannot compress a photograph. It is re-encoded as JPEG at 1600px
+   (0.11MB) — 2x its 556px display slot, so it stays sharp on retina.
+   `luxdev.png` is something else entirely: the FUNDER LOGO for the navbar dropdown,
+   imported as `projectLuxDev` far above. Do not conflate the two. */
+import projLuxDevMain from "../imports/luxdev1.jpg";
 import projLuxDev2 from "../imports/luxdev2.jpeg";
 import projLuxDev3 from "../imports/luxdev3.jpeg";
 import projLuxDev4 from "../imports/luxdev4.jpeg";
@@ -7158,7 +7198,7 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
             class names, so an interpolated one matches nothing and produces no rule at
             all — the same trap as the `object-[...]` note further up this file.
           */}
-          <div className={`grid gap-4 ${shots.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+          <div className={`grid gap-4 ${shots.length === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
             {shots.map(({ url, imgPosition }, i) => (
               <div key={i} className="aspect-video rounded-2xl overflow-hidden" style={{ backgroundColor: C.n100 }}><img src={url} alt="" className="w-full h-full object-cover" loading="lazy" style={{ objectPosition: imgPosition }} /></div>
             ))}
