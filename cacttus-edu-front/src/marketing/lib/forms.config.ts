@@ -70,3 +70,25 @@ export const BUSINESS_REQUEST_TYPES = {
   PARTNERSHIP: 'Partneritet / Punëdhënës',
   ROOM_BOOKING: 'Rezervim klase',
 } as const
+
+/**
+ * Which backend form the /biznese/klasa room "Rezervo" buttons submit to.
+ *
+ * Same contract as the slugs above — change this one line to repoint them, and keep the
+ * form ACTIVE in the dashboard.
+ *
+ * ONE form for all six rooms rather than six near-identical ones: the room is a FIELD
+ * (`klasa`), pre-selected by whichever card's button was pressed, which is what tells the
+ * bookings apart in the inbox.
+ */
+export const CLASS_BOOKING_FORM_SLUG = 'rezervo-klase'
+
+/** `klasa` values — must match the form's option VALUES exactly. */
+export const CLASS_BOOKING_ROOMS = [
+  'Klasa Portokalli',
+  'Klasa Rozë',
+  'Klasa e verdhë',
+  'Klasa e gjelbër',
+  'Klasa e kuqe',
+  'Hapsira e përbashkët',
+] as const

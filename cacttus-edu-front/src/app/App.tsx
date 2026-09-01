@@ -204,6 +204,8 @@ import {
   APPLICATION_FORM_SLUG,
   BUSINESS_FORM_SLUG,
   BUSINESS_REQUEST_TYPES,
+  CLASS_BOOKING_FORM_SLUG,
+  CLASS_BOOKING_ROOMS,
   CONTACT_FORM_SLUG,
   STUDY_PROGRAMME_VALUES,
 } from "../marketing/lib/forms.config";
@@ -779,6 +781,7 @@ function Navbar({
 
 /* ─── DROPDOWNS ─── */
 function DropdownStudime({ onClose }: { onClose: () => void }) {
+  const { pathname } = useLocation();
   return (
     <div
       className="absolute top-full left-0 mt-1 rounded-2xl shadow-2xl p-8 z-50"
@@ -799,8 +802,12 @@ function DropdownStudime({ onClose }: { onClose: () => void }) {
             key={to}
             to={to}
             onClick={onClose}
+            aria-current={pathname === to ? "page" : undefined}
             className="flex items-start gap-4 p-4 rounded-xl transition-all hover:shadow-md group"
-            style={{ border: `1px solid ${C.n200}` }}
+            style={{
+              border: `1px solid ${pathname === to ? C.brand : C.n200}`,
+              backgroundColor: pathname === to ? C.brandSoft : "transparent",
+            }}
           >
             <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: C.brandLight }}>
               <Icon size={22} style={{ color: C.brand }} />
@@ -877,6 +884,9 @@ function DropdownProjektet({ onClose }: { onClose: () => void }) {
 }
 
 function DropdownBiznese({ onClose }: { onClose: () => void }) {
+  /* Marks the sub-page the visitor is already on, so the dropdown says where they are
+     rather than only where they could go. Brand purple on the border and title. */
+  const { pathname } = useLocation();
   return (
     <div
       className="absolute top-full left-0 mt-1 rounded-2xl shadow-2xl p-6 z-50"
@@ -895,10 +905,14 @@ function DropdownBiznese({ onClose }: { onClose: () => void }) {
             key={item.path}
             to={item.path}
             onClick={onClose}
+            aria-current={pathname === item.path ? "page" : undefined}
             className="p-4 rounded-xl transition-all hover:shadow-md"
-            style={{ border: `1px solid ${C.n200}` }}
+            style={{
+              border: `1px solid ${pathname === item.path ? C.brand : C.n200}`,
+              backgroundColor: pathname === item.path ? C.brandSoft : "transparent",
+            }}
           >
-            <p className="font-semibold text-sm" style={{ color: C.n900 }}>{item.title}</p>
+            <p className="font-semibold text-sm" style={{ color: pathname === item.path ? C.brand : C.n900 }}>{item.title}</p>
             <p className="text-xs mt-1" style={{ color: C.n500 }}>{item.desc}</p>
           </Link>
         ))}
@@ -932,6 +946,16 @@ function DropdownRreth({ onClose }: { onClose: () => void }) {
 /* ─── MOBILE MENU — Rreth Nesh BEFORE Kontakti ─── */
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  /*
+    Every drawer sub-link already renders in brand purple, so "active = purple" would not
+    distinguish anything. The current page is marked with WEIGHT and a filled left rule
+    instead: same hue, unmistakably one row.
+  */
+  const { pathname } = useLocation();
+  const subLink = (path: string) => ({
+    className: `py-3 pl-4 text-sm block border-l-2 ${pathname === path ? "font-semibold" : ""}`,
+    style: { color: pathname === path ? C.brandDark : C.brand, borderColor: pathname === path ? C.brand : C.p300 },
+  });
   const toggle = (id: string) => setExpanded((prev) => (prev === id ? null : id));
 
   return (
@@ -963,25 +987,25 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
         <div className="flex-1 overflow-y-auto py-4">
           <AccordionMobile label="Studime profesionale" id="studime" expanded={expanded} toggle={toggle}>
-            <Link to="/programim" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Zhvillues i Ueb-it dhe Aplikacioneve Mobile</Link>
-            <Link to="/siguria" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Siguria Kibernetike</Link>
+            <Link to="/programim" onClick={onClose} {...subLink("/programim")}>Zhvillues i Ueb-it dhe Aplikacioneve Mobile</Link>
+            <Link to="/siguria" onClick={onClose} {...subLink("/siguria")}>Siguria Kibernetike</Link>
           </AccordionMobile>
           <Link to="/trajnime" onClick={onClose} className="flex px-5 py-3 text-sm font-medium" style={{ color: C.n800 }}>Trajnime profesionale</Link>
-          <AccordionMobile label="Projektet" id="projektet" expanded={expanded} toggle={toggle}>
+          <AccordionMobile label="Projektet" id="projektet" expanded={expanded} toggle={toggle} overviewPath="/projektet" onClose={onClose}>
             {PROJEKTET_LIST.map((p) => (
-              <Link key={p.path} to={p.path} onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>{p.name}</Link>
+              <Link key={p.path} to={p.path} onClick={onClose} {...subLink(p.path)}>{p.name}</Link>
             ))}
           </AccordionMobile>
-          <AccordionMobile label="Për biznese" id="biznese" expanded={expanded} toggle={toggle}>
+          <AccordionMobile label="Për biznese" id="biznese" expanded={expanded} toggle={toggle} overviewPath="/biznese" onClose={onClose}>
             {[["Trajnime të personalizuara", "/biznese/trajnime"], ["Rrjeti i talentëve", "/biznese/talente"], ["Bursa e Impaktit", "/biznese/bursa"], ["Klasët me qera", "/biznese/klasa"]].map(([name, path]) => (
-              <Link key={path} to={path} onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>{name}</Link>
+              <Link key={path} to={path} onClick={onClose} {...subLink(path)}>{name}</Link>
             ))}
           </AccordionMobile>
           <Link to="/lajme" onClick={onClose} className="flex px-5 py-3 text-sm font-medium" style={{ color: C.n800 }}>Lajme</Link>
           {/* Rreth Nesh BEFORE Kontakti */}
-          <AccordionMobile label="Rreth Nesh" id="rreth" expanded={expanded} toggle={toggle}>
-            <Link to="/ekipi" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Ekipi</Link>
-            <Link to="/ligjërueit" onClick={onClose} className="py-3 pl-4 text-sm block border-l-2" style={{ color: C.brand, borderColor: C.p300 }}>Ligjëruesit</Link>
+          <AccordionMobile label="Rreth Nesh" id="rreth" expanded={expanded} toggle={toggle} overviewPath="/rreth-nesh" onClose={onClose}>
+            <Link to="/ekipi" onClick={onClose} {...subLink("/ekipi")}>Ekipi</Link>
+            <Link to="/ligjërueit" onClick={onClose} {...subLink("/ligjërueit")}>Ligjëruesit</Link>
           </AccordionMobile>
           <Link to="/kontakti" onClick={onClose} className="flex px-5 py-3 text-sm font-medium" style={{ color: C.n800 }}>Kontakti</Link>
         </div>
@@ -995,7 +1019,21 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function AccordionMobile({ label, id, expanded, toggle, children }: { label: string; id: string; expanded: string | null; toggle: (id: string) => void; children: React.ReactNode }) {
+/**
+ * A drawer section whose label toggles its sub-menu.
+ *
+ * `overviewPath` is how the section's OWN page stays reachable. Three of these headings
+ * (Projektet, Për biznese, Rreth Nesh) name a real page, but the heading is a toggle, so
+ * on a phone there was no way to reach /projektet, /biznese or /rreth-nesh at all — the
+ * tap only expanded the list of children.
+ *
+ * The fix is a "Shiko të gjitha" row at the TOP of the expanded panel rather than making
+ * the heading itself a link with a separate caret. A 44px row split into a link half and a
+ * caret half is a mis-tap waiting to happen on a phone, and it would have changed this
+ * component's contract for the one section (Studime profesionale) that has no page to
+ * point at. An extra row costs nothing and reads unambiguously.
+ */
+function AccordionMobile({ label, id, expanded, toggle, overviewPath, onClose, children }: { label: string; id: string; expanded: string | null; toggle: (id: string) => void; overviewPath?: string; onClose?: () => void; children: React.ReactNode }) {
   return (
     <>
       <button
@@ -1006,7 +1044,21 @@ function AccordionMobile({ label, id, expanded, toggle, children }: { label: str
         {label}
         <ChevronDown size={16} className={`transition-transform ${expanded === id ? "rotate-180" : ""}`} />
       </button>
-      {expanded === id && <div className="px-5 pb-2 flex flex-col gap-1">{children}</div>}
+      {expanded === id && (
+        <div className="px-5 pb-2 flex flex-col gap-1">
+          {overviewPath && (
+            <Link
+              to={overviewPath}
+              onClick={onClose}
+              className="py-3 pl-4 text-sm font-semibold block border-l-2"
+              style={{ color: C.brandDark, borderColor: C.brand }}
+            >
+              Shiko të gjitha
+            </Link>
+          )}
+          {children}
+        </div>
+      )}
     </>
   );
 }
@@ -3046,9 +3098,11 @@ function PersonCard({
         {!nameOnly && (
           <>
             <p className="text-xs mt-0.5 mb-3" style={{ color: C.n500 }}>{person.role}</p>
-            <div className="flex items-center justify-between">
+            {/* The LinkedIn button that used to sit opposite the city chip is gone: it had
+                no href and no onClick on any card, so it was a control that looked
+                interactive and did nothing. The chip now owns the row on its own. */}
+            <div className="flex items-center">
               <MetaChip>{person.city}</MetaChip>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-50 transition-colors" aria-label="LinkedIn"><Linkedin size={15} style={{ color: C.n500 }} /></button>
             </div>
           </>
         )}
@@ -5396,6 +5450,72 @@ function useBusinessLead(requestType: string) {
   return { sent, error, isSubmitting, submit };
 }
 
+/**
+ * Submit state and POST for the /biznese/klasa room booking band.
+ *
+ * A sibling of `useBusinessLead` rather than a parameter on it: this posts to a different
+ * form (CLASS_BOOKING_FORM_SLUG) with a different answer shape, and folding both into one
+ * hook would mean every caller passing a slug plus a field map to satisfy the other one.
+ *
+ * `klasa` is REQUIRED by the form, so it is validated here too — the visitor gets an
+ * Albanian sentence instead of a 400 from the server.
+ */
+function useClassBooking() {
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function submit(
+    contact: { name: string; email: string; phone: string },
+    answers: { klasa: string; data_deshiruar: string; nr_personave: string; shenime: string },
+  ) {
+    if (isSubmitting) return;
+
+    if (!answers.klasa) {
+      setError("Ju lutemi zgjidhni klasën që doni të rezervoni.");
+      return;
+    }
+    if (!contact.name.trim() || !contact.email.trim() || !contact.phone.trim()) {
+      setError("Ju lutemi plotësoni emrin, email-in dhe numrin e telefonit.");
+      return;
+    }
+    if (!isValidPhone(contact.phone)) {
+      setError(PHONE_ERROR);
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await submitPublicForm(CLASS_BOOKING_FORM_SLUG, {
+        name: contact.name.trim(),
+        email: contact.email.trim(),
+        phone: contact.phone.trim(),
+        data: answers,
+      });
+      setSent(true);
+    } catch (cause: unknown) {
+      if (cause instanceof PublicApiError) {
+        setError(
+          cause.isValidation
+            ? "Disa fusha nuk janë të vlefshme. Kontrollo të dhënat dhe provo përsëri."
+            : cause.message,
+        );
+      } else {
+        setError("Diçka shkoi keq. Provo përsëri.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return { sent, error, isSubmitting, submit };
+}
+
+/** Anchor for the room cards' "Rezervo" buttons to scroll to. */
+const KLASA_BOOKING_ID = "rezervo-klasen";
+
 const BIZNESE_TRAJNIME_IMG_POSITION = "center 50%";
 
 function PageBizneseTrajnime() {
@@ -6460,8 +6580,22 @@ Si sponsor, kompania juaj fiton njohje publike, qasje prioritare në rrjetin e s
 const KLASA_HERO_IMG_POSITION = "center 50%";
 
 function PageBiznestKlasa() {
-  const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.ROOM_BOOKING);
-  const [klasa, setKlasa] = useState({ emri: "", email: "", telefoni: "", data: "", pjesemarres: "" });
+  /*
+    The booking band posts to the DEDICATED room-booking form now, not the general
+    business-enquiry form: the band is literally "Rezervo hapësirën tënde", and a booking
+    carries a room, which a general enquiry has no field for. `useBusinessLead` is still
+    what the other two /biznese pages use.
+  */
+  const booking = useClassBooking();
+  const [klasa, setKlasa] = useState({ emri: "", email: "", telefoni: "", data: "", pjesemarres: "", klasa: "", shenime: "" });
+
+  /* A room card's "Rezervo" pre-selects that room and brings the band into view — the
+     form already exists further down the page, so this reveals it rather than opening a
+     modal the /biznese pages have no precedent for. */
+  const bookRoom = (room: string) => {
+    setKlasa((prev) => ({ ...prev, klasa: room }));
+    document.getElementById(KLASA_BOOKING_ID)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   return (
     <PageWrapper>
@@ -6574,7 +6708,7 @@ function PageBiznestKlasa() {
                       </p>
                     )}
                   </div>
-                  <PrimaryBtn className="text-xs px-4 py-2">Rezervo</PrimaryBtn>
+                  <PrimaryBtn className="text-xs px-4 py-2" onClick={() => bookRoom(name)}>Rezervo</PrimaryBtn>
                 </div>
               </div>
             ))}
@@ -6587,7 +6721,7 @@ function PageBiznestKlasa() {
         <div className="max-w-[900px] mx-auto px-5">
           <h2 className="text-2xl font-bold mb-8" style={{ color: C.n900 }}>Çfarë përfshin qeraja</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {["Kompjuterë / workstation", "Projektor", "Whiteboard dhe markerë", "Free Wi-Fi", "Klimatizim dhe ngrohje", "Aparat Uji", "Sistem audio", "Aparat Kafe", "Ekrane digjitale", "Sedi"].map((item) => (
+            {["Kompjuterë / workstation", "Projektor", "Whiteboard dhe markerë", "Free Wi-Fi", "Klimatizim dhe ngrohje", "Aparat Uji", "Sistem audio", "Aparat Kafe", "Ekrane digjitale"].map((item) => (
               <div key={item} className="flex items-center gap-3 py-2">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: C.brandLight }}>
                   <Check size={11} style={{ color: C.brand }} />
@@ -6684,28 +6818,35 @@ function PageBiznestKlasa() {
       
 
       {/* 9. Booking form */}
-      <section className="py-16" style={{ backgroundColor: C.brandSoft }}>
+      <section id={KLASA_BOOKING_ID} className="py-16 scroll-mt-24" style={{ backgroundColor: C.brandSoft }}>
         <div className="max-w-[1100px] mx-auto px-5">
           <div className="rounded-3xl px-8 md:px-12 py-14" style={{ background: `linear-gradient(135deg, ${C.brand} 0%, ${C.secondary} 100%)` }}>
             <h2 className="text-2xl font-bold text-white mb-2">Rezervo hapësirën tënde</h2>
             <p className="text-white/70 text-sm mb-8">Plotëso formularin dhe do të kontaktohesh brenda 24 orëve.</p>
-            {lead.sent ? (
+            {booking.sent ? (
               <p className="text-white text-sm font-semibold">Faleminderit! Rezervimi u dërgua — do të kontaktohesh brenda 24 orëve.</p>
             ) : (
               <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+            {/* Seven tracks, not six: the room select joins the five inputs and the button.
+                Same cell styling as the inputs beside it. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
+              <select value={klasa.klasa} onChange={(e) => setKlasa({ ...klasa, klasa: e.target.value })} className="px-4 text-sm rounded-xl col-span-1" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: klasa.klasa ? C.n900 : C.n400, outline: "none" }}>
+                <option value="">Zgjidh klasën</option>
+                {CLASS_BOOKING_ROOMS.map((room) => <option key={room} value={room}>{room}</option>)}
+              </select>
               {([
                 { ph: "Emri", key: "emri" },
                 { ph: "Email", key: "email" },
                 { ph: "Telefoni", key: "telefoni" },
                 { ph: "Data e dëshiruar", key: "data" },
-                { ph: "Nr. i pjesëmarrësve", key: "pjesemarres" },
+                { ph: "Nr. i personave", key: "pjesemarres" },
               ] as const).map(({ ph, key }) => (
                 <input key={ph} type="text" placeholder={ph} value={klasa[key]} onChange={(e) => setKlasa({ ...klasa, [key]: key === "telefoni" ? sanitizePhone(e.target.value) : e.target.value })} className="px-4 text-sm rounded-xl col-span-1" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
               ))}
-              <button onClick={() => lead.submit({ name: klasa.emri, email: klasa.email, phone: klasa.telefoni }, { data_deshiruar: klasa.data, nr_pjesemarresve: klasa.pjesemarres })} className="h-[52px] px-5 rounded-xl font-semibold text-sm text-white col-span-1 whitespace-nowrap" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Rezervo tani"}</button>
+              <button onClick={() => booking.submit({ name: klasa.emri, email: klasa.email, phone: klasa.telefoni }, { klasa: klasa.klasa, data_deshiruar: klasa.data, nr_personave: klasa.pjesemarres, shenime: klasa.shenime })} className="h-[52px] px-5 rounded-xl font-semibold text-sm text-white col-span-1 whitespace-nowrap" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{booking.isSubmitting ? "Duke dërguar…" : "Rezervo tani"}</button>
             </div>
-                {lead.error && <p className="text-white text-sm mt-3">{lead.error}</p>}
+            <textarea rows={3} placeholder="Shënime (opsionale)" value={klasa.shenime} onChange={(e) => setKlasa({ ...klasa, shenime: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl mt-3 resize-none" style={{ border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
+                {booking.error && <p className="text-white text-sm mt-3">{booking.error}</p>}
               </>
             )}
           </div>
@@ -7168,7 +7309,14 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
             apply where the old value could never fit. One column below `sm` because three
             90px tracks turn "Trajnime Të Personalizuara" into six wrapped lines.
           */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 lg:gap-50 text-center">
+          {/*
+            Compact on a phone, unchanged from `sm` up. This was `grid-cols-1` with `gap-8`,
+            so three 36px figures stacked into a tall column that pushed the gallery far
+            below the fold. A wrapping flex row lets the three sit side by side at 375px and
+            re-wrap only if a label is long; the `sm:`/`lg:` grid classes are untouched, so
+            tablet and desktop render exactly as before.
+          */}
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-center sm:grid sm:grid-cols-3 sm:gap-10 lg:gap-50">
             {/*
               `project.stats`, not a literal. This strip used to hold one hard-coded array
               INSIDE the shared detail component, so all eight projects rendered the same
@@ -7181,7 +7329,7 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
               reordered.
             */}
             {project.stats.map(([num, label], i) => (
-              <div key={i}><p className="text-4xl font-bold mb-1" style={{ color: C.brand }}>{num}</p><p className="text-sm" style={{ color: C.n500 }}>{label}</p></div>
+              <div key={i}><p className="text-2xl sm:text-4xl font-bold mb-0.5 sm:mb-1" style={{ color: C.brand }}>{num}</p><p className="text-xs sm:text-sm" style={{ color: C.n500 }}>{label}</p></div>
             ))}
           </div>
         </div>
