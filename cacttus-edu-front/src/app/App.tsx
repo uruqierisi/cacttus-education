@@ -425,7 +425,6 @@ import {
   Facebook,
   Instagram,
   Linkedin,
-  Twitter,
   MapPin,
   Phone,
   Mail,
@@ -1006,12 +1005,40 @@ function TikTokIcon({ size = 24, ...rest }: React.SVGProps<SVGSVGElement> & { si
   );
 }
 
-/** Where the social buttons point. Placeholders — swap for the real profiles. */
-const FOOTER_SOCIALS: readonly { Icon: React.ElementType; label: string; href: string }[] = [
-  { Icon: Facebook, label: "Facebook", href: "https://facebook.com" },
-  { Icon: TikTokIcon, label: "TikTok", href: "https://tiktok.com" },
-  { Icon: Instagram, label: "Instagram", href: "https://instagram.com" },
-  { Icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com" },
+/**
+ * The real Cacttus Education profiles, in ONE place.
+ *
+ * Both social rows on the site (the footer and /kontakti's "Na ndiq") read from here, so
+ * a profile URL is corrected once rather than in two files that drift apart.
+ */
+const SOCIAL_URLS = {
+  facebook: "https://www.facebook.com/cacttusedu",
+  instagram: "https://www.instagram.com/cacttuseducation/",
+  linkedin: "https://www.linkedin.com/school/cacttusedu/posts/?feedView=all",
+  tiktok: "https://www.tiktok.com/@cacttuseducation",
+} as const;
+
+type SocialLink = { Icon: React.ElementType; label: string; href: string };
+
+const FOOTER_SOCIALS: readonly SocialLink[] = [
+  { Icon: Facebook, label: "Facebook", href: SOCIAL_URLS.facebook },
+  { Icon: TikTokIcon, label: "TikTok", href: SOCIAL_URLS.tiktok },
+  { Icon: Instagram, label: "Instagram", href: SOCIAL_URLS.instagram },
+  { Icon: Linkedin, label: "LinkedIn", href: SOCIAL_URLS.linkedin },
+];
+
+/**
+ * The same four profiles for /kontakti's "Na ndiq" row.
+ *
+ * Separate array only because that row renders a different shape of control; the ORDER
+ * matches the footer so the two rows read alike. It carries TikTok, not Twitter — the
+ * row used to show a Twitter glyph, and Cacttus has no Twitter profile for it to open.
+ */
+const CONTACT_SOCIALS: readonly SocialLink[] = [
+  { Icon: Facebook, label: "Facebook", href: SOCIAL_URLS.facebook },
+  { Icon: Instagram, label: "Instagram", href: SOCIAL_URLS.instagram },
+  { Icon: Linkedin, label: "LinkedIn", href: SOCIAL_URLS.linkedin },
+  { Icon: TikTokIcon, label: "TikTok", href: SOCIAL_URLS.tiktok },
 ];
 
 const FOOTER_LINKS: readonly (readonly [string, string])[] = [
@@ -1037,16 +1064,30 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
         >
           {/* 1 — identity */}
           <div>
-            <div
-              className="inline-flex items-center justify-center rounded-lg mb-5 overflow-hidden"
-              style={{ backgroundColor: "#fff", padding: "4px 10px" }}
-            >
-              <img
-                src={logoImg}
-                alt="Cacttus Education"
-                style={{ height: 28, width: "auto", objectFit: "contain", display: "block" }}
-              />
-            </div>
+            {/*
+              The WHITE lockup straight onto the purple, with no white patch behind it.
+              This was `logo-180px.png` — a 180x180 RASTER of the square mark — sitting in
+              a white rounded box, which is why it read as a sticker on the footer and
+              looked soft: 180px of square art is the wrong shape and the wrong resolution
+              for a 28px-tall wordmark slot.
+
+              `/brand/education-white.svg` is the same true-vector lockup the dashboard
+              sidebar uses on ITS dark panel, so both surfaces now show one mark. Vector,
+              so it stays crisp at any size, zoom or DPR.
+
+              `width`/`height` are the viewBox numbers (710.096 x 199.759, ~3.55:1), so the
+              browser reserves the right box before load — no layout shift — and only the
+              height is constrained, which makes stretching impossible.
+            */}
+            <img
+              src="/brand/education-white.svg"
+              width={710}
+              height={200}
+              alt="Cacttus Education"
+              decoding="async"
+              className="block mb-5"
+              style={{ height: 36, width: "auto" }}
+            />
             <p className="text-sm leading-relaxed max-w-[34ch]" style={{ color: "rgba(255,255,255,0.65)" }}>
               Cacttus Education është lider në Kosovë në ofrimin e edukimit profesional në
               fushën e teknologjisë informative.
@@ -7490,19 +7531,43 @@ function PageKontakti() {
               <div className="mt-4">
                 <p className="text-sm font-semibold mb-3" style={{ color: C.n700 }}>Na ndiq</p>
                 <div className="flex gap-3">
-                  {[Facebook, Instagram, Linkedin, Twitter].map((Icon, i) => (
-                    <button key={i} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}><Icon size={16} style={{ color: C.n600 }} /></button>
+                  {CONTACT_SOCIALS.map(({ Icon, label, href }) => (
+                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}><Icon size={16} style={{ color: C.n600 }} /></a>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-          <div className="mt-10 aspect-video rounded-2xl flex items-center justify-center" style={{ backgroundColor: C.n100 }}>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: C.brand }}><MapPin size={22} className="text-white" /></div>
-              <p className="text-sm font-semibold" style={{ color: C.n700 }}>Rr. Bashkim Fehmiu, Arbëria 3</p>
-              <p className="text-xs mt-1" style={{ color: C.n500 }}>10000 Prishtinë, Kosovë</p>
-            </div>
+          {/*
+            `overflow-hidden` is the one class added to this box: the grey placeholder it
+            replaced had nothing square inside it, so `rounded-2xl` alone was enough. An
+            iframe is a rectangle that would otherwise poke through the rounded corners.
+
+            Keyless `/maps/embed?pb=…`, NOT the Embed API — nothing here can expire or
+            leak, and no billing account is involved.
+
+            THE LONG `pb` IS LOAD-BEARING. Two shorter spellings look equivalent and are
+            not: `maps.google.com/maps?q=<address>&output=embed` 301-redirects to a
+            MINIMAL pb (`!1m3!2m1!1s<query>!6i16`), and that minimal form renders nothing
+            but Google's grey "Open in Maps" fallback — verified in-browser, twice. The
+            full viewport pb below draws real tiles. If this ever needs repointing, take
+            the string from Google Maps' own Share → "Embed a map" dialog rather than
+            hand-shortening it.
+
+            Coordinates and place id are the real ones behind the address, resolved from
+            the office's Maps short link: 42.6570015, 21.147896 / place "Cacttus".
+
+            `border: 0` rather than a `frameBorder` attribute, which is not valid React.
+          */}
+          <div className="mt-10 aspect-video rounded-2xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: C.n100 }}>
+            <iframe
+              title="Harta — Cacttus Education, Rr. Bashkim Fehmiu, Arbëria 3, Prishtinë"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2939.5!2d21.147896!3d42.6570015!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13549edd669de99b%3A0x3e37c39c9f671dd5!2sCacttus!5e0!3m2!1sen!2s!4v1700000000000!5m2!1sen!2s"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+              style={{ width: "100%", height: "100%", border: 0, display: "block" }}
+            />
           </div>
         </div>
       </section>
