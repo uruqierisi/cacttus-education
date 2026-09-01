@@ -1065,28 +1065,37 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
           {/* 1 — identity */}
           <div>
             {/*
-              The WHITE lockup straight onto the purple, with no white patch behind it.
-              This was `logo-180px.png` — a 180x180 RASTER of the square mark — sitting in
-              a white rounded box, which is why it read as a sticker on the footer and
-              looked soft: 180px of square art is the wrong shape and the wrong resolution
-              for a 28px-tall wordmark slot.
+              The official white lockup, straight onto the purple with no patch behind it.
 
-              `/brand/education-white.svg` is the same true-vector lockup the dashboard
-              sidebar uses on ITS dark panel, so both surfaces now show one mark. Vector,
-              so it stays crisp at any size, zoom or DPR.
+              THE COPY IN `public/brand/` IS DELIBERATELY NOT BYTE-IDENTICAL to the master
+              at `src/imports/logowhitenobgCE.svg`, and the difference is one attribute:
+              the master's canvas is `viewBox="0 0 150 150"` — SQUARE — with the wide 3.5:1
+              lockup floating in the middle of it, using only ~20% of the canvas and
+              padding the rest with transparency. Sized by height alone, as everything in
+              this file is, that renders a square box with a tiny logo adrift in it; making
+              the ART 36px tall would have meant a 153px-tall element and ~117px of dead
+              space in the footer. The served copy carries a viewBox cropped to the ink
+              (measured, not eyeballed: 98.3% coverage), so height-only sizing behaves.
+              Re-exporting the master tight would let both files be identical again.
 
-              `width`/`height` are the viewBox numbers (710.096 x 199.759, ~3.55:1), so the
-              browser reserves the right box before load — no layout shift — and only the
-              height is constrained, which makes stretching impossible.
+              `width`/`height` are that cropped viewBox's numbers (502 x 143, ~3.51:1), so
+              the browser reserves the right box before load — no layout shift — and only
+              the height is constrained, which makes stretching impossible.
+
+              NOTE it is a RASTER inside an SVG wrapper — two 709x251 base64 PNGs recoloured
+              white by an feColorMatrix, no <path> anywhere — unlike the true-vector
+              education-white.svg it replaces. At a 38px slot the 251px source is ~6.6x
+              oversampled, so it is crisp here and on retina, but it will NOT survive being
+              scaled up much beyond this.
             */}
             <img
-              src="/brand/education-white.svg"
-              width={710}
-              height={200}
+              src="/brand/logowhitenobgCE.svg"
+              width={502}
+              height={143}
               alt="Cacttus Education"
               decoding="async"
               className="block mb-5"
-              style={{ height: 36, width: "auto" }}
+              style={{ height: 38, width: "auto" }}
             />
             <p className="text-sm leading-relaxed max-w-[34ch]" style={{ color: "rgba(255,255,255,0.65)" }}>
               Cacttus Education është lider në Kosovë në ofrimin e edukimit profesional në
