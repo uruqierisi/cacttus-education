@@ -109,6 +109,26 @@ export const TRAINING_FORMAT_LABELS: Record<TrainingFormatValue, string> = {
 };
 
 /**
+ * The cities a training can be held in.
+ *
+ * A FIXED LIST, not free text. `city` was a plain input, and the same city was typed both
+ * with and without its diacritic ("Kamenice" vs "Kamenicë"). The public site builds its
+ * "Qyteti" filter chips from the distinct stored values, so each spelling became its own
+ * chip and the trainings behind them were split across two filters. That happened twice.
+ *
+ * The stored value is the LABEL itself, exactly as written here — there is no separate
+ * code, because the marketing site displays and filters on this string directly. Which is
+ * also why the spellings below are load-bearing: change one and it stops matching the rows
+ * already in the database.
+ *
+ * A training may legitimately have NO city (an online one). That is `null` in the database,
+ * never an empty string — see `NO_CITY_VALUE` at the editor, which exists only because a
+ * Radix <Select> cannot carry "" as an item value.
+ */
+export const TRAINING_CITIES = ['Prishtinë', 'Prizren', 'Kamenicë'] as const;
+export type TrainingCityValue = (typeof TRAINING_CITIES)[number];
+
+/**
  * Lifecycle, not visibility. `isActive` already answers "is this published"; this answers
  * "has it finished", and the two are shown side by side, so the labels must not collide —
  * hence "Përfunduar" rather than reusing "E ndalur".

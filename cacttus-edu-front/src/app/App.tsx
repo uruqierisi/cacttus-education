@@ -3585,7 +3585,10 @@ function TrajnimePromoSection() {
                      landing page for one line of text. So the line shows two facts the
                      card already has, with the same "—" the catalogue card uses for an
                      unset field. */
-                  const desc = `${t.instructor || "—"} · ${t.city || "—"}`;
+                  /* Joined from the parts that EXIST: an online training has no city, and
+                     "Enes Sermaxhaj · —" reads as missing data rather than as a training
+                     that simply has no location. The format is already on the meta line. */
+                  const desc = [t.instructor, t.city].filter(Boolean).join(" · ") || "—";
                   const meta = `${t.hours === null ? "—" : t.hours} orë · ${TRAINING_FORMAT_LABELS[t.format]}`;
 
                   return (
@@ -4083,10 +4086,31 @@ function SemesterTabs({ semesters }: { semesters: typeof SEM_PROGRAMIM }) {
       <div className="relative flex items-center justify-between mb-10 px-4">
         {/* Connector line background */}
         <div className="absolute left-8 right-8 top-4 h-0.5" style={{ backgroundColor: C.n200 }} />
-        {/* Filled portion */}
+        {/*
+          Filled portion, measured against the RAIL SPAN rather than the whole container.
+
+          This used to set `left: 32px`, `width: <pct>%` and `right: <pct>%` all at once.
+          An absolutely positioned box cannot honour all three — CSS drops `right` — so the
+          width was a percentage of the FULL container while the box already started 32px
+          in. At the last step that resolves to `left: 32px` + `width: 100%`, i.e. 32px
+          wider than its own container, which pushed roughly 12px past the viewport on a
+          phone and produced the horizontal scroll. It also overshot the final circle by
+          32px at every width, desktop included.
+
+          The fix is to stop sizing this box at all. It now spans `left-8 right-8` — exactly
+          the grey rail behind it — and the progress is drawn with `scaleX()` from
+          `origin-left`. A scale can only ever shrink the box, so the fill is incapable of
+          leaving the rail no matter how many steps there are or how narrow the screen is.
+
+          It also has to be a transform rather than an animated width: `transition-all` on
+          `width` could not interpolate between the two `calc()` expressions this used to
+          produce, so the bar silently stayed at 0 and no progress was drawn at all
+          (measured — setting the same value with `transition: none` rendered it correctly).
+          Transforms interpolate on the compositor and have no such problem.
+        */}
         <div
-          className="absolute left-8 top-4 h-0.5 transition-all duration-300"
-          style={{ backgroundColor: C.brand, right: `${((semesters.length - 1 - active) / (semesters.length - 1)) * 100 * (1 - 16 / 100)}%`, width: `calc(${(active / (semesters.length - 1)) * 100}% - 0px)` }}
+          className="absolute left-8 right-8 top-4 h-0.5 origin-left transition-transform duration-300"
+          style={{ backgroundColor: C.brand, transform: `scaleX(${active / (semesters.length - 1)})` }}
         />
 
         {semesters.map((s, i) => (
@@ -4108,7 +4132,7 @@ function SemesterTabs({ semesters }: { semesters: typeof SEM_PROGRAMIM }) {
             >
               {i + 1}
             </button>
-            <span className="text-xs font-medium whitespace-nowrap" style={{ color: i === active ? C.brand : C.n500 }}>
+            <span className="text-[11px] sm:text-xs font-medium whitespace-nowrap" style={{ color: i === active ? C.brand : C.n500 }}>
               {s.sem}
             </span>
           </div>
@@ -4537,13 +4561,20 @@ function TrainingCard({ training }: { training: TrainingCardData }) {
       </div>
       <h4 className="text-base font-semibold leading-snug" style={{ color: C.n900 }}>{training.title}</h4>
       <div className="flex flex-col gap-2 flex-1">
+        {/*
+          "Qyteti" is CONDITIONAL, not defaulted to an em dash. An online training has no
+          city — that is what `format` says — so printing "Qyteti: —" invents a field the
+          training does not have. The row is omitted entirely instead. `format` is
+          unaffected and still renders one line above, which is where Klasë / Hibrid /
+          Online is expressed.
+        */}
         {([
           ["Fillimi", formatTrainingDate(training.startDate)],
           ["Formati", TRAINING_FORMAT_LABELS[training.format]],
           ["Orët", training.hours === null ? "—" : `${training.hours} orë`],
           ["Ligjëruesi", training.instructor || "—"],
-          ["Qyteti", training.city || "—"],
-        ] as const).map(([label, val]) => (
+          ...(training.city ? [["Qyteti", training.city] as const] : []),
+        ] as readonly (readonly [string, string])[]).map(([label, val]) => (
           <div key={label} className="flex items-center justify-between text-sm gap-2">
             <span style={{ color: C.n500 }}>{label}</span>
             <span className="font-medium text-right" style={{ color: C.n700 }}>{val}</span>
@@ -4559,6 +4590,39 @@ function TrainingCard({ training }: { training: TrainingCardData }) {
 }
 
 const ALL_FILTER = "Të gjitha";
+
+/**
+ * Fold a city name for COMPARISON only: trim, lowercase, drop diacritics.
+ *
+ * The chips are built from the distinct `city` values on the trainings, so one record
+ * typed "Prishtine" and another "Prishtinë" produced two chips for one city — which is
+ * exactly what happened in production. The data itself has been normalised, and that is
+ * the real fix; this is the guard that stops the next stray entry from doing it again.
+ */
+function cityKey(value: string): string {
+  return value.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+/**
+ * Collapse spelling variants of one city down to a single chip.
+ *
+ * Keeps the ACCENTED spelling when both exist: after `normalize("NFD")` an accented
+ * letter is two code points to the plain letter's one, so the longer decomposition is
+ * the one carrying the diacritics — "Prishtinë" wins over "Prishtine" rather than the
+ * chip label depending on which record happened to be created first.
+ */
+function dedupeCities(values: readonly (string | null | undefined)[]): string[] {
+  const byKey = new Map<string, string>();
+  for (const raw of values) {
+    // A training with no city (an online one) contributes no chip at all.
+    const value = (raw ?? "").trim();
+    if (!value) continue;
+    const key = cityKey(value);
+    const kept = byKey.get(key);
+    if (!kept || value.normalize("NFD").length > kept.normalize("NFD").length) byKey.set(key, value);
+  }
+  return [...byKey.values()];
+}
 
 function PageTrajnime() {
   const [trainings, setTrainings] = useState<readonly TrainingCardData[]>([]);
@@ -4577,6 +4641,7 @@ function PageTrajnime() {
   */
   const [sel, setSel] = useState(ALL_FILTER);
   const [city, setCity] = useState(ALL_FILTER);
+  const [format, setFormat] = useState(ALL_FILTER);
 
   useEffect(() => {
     let active = true;
@@ -4620,7 +4685,10 @@ function PageTrajnime() {
      Within the merged row only one pill can be active, so there is nothing to combine
      there: a training either matches the one thing selected or it does not. */
   const filtered = trainings.filter((t) => {
-    if (city !== ALL_FILTER && t.city !== city) {
+    if (city !== ALL_FILTER && cityKey(t.city ?? "") !== cityKey(city)) {
+      return false;
+    }
+    if (format !== ALL_FILTER && TRAINING_FORMAT_LABELS[t.format] !== format) {
       return false;
     }
     if (sel === ALL_FILTER) {
@@ -4646,7 +4714,19 @@ function PageTrajnime() {
       .map((value) => TRAINING_STATUS_LABELS[value]),
     ...categories.map((c) => TRAINING_CATEGORY_LABELS[c]),
   ];
-  const cityOptions = [ALL_FILTER, ...cities];
+  const cityOptions = [ALL_FILTER, ...dedupeCities(cities)];
+  /*
+    Derived from the loaded trainings, not from /trainings/filters — that endpoint returns
+    only categories and cities, and adding formats to it would be a backend change for
+    something the client already holds. Listing only the formats actually present keeps a
+    chip from being a dead end, the same rule the status pills follow above.
+  */
+  const formatOptions = [
+    ALL_FILTER,
+    ...(["KLASE", "HIBRID", "ONLINE"] as const)
+      .filter((value) => trainings.some((t) => t.format === value))
+      .map((value) => TRAINING_FORMAT_LABELS[value]),
+  ];
 
   return (
     <PageWrapper>
@@ -4682,6 +4762,11 @@ function PageTrajnime() {
             {cityOptions.length > 1 && (
               <FilterRow label="Qyteti:" options={cityOptions} active={city} onSelect={setCity} />
             )}
+            {/* Its own guard, not the city one: an all-online catalogue has no city chips
+                but still has formats worth filtering by. */}
+            {formatOptions.length > 1 && (
+              <FilterRow label="Formati:" options={formatOptions} active={format} onSelect={setFormat} />
+            )}
           </div>
         </div>
       )}
@@ -4707,7 +4792,7 @@ function PageTrajnime() {
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center py-20 gap-4">
               <p className="text-lg" style={{ color: C.n500 }}>Nuk ka trajnime të disponueshme për filtrat e zgjedhur</p>
-              <SecondaryBtn onClick={() => { setSel(ALL_FILTER); setCity(ALL_FILTER); }}>Pastro filtrat</SecondaryBtn>
+              <SecondaryBtn onClick={() => { setSel(ALL_FILTER); setCity(ALL_FILTER); setFormat(ALL_FILTER); }}>Pastro filtrat</SecondaryBtn>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -4856,14 +4941,16 @@ function PageTrajnimiDetal() {
     );
   }
 
-  const meta = [
+  /* "Qyteti" is dropped rather than em-dashed when the training has no city — see the
+     card for the reasoning. "Formati" above it always renders. */
+  const meta: readonly (readonly [string, string])[] = [
     ["Fillimi", formatTrainingDate(training.startDate)],
     ["Formati", TRAINING_FORMAT_LABELS[training.format]],
     ["Orët", training.hours === null ? "—" : `${training.hours} orë`],
     ["Ligjëruesi", training.instructor || "—"],
-    ["Qyteti", training.city || "—"],
+    ...(training.city ? [["Qyteti", training.city] as const] : []),
     ["Çmimi", training.price === null ? "—" : `${training.price} €`],
-  ] as const;
+  ];
 
   return (
     <PageWrapper>

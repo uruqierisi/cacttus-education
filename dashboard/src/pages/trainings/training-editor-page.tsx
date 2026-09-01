@@ -46,6 +46,7 @@ import type { Training, TrainingCategory, TrainingFormat } from '@/api/types';
 import {
   ROUTES,
   TRAINING_CATEGORIES,
+  TRAINING_CITIES,
   TRAINING_CATEGORY_LABELS,
   TRAINING_STATUSES,
   TRAINING_STATUS_LABELS,
@@ -114,6 +115,15 @@ function toDateInput(iso: string | null): string {
  * string would be a third state meaning "present but blank" — a syllabus link that is
  * there and broken instead of absent.
  */
+/**
+ * The <Select> value standing in for "no city".
+ *
+ * Radix refuses "" as an item value, so the empty choice needs a token. It never leaves
+ * this file: it maps to `''` in state, which `orNull` turns into `null` on save, so the
+ * API still receives null and the column keeps its two states (a city, or nothing).
+ */
+const NO_CITY_VALUE = '__no_city__';
+
 function orNull(value: string): string | null {
   const trimmed = value.trim();
   return trimmed === '' ? null : trimmed;
@@ -299,6 +309,14 @@ export default function TrainingEditorPage(): JSX.Element {
   }
 
   const isSaving = saveMutation.isPending;
+  /*
+    "" means the admin chose "Pa qytet"; anything on TRAINING_CITIES is a normal choice.
+    Anything ELSE is a legacy row saved while this field was free text — the select then
+    shows nothing selected and the stored text is surfaced beneath it, rather than the
+    control silently presenting a value the record does not hold.
+  */
+  const isKnownCity =
+    state.city === '' || (TRAINING_CITIES as readonly string[]).includes(state.city);
   const formOptions = formOptionsQuery.data ?? [];
   /* A form that was switched off after this training was saved is no longer offered by
      the dropdown, which would silently reset the field on the next save. Surfaced. */
@@ -433,13 +451,38 @@ export default function TrainingEditorPage(): JSX.Element {
 
             <div className="space-y-2">
               <Label htmlFor="training-city">Qyteti</Label>
-              <Input
-                id="training-city"
-                value={state.city}
-                disabled={isSaving}
-                placeholder="p.sh. Prishtinë ose Online"
-                onChange={(event) => update('city', event.target.value)}
-              />
+              <Select
+                value={isKnownCity ? (state.city === '' ? NO_CITY_VALUE : state.city) : undefined}
+                onValueChange={(value) => update('city', value === NO_CITY_VALUE ? '' : value)}
+              >
+                <SelectTrigger id="training-city">
+                  <SelectValue placeholder="Zgjidh qytetin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_CITY_VALUE}>— Pa qytet —</SelectItem>
+                  {TRAINING_CITIES.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/*
+                A training saved before this was a select can hold a city that is not on the
+                list ("Kamenice", say). The select shows NOTHING selected in that case rather
+                than quietly snapping to the nearest option, and the stored text is printed
+                underneath so it is visible. `state.city` still holds it, so saving without
+                touching this field preserves it — the value only changes if an option is
+                actually picked.
+              */}
+              {!isKnownCity && (
+                <p className="text-xs text-muted-foreground">
+                  Vlera e ruajtur: {state.city} — zgjidh një opsion për ta ndryshuar.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Opsionale. Trajnimet online mund të lihen pa qytet.
+              </p>
             </div>
 
             <div className="space-y-2">
