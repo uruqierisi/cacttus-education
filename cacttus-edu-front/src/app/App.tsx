@@ -7,7 +7,36 @@ import logoImg from "../imports/logo-180px.png";
    `imgUrl` prop, so each page picks its own and neither can affect the other. */
 import programimHero from "../imports/programimPage.png";
 import cyberHero from "../imports/cyberPage.png";
-import bizneseHero from "../imports/biznese-hero.png";
+import bizneseHero from "../imports/perbiznese.png";
+/* Hero photo for /rreth-nesh, replacing the Bursa_Redesign.png placeholder that column
+   borrowed. Shot 3:2 (8192x5464) and dropped into a 4:3 frame, so the crop is real:
+   RRETH_AMBIENT_IMG_POSITION decides which band of it survives. */
+import rrethNeshStafi from "../imports/rrethNeshStafi.jpeg";
+/* Hero photo for /biznese/trajnime, replacing the Unsplash stock URL. Same 3:2 source in
+   a 4:3 frame — see BIZNESE_TRAJNIME_IMG_POSITION. */
+import trajnimePersonalizuara from "../imports/trajnimePersonalizuara.jpeg";
+/* The five faces in the overlapping circle row on /biznese/talente, in the order they
+   are shown left to right. NOTE the filename: the photo is `fatjonKerceli`, with a C —
+   it was asked for as "fatjonKerqeli", with a Q. The file on disk wins. */
+import talentMirlindArifi from "../imports/mirlindArifi.jpeg";
+import talentDinaZejneli from "../imports/dinaZejneli.jpeg";
+import talentAltinMorina from "../imports/altinMorina.jpeg";
+import talentArjanaBellaqa from "../imports/arjanaBellaqa.jpeg";
+import talentFatjonKerceli from "../imports/fatjonKerceli.jpeg";
+/* The rest of the talent-network faces. Filenames differ from how they were listed,
+   so they are spelled out here rather than guessed at the call site:
+     - Eda Nuka   -> edaNukaRrjeti.jpeg, NOT the EdaNuka.png already imported above as
+       `suksesEdaNuka` (that one is her success-story portrait, a different crop).
+     - Gjin Bardhi -> gjinBardhi.jpeg, likewise distinct from `suksesGjinBardhi`.
+     - Resul Manxholli -> .jpg, while its neighbours are .jpeg. */
+import talentEdaNuka from "../imports/edaNukaRrjeti.jpeg";
+import talentNoraBekteshi from "../imports/noraBekteshi.png";
+import talentFlamurHaxholli from "../imports/flamurHaxholli.jpeg";
+import talentResulManxholli from "../imports/resulManxholliRrjeti.jpg";
+import talentKaltrinaQerimi from "../imports/kaltrinaQerimi.jpeg";
+import talentErnataKoliqi from "../imports/nataDita.jpeg";
+import talentGjinBardhi from "../imports/gjinBardhi.jpeg";
+import talentTritMeri from "../imports/tritMeri.jpeg";
 /* Instructor portraits — /ligjërueit. See LIGJËRUEIT for which card each lands on.
    The `2` files are the small ones (~1MB); the plain .jpg originals are ~9MB each. */
 import lektorLuani from "../imports/luani2.png";
@@ -40,6 +69,10 @@ import trajnerAli from "../imports/alitrajner.png";
    `imgUrl` in TRAINERS to use the newer export instead. */
 import trajnerFisnik from "../imports/fisniktrajner.png";
 import trajnereHana from "../imports/hanatrajnere.png";
+/* Elmaze Gashi, /ekipi. */
+import ekipiElmaze from "../imports/eli.png";
+/* Dinion Svirca, /ligjërueit. */
+import lektorDinion from "../imports/dinionProfa.png";
 /* Graduate portraits for the "Histori suksesi" carousel — see STUDENT_PHOTOS. Each is a
    finished 292x164 card: portrait on the brand purple, with the graduate's name, role and
    employer already set INTO the artwork. That matters downstream — the carousel must not
@@ -59,6 +92,9 @@ import suksesErnataKoliqi from "../imports/ErnataKoliqi.png";
    frame, so roughly two thirds of its height is cropped away — which slice survives is
    BURSA_HERO_IMG_POSITION, next to the component that uses it. */
 import bursaHeroImg from "../imports/BursaImpaktit.jpeg";
+/* Hero photo for /biznese/klasa — replaces the Unsplash placeholder the section used.
+   Same full-bleed frame and KLASA_HERO_IMG_POSITION crop as before. */
+import klasaMeQeraHero from "../imports/klasaMeQeraHero.jpeg";
 /* Scholarship sponsors for /biznese/bursa — see BURSA_SPONSORS. All three arrived as .png
    despite being referred to as .svg. */
 /* Room photos for the "Hapësirat tona" grid on /biznese/klasa — one per card, in the
@@ -307,6 +343,7 @@ import {
   BarChart,
   Projector,
   Building2,
+  type LucideIcon,
 } from "lucide-react";
 
 /* ─── BRAND COLORS ─── */
@@ -1069,7 +1106,16 @@ function SecondaryBtn({ children, className = "", onClick }: { children: React.R
 
 function GhostBtn({ children, className = "", onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <button onClick={onClick} className={`inline-flex items-center gap-1 text-sm font-semibold transition-colors group ${className}`} style={{ color: C.brand }}>
+    /*
+      `py-2 -my-2` is a TAP TARGET, not spacing. Measured on a 375px phone this control was
+      20px tall — well under the ~44px a fingertip needs — because it is bare text plus a
+      chevron with no padding of its own.
+
+      The padding grows the clickable box by 8px above and below; the equal negative margin
+      takes those same 16px back out of the layout, so every card and row this sits in keeps
+      the exact geometry it had. Bigger to touch, identical to look at.
+    */
+    <button onClick={onClick} className={`inline-flex items-center gap-1 py-2 -my-2 text-sm font-semibold transition-colors group ${className}`} style={{ color: C.brand }}>
       {children}
       <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
     </button>
@@ -2824,6 +2870,8 @@ function ProjectCard({ project, to }: { project: { title: string; partner: strin
    PART 2 — HOME PAGE
 ══════════════════════════════════════════ */
 function PageBallina() {
+  const openApplyPopup = useApplyPopup();
+
   return (
     <PageWrapper>
       {/* Hero */}
@@ -2849,8 +2897,10 @@ function PageBallina() {
                   Institucion i arsimit të lartë profesional që ofron studime dyvjeçare të akredituara dhe të licencuara, me mësim praktik dhe ligjërues me përvojë nga industria.
                 </p>
                 <div className="flex flex-wrap gap-5">
-                  <Link to="/#apliko"><PrimaryBtn>Apliko tani</PrimaryBtn></Link>
-                  <SecondaryBtn>Shiko programet</SecondaryBtn>
+                  {/* Was a <Link to="/#apliko">, which jumped to an anchor that does not
+                      exist on this page. Now the same popup the navbar opens. */}
+                  <PrimaryBtn onClick={openApplyPopup}>Apliko tani</PrimaryBtn>
+                  <SecondaryBtn onClick={() => scrollToSection(BALLINA_PROGRAMS_ID)}>Shiko programet</SecondaryBtn>
                 </div>
               </div>
 
@@ -2918,7 +2968,9 @@ function StudimeProfesionaleSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24" style={{ backgroundColor: C.n0, borderTop: `1px solid ${C.n200}` }}>
+    /* `id` + `scroll-mt-28` make this the landing spot for the hero's "Shiko programet".
+       The margin is what stops the sticky navbar covering this section's own top edge. */
+    <section id={BALLINA_PROGRAMS_ID} className="py-24 scroll-mt-28" style={{ backgroundColor: C.n0, borderTop: `1px solid ${C.n200}` }}>
       <div className="max-w-[1200px] mx-auto px-5">
 
         {/* ── BAND 1: framed photo left · intro text right ── */}
@@ -2926,12 +2978,21 @@ function StudimeProfesionaleSection() {
 
           {/* Left — framed photo with blob + badge */}
           <div className="relative flex items-center justify-center">
-            {/* Decorative blob behind frame */}
+            {/* Decorative blob behind frame.
+
+                `min(340px, 90%)` rather than a flat 340: the blob sits at `left: 2%` of a
+                column that is only ~326px wide on a 375px phone, so a fixed 340 pushed its
+                right edge to 366 and put a 6px horizontal scrollbar on the whole homepage.
+                Measured — it was the only thing overflowing that page.
+
+                `aspectRatio` replaces the fixed height so it stays round as the width
+                clamps. At every width from `sm` up the 340px cap wins and nothing about
+                the desktop rendering changes. */}
             <div
               className="absolute"
               style={{
-                width: 340,
-                height: 340,
+                width: "min(340px, 90%)",
+                aspectRatio: "1 / 1",
                 borderRadius: "60% 40% 55% 45% / 50% 60% 40% 50%",
                 backgroundColor: C.brandLight,
                 opacity: 0.7,
@@ -3077,8 +3138,90 @@ function StudimeProfesionaleSection() {
   );
 }
 
-/* 2.2 — Trajnime promo with 4th box */
+/* 2.2 — Trajnime promo, live from the catalogue API */
+
+/*
+  A home card carries an ICON; the API carries no such field, and `category` is the only
+  thing on the payload that could reasonably pick one. Hence this map. Every icon in it is
+  already imported for use elsewhere in the file, so naming them here costs no bundle.
+
+  Read through `?? BookOpen` at the call site rather than indexed straight — `category`
+  arrives over the network, so a category added server-side before this file learns its
+  icon would hand us `undefined`, and React throws on rendering that as a component,
+  taking the whole band down over a missing 18px glyph. Same guard `TrainingStatusBadge`
+  applies to an unknown status.
+*/
+const TRAINING_CATEGORY_ICONS: Record<TrainingCategory, LucideIcon> = {
+  PROGRAMIM: Code,
+  ADMINISTRIM: Monitor,
+  SIGURI_KIBERNETIKE: Shield,
+  MARKETING_DIZAJN: Laptop,
+  MENAXHIM_PROJEKTEVE: Briefcase,
+  AFTESI_TE_BUTA: Users,
+};
+
+/*
+  How many cards the band shows. The API already returns the operator's OWN ordering
+  (`order` asc, then newest first — see listPublicTrainings), so slicing the front off
+  that list means the four shown are the four the dashboard was told to put first. This
+  deliberately does not re-sort: sorting here would silently override an ordering an
+  admin set by hand.
+*/
+const HOME_TRAININGS_LIMIT = 4;
+
+/* Shared by the real card and its loading placeholder, so the two can never drift out of
+   the same box. */
+const HOME_TRAINING_CARD_STYLE = {
+  backgroundColor: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.10)",
+} as const;
+
+const HOME_SKELETON_BAR = { backgroundColor: "rgba(255,255,255,0.10)" } as const;
+
 function TrajnimePromoSection() {
+  const [trainings, setTrainings] = useState<readonly TrainingCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasFailed, setHasFailed] = useState(false);
+
+  /*
+    The same fetch shape /trajnime uses, minus the filters call — this band has no chips
+    to derive. The `active` flag is what makes it safe: a visitor who clicks away mid
+    request unmounts this component, and without the guard the `.then` would still write
+    state into it.
+
+    `status: "ACTIVE"` narrows SERVER-side, so a finished training never travels to the
+    landing page at all. That is the split: the home band is a short "you can still join
+    this" list, while /trajnime stays the full catalogue and badges COMPLETED rather than
+    hiding it.
+  */
+  useEffect(() => {
+    let active = true;
+
+    getPublicTrainings({ status: "ACTIVE" })
+      .then((items) => {
+        if (active) setTrainings(items.slice(0, HOME_TRAININGS_LIMIT));
+      })
+      .catch(() => {
+        // No error message and no retry button, unlike the catalogue. This is a promo
+        // band on the landing page: a visitor who cannot see it has lost a shortcut, not
+        // the content, and "Shiko të gjitha trajnimet" below still works. Shouting about
+        // a backend fault on the front page would cost more than it explains.
+        if (active) setHasFailed(true);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /* Nothing to show and nothing still coming means the grid is dropped entirely — the
+     heading, the paragraph and the button stay. A grid of empty boxes reads as broken;
+     a section with no grid just reads as a section. */
+  const showGrid = isLoading || (!hasFailed && trainings.length > 0);
+
   return (
     <section className="py-24" style={{ backgroundColor: C.p900 }}>
       <div className="max-w-[1200px] mx-auto px-5">
@@ -3088,36 +3231,72 @@ function TrajnimePromoSection() {
             Trajnime profesionale për karrierën që synoni!
           </h2>
           <p className="text-lg max-w-x2" style={{ color: "rgba(255,255,255,0.65)" }}>
-            Zhvilloni aftësitë që kërkon tregu i punës përmes kurrikulave bashkëkohore, mësimit praktik dhe instruktorëve me përvojë nga industria. 
+            Zhvilloni aftësitë që kërkon tregu i punës përmes kurrikulave bashkëkohore, mësimit praktik dhe instruktorëve me përvojë nga industria.
           Zgjidhni trajnime intensive në programim, siguri kibernetike, dizajn dhe menaxhim projektesh, online, në klasë ose në format hibrid.
           </p>
         </div>
 
-        {/* 4-column grid (2×2 tablet, 1col mobile) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {[
-            { name: "JavaScript", desc: "Zhvillim web modern me JavaScript dhe React", meta: "30 orë · Hibrid", icon: Code },
-            { name: "Cyber Security Essentials", desc: "Bazat e sigurisë kibernetike dhe mbrojtjes", meta: "— orë · Klasë", icon: Shield },
-            { name: "Dizajn Grafik", desc: "Vizual dhe brand identity me mjete dixhitale", meta: "40 orë · Hibrid", icon: Laptop },
-            { name: "Data Science", desc: "Analizë të dhënash, statistikë dhe machine learning", meta: "120 orë · Klasë", icon: BarChart },
-          ].map(({ name, desc, meta, icon: Icon }) => (
-            <div
-              key={name}
-              className="p-5 rounded-2xl flex flex-col gap-3 transition-all hover:-translate-y-1 hover:shadow-lg"
-              style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: C.brand }}>
-                <Icon size={18} className="text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-white text-sm">{name}</p>
-                <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>{desc}</p>
-              </div>
-              <p className="text-xs mt-auto" style={{ color: "rgba(255,255,255,0.4)" }}>{meta}</p>
-              <GhostBtn className="text-white/70 hover:text-white">Shiko trajnimin</GhostBtn>
-            </div>
-          ))}
-        </div>
+        {/* 4-column grid (2×2 tablet, 1col mobile). Fewer than four live trainings simply
+            fills fewer tracks — the grid is not padded out with empties. */}
+        {showGrid && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {isLoading
+              ? /* Placeholders, not a spinner: the band keeps its height while the request
+                   is in flight, so the page below does not jump when cards land.
+                   `aria-hidden` because there is nothing here to read out yet. */
+                Array.from({ length: HOME_TRAININGS_LIMIT }, (_, i) => (
+                  <div
+                    key={i}
+                    aria-hidden="true"
+                    className="p-5 rounded-2xl flex flex-col gap-3 animate-pulse"
+                    style={HOME_TRAINING_CARD_STYLE}
+                  >
+                    <div className="w-10 h-10 rounded-xl" style={HOME_SKELETON_BAR} />
+                    <div>
+                      <div className="h-3.5 rounded w-2/3" style={HOME_SKELETON_BAR} />
+                      <div className="h-3 rounded w-full mt-2" style={HOME_SKELETON_BAR} />
+                    </div>
+                    <div className="h-3 rounded w-1/2 mt-auto" style={HOME_SKELETON_BAR} />
+                    <div className="h-3 rounded w-1/3" style={HOME_SKELETON_BAR} />
+                  </div>
+                ))
+              : trainings.map((t) => {
+                  const Icon = TRAINING_CATEGORY_ICONS[t.category] ?? BookOpen;
+
+                  /* The slot the hard-coded version filled with a marketing sentence. A
+                     card payload carries no description — that field lives on the DETAIL
+                     endpoint, and fetching it would mean four extra round-trips on the
+                     landing page for one line of text. So the line shows two facts the
+                     card already has, with the same "—" the catalogue card uses for an
+                     unset field. */
+                  const desc = `${t.instructor || "—"} · ${t.city || "—"}`;
+                  const meta = `${t.hours === null ? "—" : t.hours} orë · ${TRAINING_FORMAT_LABELS[t.format]}`;
+
+                  return (
+                    <div
+                      key={t.slug}
+                      className="p-5 rounded-2xl flex flex-col gap-3 transition-all hover:-translate-y-1 hover:shadow-lg"
+                      style={HOME_TRAINING_CARD_STYLE}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: C.brand }}>
+                        <Icon size={18} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white text-sm">{t.title}</p>
+                        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>{desc}</p>
+                      </div>
+                      <p className="text-xs mt-auto" style={{ color: "rgba(255,255,255,0.4)" }}>{meta}</p>
+                      {/* `applyUrl` comes from the API rather than being built here, so the
+                          /trajnime/:slug path shape stays owned by one side. Until now this
+                          button had no onClick and navigated nowhere. */}
+                      <Link to={t.applyUrl}>
+                        <GhostBtn className="text-white/70 hover:text-white">Shiko trajnimin</GhostBtn>
+                      </Link>
+                    </div>
+                  );
+                })}
+          </div>
+        )}
 
         <Link to="/trajnime"><PrimaryBtn>Shiko të gjitha trajnimet</PrimaryBtn></Link>
       </div>
@@ -3656,6 +3835,7 @@ function SemesterTabs({ semesters }: { semesters: typeof SEM_PROGRAMIM }) {
 /* ── PROGRAM PAGE TEMPLATE ── */
 function ProgramPage({
   title, breadcrumbEnd, heroParagraph, whatCards, semesters, roles, preselected, imgUrl,
+  planUrl,
   imgPosition = "center 20%",
 }: {
   title: string; breadcrumbEnd: string; heroParagraph: string;
@@ -3667,6 +3847,20 @@ function ProgramPage({
    */
   whatCards: { title: string; icon: React.ElementType; description: string }[];
   semesters: typeof SEM_PROGRAMIM; roles: string[]; preselected: string; imgUrl: string; to: string;
+  /**
+   * Absolute path to THIS programme's curriculum PDF, served from `public/`.
+   *
+   * Required, not optional, and that is deliberate: /programim and /siguria share this
+   * one component, so a default here would silently hand both pages the same PDF — the
+   * exact bug that a "Shkarko planprogramin" button most needs to not have. With no
+   * default, TypeScript refuses a new programme page that forgets its own file.
+   *
+   * A PLAIN STRING, never an `import`. Vite copies `public/` through verbatim, so the
+   * path stays `/pdfs/....pdf` in dev and in the build and the file can be replaced
+   * without a rebuild. Importing it instead would inline it into the bundle graph and
+   * rewrite the name with a content hash, so dropping in a new PDF would mean rebuilding.
+   */
+  planUrl: string;
   /**
    * Which part of the hero photo the frame keeps — any CSS `object-position` value.
    *
@@ -3680,6 +3874,8 @@ function ProgramPage({
    */
   imgPosition?: string;
 }) {
+  const openApplyPopup = useApplyPopup();
+
   return (
     <PageWrapper>
       {/* Hero */}
@@ -3720,8 +3916,24 @@ function ProgramPage({
                 {["2 vite ", "4 semestra", "120 ECVET", "Akredituar nga MASHT"].map((c) => <MetaChip key={c}>{c}</MetaChip>)}
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link to="/#apliko"><PrimaryBtn>Apliko tani</PrimaryBtn></Link>
-                <SecondaryBtn>Shkarko planprogramin</SecondaryBtn>
+                {/* One button, both programme pages: /programim and /siguria are the same
+                    ProgramPage with different props, so this covers each of them. */}
+                <PrimaryBtn onClick={openApplyPopup}>Apliko tani</PrimaryBtn>
+                {/*
+                  An anchor wrapping the button, matching how `<Link><PrimaryBtn>` is done
+                  everywhere else in this file — the button's own styling is untouched.
+
+                  An anchor rather than `onClick={() => window.open(...)}` because this IS a
+                  navigation: middle-click, ctrl-click, "open in new tab" and "copy link
+                  address" all work on a real href and all silently do nothing on a button.
+
+                  `rel="noopener noreferrer"` goes with every `target="_blank"`: without
+                  `noopener` the opened tab gets a `window.opener` handle back into this one
+                  and can navigate it somewhere else.
+                */}
+                <a href={planUrl} target="_blank" rel="noopener noreferrer">
+                  <SecondaryBtn>Shkarko planprogramin</SecondaryBtn>
+                </a>
               </div>
             </div>
             {/*
@@ -3869,6 +4081,8 @@ function PageProgramim() {
          lower % pulls it UP. Reset to 50% for the new photo: the old 75% was dialled in
          against a different picture and means nothing to this one. */
       imgPosition="center 60%"
+      /* Drop the real file at cacttus-edu-front/public/pdfs/ under exactly this name. */
+      planUrl="/pdfs/plani-zhvillim-web-aplikacione-mobile.pdf"
       to="/programim"
     />
   );
@@ -3922,6 +4136,8 @@ function PageSiguria() {
          Passed explicitly rather than left to `ProgramPage`'s default, which is 20% — this
          page used to inherit that silently, so the value had to be stated to reach 50%. */
       imgPosition="center 55%"
+      /* Drop the real file at cacttus-edu-front/public/pdfs/ under exactly this name. */
+      planUrl="/pdfs/plani-siguria-kibernetike.pdf"
       to="/siguria"
     />
   );
@@ -4623,6 +4839,95 @@ function PageForma() {
 /* ══════════════════════════════════════════
    PËR BIZNESE HUB — unchanged
 ══════════════════════════════════════════ */
+
+/*
+  ── HERO IMAGE NUDGE — TUNE THESE TWO NUMBERS ──
+
+  `y` moves the artwork DOWN as it grows and UP as it shrinks; `x` moves it RIGHT as it
+  grows and LEFT as it shrinks. Negative values are fine ("-20px"). The two current
+  values are exactly what was hardcoded on the <img> before this constant existed, so
+  lifting them here changed nothing on screen.
+
+  WHY NOT `objectPosition`, the knob /programim, /siguria and Bursa use:
+  that one only does something when a frame CROPS a photo — it picks which slice of an
+  oversized image survives inside a fixed box. Those heroes are `w-full h-full
+  object-cover` inside such a box, so they have a crop to aim. THIS hero is a
+  transparent cutout of four people, sized `w-auto` against a max height: the box is
+  the artwork's own 1:1 shape, nothing is cropped, and `object-fit` is left at its
+  `fill` default. Setting `objectPosition` here is inert — the browser reports
+  `50% 50%` on this element today and moving it changes not one pixel. Offsetting the
+  whole element is the only thing that can move this image, which is why the original
+  markup reached for `translate-*` and not `object-*`.
+
+  It is a {x, y} pair rather than an `object-position`-style string on purpose: the two
+  are not interchangeable, and a name like BIZNESE_HERO_IMG_POSITION would invite
+  someone to write "center 50%" in here, which is not a length and would silently do
+  nothing.
+
+  Applied through the standalone CSS `translate` property, which is what the Tailwind v4
+  `translate-*` utilities this replaces compile to — NOT `transform`. Both exist
+  independently, so a `transform` set elsewhere on this element would still compose
+  rather than fight with this.
+*/
+const BIZNESE_HERO_IMG_OFFSET = { x: "95px", y: "-65px" };
+
+/*
+  ── HERO IMAGE SIZE — TUNE THIS ONE NUMBER ──
+
+  The artwork is square (500x500 source), so this height sets the width to match and the
+  figures scale as one. Raise it to grow them, lower it to shrink them.
+
+  Set as an inline style rather than Tailwind's `max-h-[...]`: Tailwind scans the SOURCE
+  for complete class names, so a value built from a constant would never make it into the
+  stylesheet. The same reason `imgPosition` elsewhere in this file is a style and not an
+  `object-[...]` class.
+
+  TWO THINGS MOVE WHEN THIS GROWS, both intentional:
+
+  1. The column beside the text is a fixed 480px track (`lg:grid-cols-[1fr_480px]`).
+     Past 480 the square image is WIDER than its track and spills evenly on both sides.
+     That is fine and is what the reference shows — the 40px grid gap plus the page margin
+     absorb it, and BIZNESE_HERO_IMG_OFFSET.x nudges it clear of the text. Do not widen
+     the track to "fix" this: that would re-flow the text column.
+
+  2. The row is as tall as its tallest child, and this image has been the taller one since
+     it passed ~300px. So raising this raises the hero band with it. There is no way to
+     enlarge the artwork in place without that — the section has no fixed height to grow
+     into.
+*/
+/* The `min()` is a GUARD, not decoration. Tune the 560px; leave the 38vw alone.
+
+   Past the 480px track this image spills to both sides, and the right-hand spill has
+   nothing to spill INTO once the 1200px container stops centring — measured, a flat
+   560px put the right edge 30px beyond a 1024px viewport and 30px beyond a 1280px one,
+   which is a horizontal scrollbar on the whole page. 38vw makes the artwork step down on
+   those widths instead of overflowing, and is slack enough that anything >=1500px gets
+   the full 560. Raise 560 as far as you like; the guard keeps narrow screens honest. */
+const BIZNESE_HERO_IMG_HEIGHT = "min(500px, 35vw)";
+
+/*
+  ── HERO IMAGE SCALE — TUNE THIS ONE NUMBER ──
+
+  1 = the size the layout reserves (BIZNESE_HERO_IMG_HEIGHT above). Anything higher blows
+  the artwork up past that WITHOUT the page noticing: `transform` is painted after layout
+  is already decided, so the row, the section, the text column and the button all keep the
+  exact geometry they had at scale 1. That is the whole reason this is a transform and not
+  a bigger height — height feeds back into the row and drags the section taller with it,
+  which is what happened the last two times.
+
+  1.45 renders the ~500px box at roughly 725px on screen.
+
+  The trade is that the overflow has to go somewhere, and `overflow-x: clip` on the section
+  is where. Raise this far enough and the figures start losing their sides and their feet
+  at the section's edges. If you want them BIGGER AND WHOLE, that is the other knob:
+  raise BIZNESE_HERO_IMG_HEIGHT instead and accept a taller hero band.
+
+  `transformOrigin: "center top"` anchors the growth at the top edge, so the heads stay put
+  and the extra height goes downward, out through the bottom of the band. Growing from the
+  centre instead sent 100+px up behind the navbar and decapitated them.
+*/
+const BIZNESE_HERO_IMG_SCALE = 1.30;
+
 function PageBiznese() {
   const navigate = useNavigate();
   const BUSINESS_OFFERINGS = [
@@ -4638,7 +4943,22 @@ function PageBiznese() {
         smaller half of the height problem; see the note on the illustration for the
         larger half.
       */}
-      <section className="py-12 md:py-16" style={{ backgroundColor: C.brandSoft }}>
+      {/*
+        `overflow-x: clip` is what lets BIZNESE_HERO_IMG_SCALE exist. The scaled artwork is
+        wider than its 480px track and, on a 1280px screen, wider than the viewport — which
+        without this is a horizontal scrollbar on the whole page.
+
+        `clip` rather than `hidden` on purpose: `hidden` turns the section into a scroll
+        container, which would also force `overflow-y` to `auto` and break `position:
+        sticky` for anything inside. `clip` just clips.
+
+        BOTH axes. Clipping only X let the scaled figures run 225px out of the bottom of
+        the band and sit on top of the cards in the next section — measured, their visual
+        box ended at 958 while the section ended at 733. Clipping Y crops them cleanly at
+        the band's own edge instead, which is why the growth is anchored at the TOP: the
+        crop lands on legs, never on faces.
+      */}
+      <section className="py-12 md:py-16" style={{ backgroundColor: C.brandSoft, overflow: "clip" }}>
         <div className="max-w-[1200px] mx-auto px-5">
           {/*
             `items-center`, NOT `items-end`.
@@ -4667,10 +4987,10 @@ function PageBiznese() {
               SVG already carries its own transparency, and anything behind it would turn
               a cutout into a framed picture.
 
-              Sized by HEIGHT, not width. The artwork is portrait while the space beside
-              the text is landscape, so matching the width would push the hero far taller
-              than the copy needs. `max-h-[380px]` fills the column vertically and lets
-              the width fall where the ratio puts it.
+              Sized by HEIGHT, not width — see BIZNESE_HERO_IMG_HEIGHT above, which
+              is the one number to tune. Height drives it because the artwork is square
+              while the space beside the text is landscape: pinning the width would leave
+              the figures small in a wide track.
 
               THE HEIGHT FIX: the source had 28.7% of its canvas as empty transparent
               space above the figures' heads (measured: content began at y=387 of 1350).
@@ -4691,7 +5011,22 @@ function PageBiznese() {
                 src={bizneseHero}
                 alt=""
                 aria-hidden="true"
-                className="w-auto max-h-[400px] select-none pointer-events-none translate-y-[64px] translate-x-[35px]"
+                className="w-auto select-none pointer-events-none"
+                style={{
+                  height: BIZNESE_HERO_IMG_HEIGHT,
+                  /* Tailwind's preflight sets `img { max-width: 100% }`, which pinned this
+                     to its 480px track and silently capped the height constant above at
+                     480 no matter what it said. Released HERE, on the image, so the track
+                     itself is untouched. */
+                  maxWidth: "none",
+                  translate: `${BIZNESE_HERO_IMG_OFFSET.x} ${BIZNESE_HERO_IMG_OFFSET.y}`,
+                  /* `translate` and `transform` are SEPARATE CSS properties, not two names
+                     for one thing — so the offset above and this scale compose instead of
+                     overwriting each other, and either can be tuned without touching the
+                     other. */
+                  transform: `scale(${BIZNESE_HERO_IMG_SCALE})`,
+                  transformOrigin: "center top",
+                }}
               />
             </div>
           </div>
@@ -4759,11 +5094,11 @@ function PageBizneseTrajnime() {
                 Programe trajnimi të personalizuara sipas nevojave të biznesit tuaj, nga analiza dhe zhvillimi i aftësive deri te vlerësimi dhe certifikimi i stafit.
               </p>
               <div className="flex flex-wrap gap-3">
-                <PrimaryBtn>Na kontaktoni</PrimaryBtn>
+                <Link to="/kontakti"><PrimaryBtn>Na kontaktoni</PrimaryBtn></Link>
               </div>
             </div>
-            <div className="aspect-[4/3] rounded-[20px] overflow-hidden" style={{ backgroundColor: C.n100 }}>
-              <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=720&h=540&fit=crop&auto=format" alt="Trajnim korporativ" className="w-full h-full object-cover" style={{ objectPosition: BIZNESE_TRAJNIME_IMG_POSITION }} />
+            <div className="aspect-[5/3] rounded-[20px] overflow-hidden" style={{ backgroundColor: C.n100 }}>
+              <img src={trajnimePersonalizuara} alt="Trajnim i personalizuar" className="w-full h-full object-cover" style={{ objectPosition: BIZNESE_TRAJNIME_IMG_POSITION }} />
             </div>
           </div>
         </div>
@@ -4927,9 +5262,428 @@ function PageBizneseTrajnime() {
 /* ── 5.2 RRJETI I TALENTËVE ── */
 /* `object-position` for the framed image in this component. Second number is the
    vertical one — raise it to push the image DOWN inside its frame. */
-const TALENTE_SAMPLE_AVATAR_IMG_POSITION = "center 50%";
+/*
+  ─── TALENT NETWORK ───
+
+  One person = one entry here, and the categories below REFERENCE these objects rather
+  than repeating them. Several people belong to more than one category (Arjana Bellaqa is
+  in three), and duplicating a card per category is how a name, a role or — later — a CV
+  link ends up corrected in one place and stale in another. Edit a person once; every
+  carousel they appear in follows.
+
+  `photo: null` renders the icon placeholder instead of an <img>. Every person has a real
+  photo now — Trit Meri was the last holdout and his arrived — so nothing hits that branch
+  today. It is kept because a new name added here before their portrait exists should
+  render a complete card, not a broken image box.
+
+  `imgPosition` is per person: a face sits differently in every crop, so one shared value
+  cannot centre all twelve. Raise the second number to push that face DOWN in its circle.
+
+  `cvUrl` is a PLAIN PATH into `public/`, never an `import`. Vite copies `public/` through
+  untouched, so `/pdfs/cvs/x.pdf` stays that exact URL in dev and in the build and a CV can
+  be replaced by dropping in a new file — no rebuild, no code change. Importing them would
+  put twelve PDFs in the bundle graph under content-hashed names instead.
+
+  Set once per PERSON, which is the point of this table: Eda Nuka appears in two carousels
+  and Arjana Bellaqa in three, and they each resolve to one file rather than a copy per
+  category. Correct a path here and every card showing that person follows.
+
+  TalentCard still branches on it — a `null` renders the plain, inert button — so a new
+  person can be added before their CV exists without producing a link to nothing.
+*/
+type TalentPerson = {
+  readonly name: string;
+  readonly role: string;
+  readonly photo: string | null;
+  readonly imgPosition: string;
+  readonly cvUrl: string | null;
+};
+
+const TALENT_PEOPLE = {
+  altinMorina: { name: "Altin Morina", role: "Web & Mobile Development", photo: talentAltinMorina, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/altinCV.pdf" },
+  edaNuka: { name: "Eda Nuka", role: "Web & Mobile Development and UI/UX", photo: talentEdaNuka, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/edaCV.pdf" },
+  arjanaBellaqa: { name: "Arjana Bellaqa", role: "Web & Mobile Development, UI/UX Designer, Data Analysis", photo: talentArjanaBellaqa, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/arjanaCV.pdf" },
+  noraBekteshi: { name: "Nora Bekteshi", role: "Web & Mobile Development and UI/UX Designer", photo: talentNoraBekteshi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/noraCV.pdf" },
+  flamurHaxholli: { name: "Flamur Haxholli", role: "Web & Mobile Development", photo: talentFlamurHaxholli, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/flamurCV.pdf" },
+  resulManxholli: { name: "Resul Manxholli", role: "Web & Mobile Development", photo: talentResulManxholli, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/resulCV.pdf" },
+  kaltrinaQerimi: { name: "Kaltrina Qerimi", role: "Web & Mobile Development", photo: talentKaltrinaQerimi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/kaltrinaCV.pdf" },
+  ernataKoliqi: { name: "Ernata Koliqi", role: "Web & Mobile Development and UI/UX Designer", photo: talentErnataKoliqi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/ernataCV.pdf" },
+  mirlindArifi: { name: "Mirlind Arifi", role: "Data Analysis", photo: talentMirlindArifi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/mirlindCV.pdf" },
+  gjinBardhi: { name: "Gjin Bardhi", role: "DevOps Engineer", photo: talentGjinBardhi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/gjinCV.pdf" },
+  tritMeri: { name: "Trit Meri", role: "Network Engineer", photo: talentTritMeri, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/tritCV.pdf" },
+  fatjonKerceli: { name: "Fatjon Kërqeli", role: "Network Engineer", photo: talentFatjonKerceli, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/fatjonCV.pdf" },
+} satisfies Record<string, TalentPerson>;
+
+/*
+  The left-hand list AND the carousel both read this one array, so a category cannot exist
+  in the list without a carousel behind it. `people` order IS carousel order.
+
+  ⚠ The `skills` strings are carried over EXACTLY as they were on the page before this
+  change, including the fact that three of them are attached to the wrong role — UI/UX
+  Designers reads "Penetration testing, SOC, incident response" and Network Engineers reads
+  "Figma, prototyping, user research". That mismatch predates this work and is left alone
+  rather than silently rewritten; it is flagged so it can be fixed deliberately.
+*/
+const TALENT_CATEGORIES = [
+  {
+    role: "Web & Mobile Developers",
+    skills: "React, Node.js, React Native, API design",
+    people: [
+      TALENT_PEOPLE.altinMorina,
+      TALENT_PEOPLE.edaNuka,
+      TALENT_PEOPLE.arjanaBellaqa,
+      TALENT_PEOPLE.noraBekteshi,
+      TALENT_PEOPLE.flamurHaxholli,
+      TALENT_PEOPLE.resulManxholli,
+      TALENT_PEOPLE.kaltrinaQerimi,
+      TALENT_PEOPLE.ernataKoliqi,
+    ],
+  },
+  {
+    role: "UI/UX Designers",
+    skills: "Penetration testing, SOC, incident response",
+    people: [
+      TALENT_PEOPLE.edaNuka,
+      TALENT_PEOPLE.arjanaBellaqa,
+      TALENT_PEOPLE.noraBekteshi,
+      TALENT_PEOPLE.ernataKoliqi,
+    ],
+  },
+  {
+    role: "Data Analysts",
+    skills: "Python, SQL, visualization, reporting",
+    people: [TALENT_PEOPLE.arjanaBellaqa, TALENT_PEOPLE.mirlindArifi],
+  },
+  {
+    role: "DevOps Engineers",
+    skills: "Cloud (AWS/Azure), CI/CD, containerization",
+    people: [TALENT_PEOPLE.gjinBardhi],
+  },
+  {
+    role: "Network Engineers",
+    skills: "Figma, prototyping, user research",
+    people: [TALENT_PEOPLE.tritMeri, TALENT_PEOPLE.fatjonKerceli],
+  },
+];
+
+/*
+  One person's card. Same frame as the sample card it replaces — same padding, radius,
+  shadow, border, the same 64px circle and the same divider under the header.
+
+  What is GONE, deleted rather than hidden: the five-star row with "4.9", the tech tag
+  pills, and the small outlined "CV" button. Their space is not left empty — the header's
+  own `pb-5` and the divider now carry the rhythm, and the purple button spans the full
+  width the two buttons used to share. Three elements out, nothing floating.
+
+  `h-full` matters inside the carousel: every card sits in the same flex row, so the row is
+  as tall as the tallest of them and each card stretches to match. Without it, moving from
+  a one-line role to a three-line one would change the card's height mid-slide.
+*/
+/*
+  ─── Talent card: NO shadow, by decision ───
+
+  Two shadow attempts were rejected on this card — Tailwind's `shadow-2xl` (one hard
+  offset, reads as a dark smear) and a layered purple-tinted elevation (too heavy against
+  the tinted panel it sits on). The card now casts nothing at all.
+
+  What separates it from the panel instead is cheaper and cleaner, and is what most
+  restrained "premium" UI actually leans on:
+
+    · a real 1px border in a brand tint, not a grey hairline
+    · white card on a tinted panel — the contrast IS the separation
+    · generous internal padding, so the content is not crowding its own edges
+    · one 3px brand accent along the top edge
+
+  Nothing here should reintroduce `boxShadow` on the card surface. The only shadow left
+  anywhere in this component is the white/lilac RING around the avatar, which is a
+  spread-only ring drawn with box-shadow — a border substitute, not an elevation effect.
+*/
+const TALENT_AVATAR_RING = (ringInner: string, ringOuter: string) =>
+  `0 0 0 3px ${ringInner}, 0 0 0 4px ${ringOuter}`;
+
+function TalentCard({ person }: { person: TalentPerson }) {
+  return (
+    <div
+      className="h-full rounded-[20px] overflow-hidden flex flex-col"
+      style={{
+        /* Flat white now, not a wash. With no shadow the border is doing all the
+           separating, and a gradient that fades toward the panel's own tint softened the
+           bottom edge exactly where that border needs to read hardest. */
+        backgroundColor: C.n0,
+        /* `p200` rather than the near-invisible `p100`: this line IS the card's edge now,
+           so it has to be visible on its own. Still a brand tint, never grey. */
+        border: `1px solid ${C.p200}`,
+      }}
+    >
+      {/* Brand accent, 3px, full bleed across the top. The card's one piece of saturated
+          colour besides the button — enough to tie it to #823685 without competing with
+          the photo. `overflow-hidden` on the parent is what keeps its ends rounded. */}
+      <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${C.brand} 0%, ${C.p400} 55%, ${C.p300} 100%)` }} />
+
+      {/* p-8, up from p-7: with no shadow the padding is doing more of the work of making
+          the card feel considered rather than cramped. */}
+      <div className="p-8 flex flex-col flex-1">
+        <div className="flex items-center gap-4">
+          {/*
+            72px, up from 64. The photo is the first thing read on this card and at 64 it
+            was the same weight as the text beside it.
+
+            The double ring is drawn with `box-shadow`, not `border`: a border would eat
+            into the 72px box and shrink the face inside it, while spread-only shadows are
+            painted outside the element and leave the image untouched. White ring first,
+            then the pale purple, so the photo is separated from the tint behind it.
+          */}
+          <div
+            className="w-[72px] h-[72px] rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+            style={{
+              backgroundColor: C.n100,
+              /* Ring only — the drop-shadow that used to trail this is gone with the rest. */
+              boxShadow: TALENT_AVATAR_RING(C.n0, C.p200),
+            }}
+          >
+            {person.photo ? (
+              <img src={person.photo} alt="" className="w-full h-full object-cover" style={{ objectPosition: person.imgPosition }} />
+            ) : (
+              /* Same placeholder the instructor cards use when a portrait is missing. */
+              <Users size={26} style={{ color: C.p300 }} />
+            )}
+          </div>
+          <div className="min-w-0">
+            {/* Bigger and heavier than the role beneath it — the two used to be a
+                half-step apart, which read as one block of text rather than a name with a
+                caption. Negative tracking is what the rest of the site's headings use. */}
+            <p className="text-lg font-bold leading-tight" style={{ color: C.n900, letterSpacing: "-0.01em" }}>{person.name}</p>
+            <p className="text-sm mt-1.5 leading-snug" style={{ color: C.muted }}>{person.role}</p>
+          </div>
+        </div>
+
+        {/* A hairline that FADES rather than a flat 1px rule running wall to wall. Drawn as
+            a 1px element with a gradient background, since a border cannot fade. */}
+        <div className="h-px my-6" style={{ background: `linear-gradient(90deg, ${C.p200} 0%, ${C.p100} 45%, transparent 100%)` }} />
+
+        {/* `mt-auto` pins the button to the bottom, so a short card and a tall one in the
+            same carousel line their buttons up instead of floating them mid-card. */}
+        <div className="mt-auto">
+          {/*
+            An <a> when there is a CV, a bare <button> when there is not — same markup and
+            styling either way, so the card looks identical in both states.
+
+            An anchor rather than `onClick={() => window.open(...)}` because opening a
+            document IS navigation: middle-click, ctrl-click, "open in new tab" and "copy
+            link address" all work on a real href and all silently do nothing on a button.
+            The same choice, for the same reason, as the "Shkarko planprogramin" links.
+
+            `rel="noopener noreferrer"` goes with every `target="_blank"`: without
+            `noopener` the opened tab gets a `window.opener` handle back into this one and
+            can navigate it somewhere else.
+
+            `block text-center` on the <a> reproduces what the <button> gave for free —
+            an anchor is inline by default and would otherwise shrink to its text.
+          */}
+          {person.cvUrl ? (
+            <a
+              href={person.cvUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center py-3 rounded-[14px] text-sm font-semibold text-white transition-colors active:scale-[0.98]"
+              style={{ backgroundColor: C.brand, letterSpacing: "0.01em" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.brandDark; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.brand; }}
+            >
+              Shkarko CV
+            </a>
+          ) : (
+            <button
+              className="w-full py-3 rounded-[14px] text-sm font-semibold text-white transition-colors active:scale-[0.98]"
+              style={{
+                /* Flat brand fill and no glow, to match the shadow-free card. Depth here
+                   comes from the colour darkening on hover — the same move PrimaryBtn
+                   makes everywhere else on the site — rather than from a cast shadow. */
+                backgroundColor: C.brand,
+                letterSpacing: "0.01em",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.brandDark; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.brand; }}
+            >
+              Shkarko CV
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/*
+  The carousel. ONE card visible, arrows on desktop, swipe on touch.
+
+  Built on native scroll-snap rather than a transform slider or a library: the track is a
+  real horizontally scrollable element, so a phone's own inertial swipe, a trackpad's
+  two-finger flick and a screen reader's focus order all work for free. The arrows just
+  scroll it. A transform-based slider would have to reimplement every one of those.
+
+  `index` is derived FROM the scroll position rather than being the thing that drives it,
+  which is what keeps the counter honest when the user swipes instead of clicking: the
+  arrows call `scrollTo`, the scroll handler reports where the track actually landed.
+
+  Resetting on `people` is what makes switching category feel right — pick a new category
+  while on the 6th card and the carousel starts at the first person again, not on an
+  index that may not exist in the new, shorter list.
+*/
+function TalentCarousel({ people }: { people: readonly TalentPerson[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(0);
+    const track = trackRef.current;
+    if (!track) return;
+    /* Jump, do not glide: this is a category switch, not a step through a list, and
+       animating back to the start reads as a glitch. The track carries CSS
+       `scroll-behavior: smooth`, so it is suspended for this one assignment and restored
+       immediately after. */
+    track.style.scrollBehavior = "auto";
+    track.scrollLeft = 0;
+    track.style.scrollBehavior = "";
+  }, [people]);
+
+  const goTo = (target: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.max(0, Math.min(target, people.length - 1));
+    /*
+      Assigning `scrollLeft` and letting CSS `scroll-behavior: smooth` animate it —
+      NOT `scrollTo({ behavior: "smooth" })`.
+
+      Measured: with `scroll-snap-type: x mandatory` on this track, Chrome cancels a
+      programmatic smooth animation and re-snaps to where it started, so the arrows moved
+      the counter while the track never left scrollLeft 0. The direct assignment is not
+      cancelled, and the CSS property still animates it.
+    */
+    track.scrollLeft = clamped * track.clientWidth;
+    setIndex(clamped);
+  };
+
+  /* Rounding to the nearest slide rather than flooring: mid-swipe the track sits between
+     two cards, and flooring would report the previous one until the very last pixel. */
+  const handleScroll = () => {
+    const track = trackRef.current;
+    if (!track || track.clientWidth === 0) return;
+    setIndex(Math.round(track.scrollLeft / track.clientWidth));
+  };
+
+  const atStart = index <= 0;
+  const atEnd = index >= people.length - 1;
+
+  const arrowStyle = (disabled: boolean) => ({
+    border: `1px solid ${disabled ? C.n200 : C.brand}`,
+    color: disabled ? C.n400 : C.brand,
+    backgroundColor: C.n0,
+    cursor: disabled ? "default" : "pointer",
+  });
+
+  return (
+    /*
+      A contained panel behind the whole carousel. The card used to float on bare white
+      with nothing framing it, which is what made it read as unfinished.
+
+      The radial gradient is anchored at the TOP CENTRE, directly behind the card's head,
+      so the tint is strongest where the photo and name are and washes out to white at the
+      edges. A flat tinted rectangle would just look like a grey box; a gradient that
+      follows the content gives the card something to sit in.
+    */
+    <div
+      className="rounded-3xl p-5 sm:p-6"
+      style={{
+        background: `radial-gradient(120% 90% at 50% 0%, ${C.brandLight} 0%, ${C.brandSoft} 42%, ${C.n0} 100%)`,
+        border: `1px solid ${C.p100}`,
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => goTo(index - 1)}
+          disabled={atStart}
+          aria-label="Talenti i mëparshëm"
+          className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center shrink-0 transition-colors"
+          style={arrowStyle(atStart)}
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        {/*
+          `overflow-x-auto` + `snap-x snap-mandatory` is the carousel itself.
+          `scrollbar-width: none` (and the WebKit pseudo-element, which Tailwind cannot
+          express, hence the <style> once at the page level) hides the bar without
+          disabling the scrolling that makes swipe work.
+        */}
+        <div
+          ref={trackRef}
+          onScroll={handleScroll}
+          /* `py-1` is enough now that the card casts nothing — it only keeps the border
+             off the scroll container's own edge. Horizontal padding is still deliberately
+             NOT added: `clientWidth` includes padding, and the arrows scroll by exactly one
+             `clientWidth` per slide, so a left/right pad would drift the carousel further
+             out of alignment with every step. */
+          className="talent-track flex-1 min-w-0 flex overflow-x-auto snap-x snap-mandatory py-1"
+          style={{ scrollbarWidth: "none", scrollBehavior: "smooth" }}
+        >
+          {people.map((person) => (
+            /* `w-full shrink-0` is what makes exactly one card fill the viewport of the
+               track; `snap-center` is what makes a swipe settle on a card, never between
+               two. `p-1` leaves the card's own shadow room to render instead of being
+               clipped by the scroll container's edge. */
+            <div key={person.name} className="w-full shrink-0 snap-center p-1">
+              <TalentCard person={person} />
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => goTo(index + 1)}
+          disabled={atEnd}
+          aria-label="Talenti i radhës"
+          className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center shrink-0 transition-colors"
+          style={arrowStyle(atEnd)}
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      {/* Position readout, promoted from loose grey text to a pill that matches the card's
+          own surface — white, hairline purple border, the same soft contact shadow. The
+          CURRENT number carries brand colour and weight while the total stays muted, so
+          the pair reads as "where you are, out of how many" at a glance. */}
+      {people.length > 1 && (
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <span
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold tabular-nums"
+            style={{
+              backgroundColor: C.n0,
+              border: `1px solid ${C.p200}`,
+              letterSpacing: "0.02em",
+            }}
+          >
+            <span style={{ color: C.brand }}>{index + 1}</span>
+            <span style={{ color: C.n400 }}> / {people.length}</span>
+          </span>
+          {/* Touch only: on desktop the arrows already say this. */}
+          <span className="sm:hidden text-xs" style={{ color: C.n500 }}>rrëshqit për të parë më shumë</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function PageBizneseTalente() {
+  /* Which category the list on the left has selected, and therefore whose people the
+     carousel beside it shows. An INDEX into TALENT_CATEGORIES rather than a role string:
+     the index cannot drift out of sync with a renamed category, and it is what the
+     carousel needs to look the list up anyway. Starts at 0 so the section is never empty
+     on arrival — the page opens on Web & Mobile Developers. */
+  const [activeTalentCategory, setActiveTalentCategory] = useState(0);
+
   return (
     <PageWrapper>
       <style>{globalStyle}</style>
@@ -4942,25 +5696,34 @@ function PageBizneseTalente() {
             Gjeni profesionistët e rinj që kërkon biznesi juaj!
           </h1>
           <p className="text-lg mb-8" style={{ color: C.muted }}>Eksploroni CV-të, aftësitë dhe përvojën e studentëve dhe të diplomuarve tanë, të përgatitur për praktikë dhe punësim në industrinë e teknologjisë.</p>
-          <PrimaryBtn>Mëso më shumë</PrimaryBtn>
+          <PrimaryBtn onClick={() => scrollToSection(TALENTE_LIST_ID)}>Mëso më shumë</PrimaryBtn>
 
           {/* Avatars row */}
           <div className="flex items-center justify-center mt-10 gap-1">
             {[
-              /* `imgPosition` per avatar — a face sits differently in each source crop, so
-                 one shared value cannot centre all five. Raise the second number to push
-                 that avatar's image DOWN in its circle. */
-              { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&auto=format", imgPosition: "center 50%" },
-              { url: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&auto=format", imgPosition: "center 50%" },
-              { url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop&auto=format", imgPosition: "center 50%" },
-              { url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop&auto=format", imgPosition: "center 50%" },
-              { url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=60&h=60&fit=crop&auto=format", imgPosition: "center 50%" },
+              /* Real talents now, in display order. `imgPosition` per avatar — a face sits
+                 differently in each source crop, so one shared value cannot centre all
+                 five. Raise the second number to push that avatar's image DOWN in its
+                 circle, lower it to pull the face UP. */
+              { url: talentMirlindArifi, imgPosition: "center 50%" },
+              { url: talentDinaZejneli, imgPosition: "center 50%" },
+              { url: talentAltinMorina, imgPosition: "center 50%" },
+              { url: talentArjanaBellaqa, imgPosition: "center 50%" },
+              { url: talentFatjonKerceli, imgPosition: "center 50%" },
             ].map(({ url, imgPosition }, i) => (
               <div key={i} className="w-12 h-12 rounded-full overflow-hidden -ml-2 first:ml-0 ring-2 ring-white" style={{ backgroundColor: C.n100 }}>
                 <img src={url} alt="" className="w-full h-full object-cover" style={{ objectPosition: imgPosition }} />
               </div>
             ))}
-            <span className="ml-3 px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: C.brandLight, color: C.brand }}>+200 talente</span>
+            {/*
+              The "+200 talente" pill used to sit here. Removing it is all the re-centring
+              this row needs: the wrapper is already `justify-center`, and flexbox centres
+              whatever it actually contains — the pill was simply part of that content, so
+              its width pushed the circles left of true centre. With it gone the five
+              circles are the only children and land dead centre under the button. No
+              margin or offset is added to compensate; there is nothing left to compensate
+              for.
+            */}
           </div>
         </div>
       </section>
@@ -4979,50 +5742,49 @@ function PageBizneseTalente() {
         </div>
       </section>
 
-      {/* 3. Who you get */}
-      <section className="py-24" style={{ backgroundColor: C.n0 }}>
+      {/* 3. Who you get — the landing spot for the hero's "Mëso më shumë". */}
+      <section id={TALENTE_LIST_ID} className="py-24 scroll-mt-28" style={{ backgroundColor: C.n0 }}>
         <div className="max-w-[1200px] mx-auto px-5">
           <h2 className="text-2xl font-bold mb-10" style={{ color: C.n900 }}>Cilët talente gjeni në rrjetin tonë</h2>
+          {/* WebKit has no CSS property for hiding a scrollbar, only a pseudo-element, and
+              Tailwind cannot express one — so the track's bar is hidden here. Scrolling
+              itself is untouched, which is what keeps the swipe working. */}
+          <style>{`.talent-track::-webkit-scrollbar { display: none; }`}</style>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
             <div className="flex flex-col gap-3">
-              {[["Zhvillues Web & Mobile", "React, Node.js, React Native, API design"], ["Specialistë Sigurie Kibernetike", "Penetration testing, SOC, incident response"], ["Data Analysts", "Python, SQL, visualization, reporting"], ["DevOps Engineers", "Cloud (AWS/Azure), CI/CD, containerization"], ["UI/UX Designers", "Figma, prototyping, user research"]].map(([role, skills]) => (
-                <div key={role} className="p-4 rounded-xl flex gap-4 transition-all hover:shadow-md" style={{ border: `1px solid ${C.cardBorder}` }}>
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: C.brandLight }}>
-                    <UserCheck size={16} style={{ color: C.brand }} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm" style={{ color: C.n900 }}>{role}</p>
-                    <p className="text-xs mt-0.5" style={{ color: C.muted }}>{skills}</p>
-                  </div>
-                </div>
-              ))}
+              {TALENT_CATEGORIES.map(({ role, skills }, i) => {
+                const selected = i === activeTalentCategory;
+                return (
+                  /*
+                    A real <button>, not a clickable <div>: this changes what is shown
+                    beside it, so it has to be reachable by keyboard and announced as a
+                    control. `aria-pressed` is what tells a screen reader WHICH category is
+                    the current one — the colour change alone says nothing to it.
+                  */
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setActiveTalentCategory(i)}
+                    aria-pressed={selected}
+                    className="p-4 rounded-xl flex gap-4 text-left w-full transition-all hover:shadow-md"
+                    style={{
+                      border: `1px solid ${selected ? C.brand : C.cardBorder}`,
+                      backgroundColor: selected ? C.brandLight : "transparent",
+                    }}
+                  >
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: selected ? C.brand : C.brandLight }}>
+                      <UserCheck size={16} style={{ color: selected ? "#fff" : C.brand }} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm" style={{ color: C.n900 }}>{role}</p>
+                      <p className="text-xs mt-0.5" style={{ color: C.muted }}>{skills}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Sample talent card */}
-            <div className="p-6 rounded-2xl shadow-2xl" style={{ border: `1px solid ${C.cardBorder}`, backgroundColor: C.n0 }}>
-              <div className="flex items-center gap-4 mb-5 pb-4" style={{ borderBottom: `1px solid ${C.n100}` }}>
-                <div className="w-16 h-16 rounded-full overflow-hidden" style={{ backgroundColor: C.n100 }}>
-                  <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&auto=format" alt="" className="w-full h-full object-cover" style={{ objectPosition: TALENTE_SAMPLE_AVATAR_IMG_POSITION }} />
-                </div>
-                <div>
-                  <p className="font-semibold" style={{ color: C.n900 }}>Enis Krasniqi</p>
-                  <p className="text-sm" style={{ color: C.muted }}>Zhvillues i Ueb-it dhe Aplikacioneve Mobile</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {[Star, Star, Star, Star, Star].map((Icon, i) => <Icon key={i} size={12} style={{ color: "#F5A524" }} fill="#F5A524" />)}
-                    <span className="text-xs ml-1" style={{ color: C.n500 }}>4.9</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {["React", "Node.js", "TypeScript", "PostgreSQL", "Git"].map((tag) => (
-                  <span key={tag} className="px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: C.brandLight, color: C.brandDark }}>{tag}</span>
-                ))}
-              </div>
-              <div className="flex gap-3">
-                <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: C.brand }}>Kërko intervistë</button>
-                <button className="px-4 py-2.5 rounded-xl text-sm font-semibold" style={{ border: `1px solid ${C.brand}`, color: C.brand }}>CV</button>
-              </div>
-            </div>
+            <TalentCarousel people={TALENT_CATEGORIES[activeTalentCategory].people} />
           </div>
         </div>
       </section>
@@ -5186,7 +5948,7 @@ function PageBizneseBursa() {
               <p className="text-lg leading-relaxed mb-8" style={{ color: C.muted }}>
                 Çdo bursë e sponsorizuar hap derën e arsimit teknologjik për një student me talent që nuk ka mundësi financiare.
               </p>
-              <PrimaryBtn>Bëhu sponsor</PrimaryBtn>
+              <Link to="/kontakti"><PrimaryBtn>Bëhu sponsor</PrimaryBtn></Link>
             </div>
             <div className="relative">
               {/* Landscape, matching the reference frame exactly: 4:3 on a phone, 16:10 from
@@ -5344,7 +6106,7 @@ function PageBiznestKlasa() {
       {/* 1. Hero — image-led */}
       <section className="relative min-h-[60vh] flex items-end">
         <div className="absolute inset-0">
-          <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1440&h=720&fit=crop&auto=format" alt="Klasë moderne" className="w-full h-full object-cover" style={{ objectPosition: KLASA_HERO_IMG_POSITION }} />
+          <img src={klasaMeQeraHero} alt="Klasë moderne" className="w-full h-full object-cover" style={{ objectPosition: KLASA_HERO_IMG_POSITION }} />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.1) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 py-16 w-full">
@@ -5352,7 +6114,9 @@ function PageBiznestKlasa() {
             <Breadcrumb items={[{ label: "Ballina", path: "/" }, { label: "Për biznese", path: "/biznese" }, { label: "Klasët me qera" }]} />
             <h1 className="text-2xl font-bold mb-2 leading-tight" style={{ color: C.n900 }}>Hapësira moderne për trajnimet dhe eventet tuaja</h1>
             <p className="text-sm mb-5" style={{ color: C.muted }}>Klasa plotësisht të pajisura për trajnime, workshope, provime, takime dhe konferenca, në një lokacion të përshtatshëm.</p>
-            <PrimaryBtn>Rezervo tani</PrimaryBtn>
+            {/* The HERO button only. The identically-labelled button further down this
+                page is a form's submit control, not a link, and is left alone. */}
+            <Link to="/kontakti"><PrimaryBtn>Rezervo tani</PrimaryBtn></Link>
           </div>
         </div>
       </section>
@@ -5591,9 +6355,23 @@ function PageBiznestKlasa() {
  */
 /* Project photos — /projektet/[slug]. `Main` is the large shot beside the "Rreth
    projektit" copy; the numbered ones fill the three-up strip below it. Six of the eight
-   projects have real photos; SDC and LuxDev have none yet and fall back to the stock
-   images still hard-coded in ProjectDetailPage. The delivered names differ slightly from
-   how they were listed: us2/us3/us4, not us-2/us-3/us-4. */
+   projects have real photos; SDC alone still has none and falls back to the stock images
+   hard-coded in ProjectDetailPage. The delivered names differ slightly from how they were
+   listed: us2/us3/us4, not us-2/us-3/us-4. */
+/* LuxDev. `1` is the large shot; 2-4 fill the strip, left to right. Note the mixed
+   extensions — luxdev1 is a .png while 2-4 are .jpeg, which is how they were
+   delivered. `luxdev.png` is something else entirely: the FUNDER LOGO for the navbar
+   dropdown, imported as `projectLuxDev` far above. Do not conflate the two. */
+import projLuxDevMain from "../imports/luxdev1.png";
+import projLuxDev2 from "../imports/luxdev2.jpeg";
+import projLuxDev3 from "../imports/luxdev3.jpeg";
+import projLuxDev4 from "../imports/luxdev4.jpeg";
+/* SDC / Helvetas. `1` is the large shot; 2 and 3 fill the strip, which is a TWO-up
+   row for this project rather than the usual three — only two extra photos exist.
+   Mixed extensions, as delivered: sdc1 is .webp, 2 and 3 are .jpg. */
+import projSdcMain from "../imports/sdc1.webp";
+import projSdc2 from "../imports/sdc2.jpg";
+import projSdc3 from "../imports/sdc3.jpg";
 import projSkillMain from "../imports/skill7.jpeg";
 import projSkill1 from "../imports/skill1.jpeg";
 import projSkill3 from "../imports/skill3.jpeg";
@@ -5624,6 +6402,14 @@ const PROJECTS = [
     partner: "PARTNER",
     desc: "Skill Factory nga Cacttus Education ishte një akademi trajnimi inovative, e mbështetur nga Bashkimi Evropian dhe Qeveria Gjermane përmes iniciativës Digital4Business.",
     path: "/projektet/skill-factory",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["1,200", "Pjesëmarrës"],
+      ["35", "Trajnime"],
+      ["10+", "Kategori Trajnimesh"],
+    ],
     mainImg: projSkillMain,
     gallery: [
       { url: projSkill1, imgPosition: "center 50%" },
@@ -5641,6 +6427,14 @@ const PROJECTS = [
     partner: "USAID",
     desc: "Cacttus Education zbaton Programin YOU, i mbështetur nga USAID Kosovo, për të rritur qasjen e të rinjve në arsim profesional, njohuri dhe tregun e punës në ICT. Projekti ofron trajnime praktike në zhvillim softueri, administrim rrjetesh, siguri kibernetike dhe sipërmarrësi digjitale, duke i lidhur pjesëmarrësit me sektorin privat për praktika dhe mentorim.",
     path: "/projektet/usaid",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["250", "Pjesëmarrës"],
+      ["60", "Bursa"],
+      ["32", "Programe Trajnimi"],
+    ],
     mainImg: projUsaidMain,
     gallery: [
       { url: projUs2, imgPosition: "center 50%" },
@@ -5658,6 +6452,22 @@ const PROJECTS = [
     partner: "SDC",
     desc: "Projekti synon përmirësimin e punësimit të të rinjve në sektorin ICT në Kosovë, duke ndërtuar ura bashkëpunimi mes arsimit dhe industrisë dhe duke rritur kapacitetet për eksport të shërbimeve ICT drejt tregjeve të BE-së dhe vendeve gjermanofolëse (DACH).",
     path: "/projektet/sdc",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["30+", "Të Punësuar"],
+      ["340+", "Orë Trajnuese"],
+      ["14+", "Trajnime Të Personalizuara"],
+    ],
+    mainImg: projSdcMain,
+    /* TWO entries, not three. The strip's column count follows this array's length —
+       see `shots` in ProjectDetailPage — so two photos make a two-up row that fills the
+       width, rather than three columns with one left empty. */
+    gallery: [
+      { url: projSdc2, imgPosition: "center 50%" },
+      { url: projSdc3, imgPosition: "center 50%" },
+    ],
     about: [
       "Projekti, i financuar nga SDC dhe i zbatuar nga Helvetas dhe MDA, zhvilloi një model inovativ të trajnimit dhe punësimit për të rinjtë në sektorin ICT.",
       "Përmes një programi intensiv katërmujor për Full-Stack Web Development, të zhvilluar në bashkëpunim me kompanitë ICT në Kosovë, u ofrua trajnim i përshtatur me kërkesat reale të tregut.",
@@ -5670,6 +6480,14 @@ const PROJECTS = [
     partner: "WoW",
     desc: "Projekti, zbatuar nga Cacttus Education me mbështetjen e USAID Kosovo, fuqizon gratë e papuna dhe të nënpunësuara me aftësi për punë online — freelancing, zhvillim web, dizajn grafik, SEO, menaxhim rrjetesh sociale dhe përkthim — duke i ndihmuar të ndërtojnë profile profesionale dhe të fitojnë të ardhura të pavarura.",
     path: "/projektet/wow",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["135+", "Gra Të Trajnuara"],
+      ["35+", "fituan 2,511€"],
+      ["1,670+", "Aplikime"],
+    ],
     mainImg: projGraMain,
     gallery: [
       { url: projGra1, imgPosition: "center 50%" },
@@ -5687,6 +6505,14 @@ const PROJECTS = [
     partner: "KODE",
     desc: "Cacttus Education zbaton Projektin KODE të Programit YOU, duke rikualifikuar përfitues të përzgjedhur në Komunën e Prizrenit përmes kurseve në Microsoft Azure Cloud, Linux dhe aftësi të buta, me katër klasa trajnimi dhe rreth 80 përfitues gjithsej.",
     path: "/projektet/kode",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["285+", "Orë Të Mbajtura"],
+      ["80+", "Përfitues"],
+      ["6", "Muaj"],
+    ],
     mainImg: projKodeMain,
     gallery: [
       { url: projKode2, imgPosition: "center 50%" },
@@ -5702,6 +6528,14 @@ const PROJECTS = [
     partner: "RCF",
     desc: "Projekti, zbatuar nga Cacttus Education me partnerë teknologjikë, përmirëson aftësitë digjitale dhe punësueshmërinë e të rinjve përmes trajnimit bashkëpunues (Cooperative Training), duke kombinuar mësimin teorik me praktikën në zhvillim web, mobile dhe administrim sistemesh.",
     path: "/projektet/rcf",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["60+", "Të Trajnuar"],
+      ["50%", "Gra"],
+      ["2", "Vite"],
+    ],
     mainImg: projRcfMain,
     gallery: [
       { url: projRcf1, imgPosition: "center 50%" },
@@ -5719,6 +6553,21 @@ const PROJECTS = [
     partner: "LuxDev",
     desc: "LuxDev Smart Mobility Project është një iniciativë e financuar nga LuxDev dhe fituar nga Cacttus Sh.A., që synon zhvillimin e zgjidhjeve të mençura dhe të qëndrueshme në mobilitetin urban të Kosovës, duke forcuar njohuritë lokale në smart mobility dhe teknologjitë e aplikuara.",
     path: "/projektet/luxdev",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["100+", "Pjesëmarrës"],
+      ["5+", "Partnerë"],
+      ["4000+", "IoT Pajisje"],
+    ],
+    mainImg: projLuxDevMain,
+    /* Strip order IS the array order, left to right. */
+    gallery: [
+      { url: projLuxDev2, imgPosition: "center 50%" },
+      { url: projLuxDev3, imgPosition: "center 50%" },
+      { url: projLuxDev4, imgPosition: "center 50%" },
+    ],
     about: [
       "Fokusi i projektit është forcimi i njohurive dhe aftësive lokale në fusha që lidhen me smart mobility, sistemet digjitale dhe teknologjitë e aplikuara, duke krijuar lidhje të drejtpërdrejta ndërmjet arsimit, nevojave të tregut të punës dhe zhvillimeve të ardhshme në sektorin e transportit dhe mobilitetit.",
       "Roli i Cacttus Education në këtë projekt është i përqendruar kryesisht në arsim dhe zhvillim të aftësive profesionale. Si institucion i arsimit dhe trajnimit profesional, Cacttus Education është përgjegjës për dizajnimin dhe ofrimin e programeve trajnuese praktike, punëtorive dhe moduleve mësimore që pajisin studentët dhe profesionistët me aftësi konkrete digjitale dhe teknike të lidhura me smart mobility. CE kontribuon gjithashtu në zhvillimin e kurrikulave, aktiviteteve praktike dhe ndërtimin e kapaciteteve afatgjata, duke siguruar që rezultatet e projektit të jenë të matshme dhe të qëndrueshme.",
@@ -5730,6 +6579,14 @@ const PROJECTS = [
     partner: "VIC",
     desc: "VIC është një iniciativë e mbështetur nga Bashkimi Evropian që zhvillon aftësi dixhitale të avancuara në Realitetin e Zgjeruar (AR/VR), duke bashkuar universitete, institucione kërkimore dhe liderë industrie për trajnime të përshtatura si për profesionistë të TIK-ut ashtu edhe për audiencat jo-tradicionale.",
     path: "/projektet/vic",
+    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
+       number to push the image DOWN inside the frame, lower it to pull it UP. */
+    mainImgPosition: "center 50%",
+    stats: [
+      ["500+", "Pjesëmarrës"],
+      ["11+", "Partnerë"],
+      ["25+", "Trajnime të Avancuara"],
+    ],
     mainImg: projVicMain,
     gallery: [
       { url: projVic1, imgPosition: "center 50%" },
@@ -5796,7 +6653,17 @@ function PageProjektet() {
 
 /* `object-position` for the framed image in this component. Second number is the
    vertical one — raise it to push the image DOWN inside its frame. */
-const PROJECT_ABOUT_IMG_POSITION = "center 50%";
+
+/*
+  The strip shown for a project that has no photos of its own. Every project has real
+  ones now, so nothing reaches this today — it is kept so that a newly added project
+  renders a complete page before its photography arrives, rather than three empty boxes.
+*/
+const PROJECT_FALLBACK_GALLERY = [
+  { url: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
+  { url: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
+  { url: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
+];
 
 function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
   /*
@@ -5810,6 +6677,13 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
     the dropdown should render without a logo, not crash the page.
   */
   const logo = PROJEKTET_LIST.find((p) => p.path === project.path)?.icon ?? null;
+
+  /*
+    The strip's photos, resolved ONCE so the column count and the cells read the same
+    list. Hoisted out of the JSX because the grid needs `.length` before it can decide
+    how many tracks to draw, and inlining the fallback twice is how the two drift apart.
+  */
+  const shots = project.gallery ?? PROJECT_FALLBACK_GALLERY;
 
   return (
     <PageWrapper>
@@ -5890,15 +6764,15 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
                 <p key={i} className="text-base leading-relaxed" style={{ color: C.muted }}>{paragraph}</p>
               ))}
             </div>
-            {/* Frame untouched — only the source is now per project. The `??` keeps SDC and
-                LuxDev on the stock photo they already showed: they have no `mainImg` yet, and
-                falling back is what leaves those two pages exactly as they were. */}
+            {/* Frame untouched — only the source is per project. The `??` now catches SDC
+                alone: it is the last project with no `mainImg`, so it keeps the stock photo
+                it always showed. */}
             <div className="aspect-video rounded-2xl overflow-hidden" style={{ backgroundColor: C.n100 }}>
               <img
                 src={project.mainImg ?? "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=720&h=405&fit=crop&auto=format"}
                 alt={project.title}
                 className="w-full h-full object-cover"
-                style={{ objectPosition: PROJECT_ABOUT_IMG_POSITION }}
+                style={{ objectPosition: project.mainImgPosition }}
               />
             </div>
           </div>
@@ -5906,26 +6780,47 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
       </section>
       <section className="py-16" style={{ backgroundColor: C.brandSoft }}>
         <div className="max-w-[1200px] mx-auto px-5">
-          <div className="grid grid-cols-3 gap-50 text-center">
-            {[["5000+", "Pjesëmarrës"], ["30+", "Projekte"], ["20+", "Partnerë"]].map(([num, label]) => (
-              <div key={label}><p className="text-4xl font-bold mb-1" style={{ color: C.brand }}>{num}</p><p className="text-sm" style={{ color: C.n500 }}>{label}</p></div>
+          {/*
+            RESPONSIVE GAP. `gap-50` is 200px — fine inside a 1200px container, fatal below
+            it: measured at 375px the row had 320px of width against 400px of gaps, so all
+            three cells computed to ZERO width and their text spilled 158px off the page.
+
+            `lg:gap-50` keeps the desktop spacing exactly as it was; the smaller steps only
+            apply where the old value could never fit. One column below `sm` because three
+            90px tracks turn "Trajnime Të Personalizuara" into six wrapped lines.
+          */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 lg:gap-50 text-center">
+            {/*
+              `project.stats`, not a literal. This strip used to hold one hard-coded array
+              INSIDE the shared detail component, so all eight projects rendered the same
+              three numbers — the figures belonged to no project in particular and were
+              wrong on every page. They live on each project in PROJECTS now.
+
+              Keyed by INDEX, not by label: two projects still have blank placeholders, and
+              three empty-string labels in one strip are three duplicate keys, which React
+              cannot tell apart. Index is stable here because the array is static and never
+              reordered.
+            */}
+            {project.stats.map(([num, label], i) => (
+              <div key={i}><p className="text-4xl font-bold mb-1" style={{ color: C.brand }}>{num}</p><p className="text-sm" style={{ color: C.n500 }}>{label}</p></div>
             ))}
           </div>
         </div>
       </section>
       <section className="py-20" style={{ backgroundColor: C.n0 }}>
         <div className="max-w-[1200px] mx-auto px-5">
-          <div className="grid grid-cols-3 gap-4">
-            {(project.gallery ?? [
-              /* Fallback strip for the projects with no photos of their own — SDC and LuxDev.
-                 `imgPosition` per photo — raise the second number to push that one DOWN in
-                 its 16:9 cell. Per entry rather than one value for the strip, because the
-                 shots crop differently; the same field is on every real `gallery` entry in
-                 PROJECTS, so the knob survives the swap. */
-              { url: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
-              { url: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
-              { url: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
-            ]).map(({ url, imgPosition }, i) => (
+          {/*
+            Column count follows the number of photos: two shots make a two-up row that
+            fills the width, three keep the original three-up. A fixed `grid-cols-3` left
+            SDC's two photos in the first two tracks with a visibly empty third.
+
+            Both class names are written out in full rather than built as
+            `grid-cols-${n}`. Tailwind generates CSS by scanning the source for COMPLETE
+            class names, so an interpolated one matches nothing and produces no rule at
+            all — the same trap as the `object-[...]` note further up this file.
+          */}
+          <div className={`grid gap-4 ${shots.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+            {shots.map(({ url, imgPosition }, i) => (
               <div key={i} className="aspect-video rounded-2xl overflow-hidden" style={{ backgroundColor: C.n100 }}><img src={url} alt="" className="w-full h-full object-cover" loading="lazy" style={{ objectPosition: imgPosition }} /></div>
             ))}
           </div>
@@ -6185,10 +7080,9 @@ const TEAM_MEMBERS = [
     and all — "Prishtine" or "Prishtinë " would silently filter to an empty grid rather
     than error. They were copied out of the `cities` list rather than retyped.
 
-    Elmaze Gashi has no `imgUrl` and an empty `role`. Omitting the field entirely is what
-    makes PersonCard draw its own placeholder — a Users glyph on `brandSoft` — instead of
-    the broken-image box the old "Arta Berisha" row produced by pointing at a URL that no
-    longer resolved. Add the photo and the title here when they are known.
+    Elmaze Gashi now has her photo; her `role` is still empty, which PersonCard renders as
+    a blank line rather than inventing a title. Fill it in when it is known. The `role`-less
+    entries are deliberate everywhere on this page — see LIGJËRUEIT for the same reasoning.
   */
   { name: "Driton Hapçiu", role: "Chairman of the Board", city: "Prishtinë", imgUrl: ekipiDritoni },
   { name: "Vildane Kelmendi", role: "CEO", city: "Prishtinë", imgUrl: ekipiVili },
@@ -6197,7 +7091,7 @@ const TEAM_MEMBERS = [
   { name: "Donjeta Ismajli", role: "Chief Operating Officer", city: "Prishtinë", imgUrl: ekipiDonjeta },
   { name: "Vjosa Osmani", role: "Head of Human Resources and Quality Control", city: "Prishtinë", imgUrl: ekipiVjosa },
   { name: "Rinon Hoxha", role: "Project Manager", city: "Prishtinë", imgUrl: ekipiRinoni },
-  { name: "Elmaze Gashi", role: "", city: "Prishtinë", /* no photo yet */ },
+  { name: "Elmaze Gashi", role: "", city: "Prishtinë", imgUrl: ekipiElmaze },
   { name: "Florentina Osmani", role: "Marketing Manager", city: "Prishtinë", imgUrl: ekipiTina },
   { name: "Antigona Beha-Breznica", role: "Financial Assistant", city: "Prishtinë", imgUrl: ekipiGona },
   { name: "Arnisa Aliqkaj", role: "Career Counsellor", city: "Prishtinë", imgUrl: ekipiArnisa },
@@ -6453,15 +7347,17 @@ function PageRrethNesh() {
             </div>
 
             {/*
-              PLACEHOLDER IMAGE. `studimePhoto` is the Bursa_Redesign.png already bundled
-              for the homepage's studies section — borrowed here so the column is not
-              empty, NOT because it is the right picture. Swap the import below for a real
-              photo of the school, a classroom or the team.
+              The real staff photo, in place of the Bursa_Redesign.png this column used to
+              borrow from the homepage. `studimePhoto` still serves that homepage section,
+              so its import stays — this page simply no longer shares it.
+
+              A 3:2 photo in a 4:3 frame: `object-cover` fills the box and throws away the
+              overflow, and RRETH_AMBIENT_IMG_POSITION is what chooses which slice is kept.
             */}
             <div className="aspect-[4/3] rounded-3xl overflow-hidden" style={{ backgroundColor: C.brandLight }}>
               <img
-                src={studimePhoto}
-                alt="Ambienti i Cacttus Education"
+                src={rrethNeshStafi}
+                alt="Stafi i Cacttus Education"
                 className="w-full h-full object-cover"
                 style={{ objectPosition: RRETH_AMBIENT_IMG_POSITION }}
                 loading="lazy"
@@ -6730,6 +7626,9 @@ const LIGJËRUEIT = [
   { name: "Ali Kaçamaku", role: "", city: "Prishtinë", imgUrl: trajnerAli },
   { name: "Fisnik Avdiu", role: "", city: "Prishtinë", imgUrl: trajnerFisnik },
   { name: "Hana Hoxha", role: "", city: "Prishtinë", imgUrl: trajnereHana },
+  /* Card 19. `role` left empty like every other entry here — see the note at the top of
+     this array: a title nobody has confirmed is worse than a blank line. */
+  { name: "Dinion Svirca", role: "", city: "Prishtinë", imgUrl: lektorDinion },
 ];
 
 function PageLigjërueit() {
@@ -6756,6 +7655,62 @@ function PageLigjërueit() {
       </section>
     </PageWrapper>
   );
+}
+
+/* ══════════════════════════════════════════
+   APPLY POPUP ACCESS + IN-PAGE SCROLL
+══════════════════════════════════════════ */
+
+/*
+  The application popup is owned by `Layout` — the banner, the navbar and the footer all
+  open it from there. Pages, though, arrive as `children` inside <main>, so they have no
+  prop path back up to that opener.
+
+  A context is what closes the gap WITHOUT a second popup existing anywhere. One state,
+  one <ScrollPopupForm>, and any page deep in the tree can ask for the same door the
+  navbar uses. Threading an `onApplyClick` prop through every page component instead
+  would touch a dozen signatures to deliver one function.
+
+  The default is a no-op rather than a throw: a page rendered outside Layout (a test, a
+  future embed) should degrade to a dead button, not crash the route.
+*/
+const ApplyPopupContext = React.createContext<() => void>(() => {});
+
+/** Opens the same application popup as the navbar's "Apliko tani". */
+function useApplyPopup(): () => void {
+  return React.useContext(ApplyPopupContext);
+}
+
+/*
+  Anchors for the two in-page "scroll down to…" buttons. Declared as constants because
+  each id is written twice — once on the section, once on the button that jumps to it —
+  and a typo in either half fails silently as a button that does nothing.
+*/
+const BALLINA_PROGRAMS_ID = "programet";
+const TALENTE_LIST_ID = "talentet";
+
+/*
+  Smooth in-page scroll.
+
+  `scrollIntoView` rather than a hand-rolled `requestAnimationFrame` easing loop, which is
+  what this briefly was. The rAF version was written after the native call appeared to be
+  a no-op in testing — but the real cause was that the test tab was BACKGROUNDED, and
+  Chrome suspends animation frames in a hidden tab. That kills a rAF loop exactly as dead
+  as it kills the native animation, so the extra 25 lines bought nothing. In a tab the
+  user is actually looking at, this animates.
+
+  It also gets two things free that the hand-rolled version had to spell out: it honours
+  `prefers-reduced-motion` on its own, and it recomputes the distance if an image above
+  the target finishes loading and shifts the page mid-scroll.
+
+  The sticky navbar would otherwise cover the top of whatever we land on. That offset
+  comes from the target's own `scroll-mt-28`, the CSS property built for this, so the
+  number lives with the element rather than being guessed here.
+
+  A missing id is a no-op by design — a dead button beats a crash.
+*/
+function scrollToSection(id: string): void {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ══════════════════════════════════════════
@@ -6817,7 +7772,10 @@ function Layout({ children }: { children: React.ReactNode }) {
       {showBanner && <TopBanner onApplyClick={openPopup} />}
       <Navbar showBanner={showBanner} setMobileMenuOpen={setMobileMenuOpen} onApplyClick={openPopup} />
       <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
-      <main className="flex-1">{children}</main>
+      {/* Every page below can now call `useApplyPopup()` and get THIS opener. */}
+      <ApplyPopupContext.Provider value={openPopup}>
+        <main className="flex-1">{children}</main>
+      </ApplyPopupContext.Provider>
       {/* Chrome, like the navbar: rendered here so no route can be missing it. */}
       <Footer onApplyClick={openPopup} />
       {/* Lives in Layout so it is available on every route, not just the homepage. */}
