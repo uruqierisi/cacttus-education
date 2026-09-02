@@ -96,7 +96,6 @@ import {
   TRAINING_CATEGORY_LABELS,
   TRAINING_FORMAT_LABELS,
   TRAINING_STATUS_LABELS,
-  TRAINING_STATUS_STYLES,
 } from "./lib/training-labels";
 import { renderSafeHtml } from "./lib/sanitize";
 import { ApplyPopupContext, useApplyPopup } from "./hooks/apply-popup";
@@ -122,36 +121,6 @@ import talentMirlindArifi from "../imports/mirlindArifi.jpeg";
 import talentAltinMorina from "../imports/altinMorina.jpeg";
 import talentArjanaBellaqa from "../imports/arjanaBellaqa.jpeg";
 import talentFatjonKerceli from "../imports/fatjonKerceli.jpeg";
-
-
-
-
-
-
-/**
- * The card's status pill. Same shape as `MetaChip`, different palette.
- *
- * The lookup is guarded rather than destructured straight away: `status` arrives over the
- * network, so an older API that predates the field — or a value added server-side before
- * this file learns its label — hands us something outside the two keys below. Indexing a
- * `Record` still type-checks in that case, so the crash would only show up at runtime, and
- * it would take the whole catalogue down over one missing pill. No style, no badge; the
- * card's other rows still render.
- */
-function TrainingStatusBadge({ status }: { status: TrainingStatus }) {
-  const style = TRAINING_STATUS_STYLES[status];
-  if (!style) return null;
-  const { bg, fg } = style;
-
-  return (
-    <span
-      className="shrink-0 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-      style={{ backgroundColor: bg, color: fg }}
-    >
-      {TRAINING_STATUS_LABELS[status]}
-    </span>
-  );
-}
 import {
   ChevronDown,
   ChevronRight,
@@ -190,6 +159,15 @@ import {
   Building2,
   type LucideIcon,
 } from "lucide-react";
+import { Breadcrumb } from "./ui/Breadcrumb";
+import { GhostBtn, PrimaryBtn, SecondaryBtn } from "./ui/buttons";
+import { FormField, FormSelect } from "./ui/FormField";
+import { HeroStats } from "./ui/HeroStats";
+import { MetaChip } from "./ui/MetaChip";
+import { Overline } from "./ui/Overline";
+import { PageWrapper } from "./ui/PageWrapper";
+import { TrainingStatusBadge } from "./ui/TrainingStatusBadge";
+
 
 /* ─── SHARED TYPES ─── */
 type DropdownId = "studime" | "projektet" | "biznese" | "rreth" | null;
@@ -847,151 +825,6 @@ function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
       </div>
     </footer>
   );
-}
-
-/* ══════════════════════════════════════════
-   SHARED UI PRIMITIVES
-══════════════════════════════════════════ */
-function PrimaryBtn({ children, className = "", onClick, type = "button" }: { children: React.ReactNode; className?: string; onClick?: () => void; type?: "button" | "submit" }) {
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 ${className}`}
-      style={{ backgroundColor: C.brand }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = C.brandDark)}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = C.brand)}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SecondaryBtn({ children, className = "", onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-95 ${className}`}
-      style={{ color: C.brand, border: `1.5px solid ${C.brand}`, backgroundColor: "transparent" }}
-      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.brandLight; }}
-      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function GhostBtn({ children, className = "", onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
-  return (
-    /*
-      `py-2 -my-2` is a TAP TARGET, not spacing. Measured on a 375px phone this control was
-      20px tall — well under the ~44px a fingertip needs — because it is bare text plus a
-      chevron with no padding of its own.
-
-      The padding grows the clickable box by 8px above and below; the equal negative margin
-      takes those same 16px back out of the layout, so every card and row this sits in keeps
-      the exact geometry it had. Bigger to touch, identical to look at.
-    */
-    <button onClick={onClick} className={`inline-flex items-center gap-1 py-2 -my-2 text-sm font-semibold transition-colors group ${className}`} style={{ color: C.brand }}>
-      {children}
-      <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-    </button>
-  );
-}
-
-function Overline({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: C.brand, letterSpacing: "0.08em" }}>{children}</p>;
-}
-
-function HeroStats({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`grid grid-cols-2 md:grid-cols-4 gap-7 pt-6 ${className}`}
-      style={{ borderTop: `1px solid ${C.n200}` }}
-    >
-      {HERO_STATS.map(([num, label]) => (
-        <div key={label}>
-          <p className="text-2xl font-bold" style={{ color: C.brand }}>{num}</p>
-          <p className="text-sm mt-0.5" style={{ color: C.n500 }}>{label}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MetaChip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: C.brandLight, color: C.brandDark }}>
-      {children}
-    </span>
-  );
-}
-
-function Breadcrumb({ items }: { items: { label: string; path?: string }[] }) {
-  return (
-    <nav className="flex items-center gap-1 text-sm mb-6 flex-wrap">
-      {items.map((item, i) => (
-        <span key={i} className="flex items-center gap-1">
-          {i > 0 && <span style={{ color: C.n400 }}>/</span>}
-          {item.path ? (
-            <Link to={item.path} className="hover:underline transition-colors" style={{ color: C.brand }}>{item.label}</Link>
-          ) : (
-            <span style={{ color: C.n500 }}>{item.label}</span>
-          )}
-        </span>
-      ))}
-    </nav>
-  );
-}
-
-function FormField({ label, type = "text", value, onChange, placeholder }: { label: string; type?: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-1" style={{ color: C.n700 }}>{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-        style={{ border: `1px solid ${C.n300}`, backgroundColor: C.n0, color: C.n800, height: 52 }}
-        onFocus={(e) => (e.target.style.borderColor = C.brand)}
-        onBlur={(e) => (e.target.style.borderColor = C.n300)}
-      />
-    </div>
-  );
-}
-
-function FormSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-1" style={{ color: C.n700 }}>{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
-        style={{ border: `1px solid ${C.n300}`, backgroundColor: C.n0, color: value ? C.n800 : C.n400, height: 52 }}
-        onFocus={(e) => (e.target.style.borderColor = C.brand)}
-        onBlur={(e) => (e.target.style.borderColor = C.n300)}
-      >
-        <option value="" disabled>Zgjidh...</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-}
-
-/**
- * Scroll-to-top on mount, and nothing else.
- *
- * It used to render the footer too, behind a `withFooter` prop — which meant a page could
- * silently ship without one, and `ProgramPage` did exactly that. The footer now lives in
- * `Layout` beside the navbar, so this is purely the "new page, start at the top" helper
- * its name suggests.
- */
-function PageWrapper({ children }: { children: React.ReactNode }) {
-  useEffect(() => { window.scrollTo(0, 0); }, []);
-  return <>{children}</>;
 }
 
 /* ══════════════════════════════════════════
