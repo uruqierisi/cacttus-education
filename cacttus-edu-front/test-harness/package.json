@@ -1,0 +1,18 @@
+{
+  "name": "cacttus-edu-split-harness",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "DOM/screenshot/overflow/form regression harness used to prove the App.tsx split changed no behaviour.",
+  "scripts": {
+    "capture": "node capture.mjs",
+    "compare": "node compare.mjs",
+    "forms": "node forms.mjs",
+    "bundle": "node bundle.mjs",
+    "record-fixtures": "node record-fixtures.mjs",
+    "postinstall": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

@@ -1,0 +1,4 @@
+# Captured runs are outputs, not sources — a full run is ~120 files and ~60MB of PNGs.
+runs/
+node_modules/
+package-lock.json
