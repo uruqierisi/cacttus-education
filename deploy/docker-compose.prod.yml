@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# Production stack — runs from ~/apps/cacttus on the VPS.
+#
+# Paths are relative to THAT directory, not to this repo:
+#   ~/apps/cacttus/repo/            this git checkout  (build context for backend)
+#   ~/apps/cacttus/static/          built SPA bundles, scp'd from a laptop
+#   ~/apps/cacttus/uploads/         upload volume, bind-mounted into the backend
+#   ~/apps/cacttus/.env.prod        secrets (chmod 600, never committed)
+#   ~/apps/cacttus/Caddyfile        copied from repo/deploy/Caddyfile
+#   ~/apps/cacttus/docker-compose.prod.yml   copied from repo/deploy/
+#
+# Tracked here so the database's port exposure and Caddy's security headers are
+# reviewable in git rather than living only on the server.
+# ---------------------------------------------------------------------------
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: cacttus-db
+    restart: unless-stopped
+    # deliberately no ports: — Docker bypasses ufw, the db must stay internal-only
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  backend:
+    build: ./repo/backend
+    container_name: cacttus-backend
+    restart: unless-stopped
+    env_file: .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+    # No ports: the API is reached only through Caddy on the compose network.
+    volumes:
+      - ./uploads:/data/uploads
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: cacttus-caddy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      # Interim IP-based access. Remove both once the domains are live and verified.
+      - '8080:8080'
+      - '8081:8081'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./static/marketing:/srv/marketing:ro
+      - ./static/dashboard:/srv/dashboard:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

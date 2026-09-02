@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# Cacttus Education — production Caddyfile (TARGET domain layout).
+#
+# Copy to ~/apps/cacttus/Caddyfile. It is bind-mounted read-only into the caddy
+# container, and a bind mount does NOT reload on `docker compose up -d` —
+# run `dc restart caddy` after every edit.
+#
+# Caddy provisions and renews Let's Encrypt certificates automatically for each
+# domain below, so there is no certificate block to maintain. That requires the
+# A records to resolve to this host and ports 80 and 443 to be reachable.
+#
+# NOTE: no Content-Security-Policy header here. Adding one is a separate,
+# deliberate task — the marketing site needs frame-src for the Google Maps embed
+# and a widened img-src, and getting it wrong breaks the page silently.
+# ---------------------------------------------------------------------------
+
+# --- Public marketing site -------------------------------------------------
+cacttus.education {
+	root * /srv/marketing
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+	}
+
+	# SPA fallback: every unknown path renders index.html so client-side routing
+	# handles it. Must come before file_server.
+	try_files {path} /index.html
+	file_server
+}
+
+# --- www -> apex -----------------------------------------------------------
+www.cacttus.education {
+	redir https://cacttus.education{uri} permanent
+}
+
+# --- Admin dashboard -------------------------------------------------------
+admin.cacttus.education {
+	root * /srv/dashboard
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+	}
+
+	try_files {path} /index.html
+	file_server
+}
+
+# --- API -------------------------------------------------------------------
+api.cacttus.education {
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+	}
+
+	# `backend` is the compose service name, resolved on the internal network.
+	# The API publishes no host port; this is the only way in.
+	reverse_proxy backend:4000
+}
