@@ -21,6 +21,7 @@ import { resolvePageParams, toPrismaPageArgs } from '../lib/pagination';
 import { recordAuditWithin, type AuditContext } from '../lib/audit';
 import { resolveSlugCollision, slugify } from '../lib/slug';
 import { logger } from '../lib/logger';
+import { assertCategoryIdExists } from './training-categories.service';
 import type {
   CreateTrainingInput,
   ListTrainingsQuery,
@@ -43,11 +44,24 @@ export function trainingDetailPath(slug: string): string {
   return `${TRAINING_DETAIL_PATH}/${slug}`;
 }
 
+/**
+ * The category on a training payload.
+ *
+ * `name` IS the label. Callers used to receive `"PROGRAMIM"` and look it up in a map
+ * they each kept a copy of; they now receive the text to render. `slug` rides along
+ * because it, not the name, is the stable handle a filter URL is built from.
+ */
+export type TrainingCategoryRef = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+};
+
 export type TrainingDto = {
   readonly id: string;
   readonly slug: string;
   readonly title: string;
-  readonly category: Training['category'];
+  readonly category: TrainingCategoryRef;
   readonly startDate: Date | null;
   readonly format: Training['format'];
   readonly hours: number | null;
@@ -72,7 +86,17 @@ export type TrainingDto = {
   readonly updatedAt: Date;
 };
 
-type TrainingRow = Training & { _count?: { submissions: number } };
+/**
+ * Every read below includes the category relation. It is not optional the way `_count`
+ * is: `toDto` cannot build a payload without the label, so a query that forgot the
+ * include is a compile error rather than a runtime `undefined` in the dashboard.
+ */
+const includeCategory = { select: { id: true, name: true, slug: true } } as const;
+
+type TrainingRow = Training & {
+  category: TrainingCategoryRef;
+  _count?: { submissions: number };
+};
 
 const notDeleted = (): Prisma.TrainingWhereInput => ({ deletedAt: null });
 
@@ -235,7 +259,9 @@ function buildOrderBy(
 function buildListWhere(query: ListTrainingsQuery): Prisma.TrainingWhereInput {
   return {
     ...(query.includeDeleted ? {} : notDeleted()),
-    ...(query.category ? { category: query.category } : {}),
+    // By ID here, unlike the public catalogue's slug: the dashboard already holds the
+    // category rows it renders the filter from, and an id cannot drift under a rename.
+    ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.city ? { city: query.city } : {}),
     ...(query.isActive === undefined ? {} : { isActive: query.isActive }),
     ...(query.search
@@ -260,7 +286,7 @@ export async function listTrainings(
     prisma.training.findMany({
       where,
       orderBy: buildOrderBy(query.sort, query.order),
-      include: { _count: { select: { submissions: true } } },
+      include: { category: includeCategory, _count: { select: { submissions: true } } },
       ...toPrismaPageArgs(page),
     }),
     prisma.training.count({ where }),
@@ -277,7 +303,7 @@ export async function listTrainings(
 export async function getTrainingById(id: string): Promise<TrainingDto> {
   const row = await prisma.training.findFirst({
     where: { id, ...notDeleted() },
-    include: { _count: { select: { submissions: true } } },
+    include: { category: includeCategory, _count: { select: { submissions: true } } },
   });
 
   if (!row) {
@@ -315,6 +341,9 @@ export async function createTraining(
   audit: AuditContext,
 ): Promise<TrainingDto> {
   await assertFormSlugUsable(input.formSlug);
+  // Same shape as the form-slug check above: resolve the reference here so a bad id is
+  // a 400 naming the field, not a foreign-key violation surfacing as a 500.
+  await assertCategoryIdExists(input.categoryId);
 
   let slug: string;
 
@@ -330,7 +359,7 @@ export async function createTraining(
       data: {
         slug,
         title: input.title,
-        category: input.category,
+        categoryId: input.categoryId,
         startDate: input.startDate ?? null,
         format: input.format,
         hours: input.hours ?? null,
@@ -348,7 +377,7 @@ export async function createTraining(
         isActive: input.isActive,
         order: input.order,
       },
-      include: { _count: { select: { submissions: true } } },
+      include: { category: includeCategory, _count: { select: { submissions: true } } },
     });
 
     await recordAuditWithin(tx, {
@@ -362,7 +391,7 @@ export async function createTraining(
       metadata: {
         slug: created.slug,
         title: created.title,
-        category: created.category,
+        category: created.category.name,
         status: created.status,
         formSlug: created.formSlug,
         isActive: created.isActive,
@@ -400,6 +429,10 @@ export async function updateTraining(
     await assertFormSlugUsable(input.formSlug);
   }
 
+  if (input.categoryId !== undefined) {
+    await assertCategoryIdExists(input.categoryId);
+  }
+
   if (input.slug) {
     await assertSlugIsFree(input.slug, id);
   }
@@ -412,7 +445,7 @@ export async function updateTraining(
   const data: Prisma.TrainingUpdateInput = {
     ...(input.slug === undefined ? {} : { slug: input.slug }),
     ...(input.title === undefined ? {} : { title: input.title }),
-    ...(input.category === undefined ? {} : { category: input.category }),
+    ...(input.categoryId === undefined ? {} : { category: { connect: { id: input.categoryId } } }),
     ...(input.startDate === undefined ? {} : { startDate: input.startDate }),
     ...(input.format === undefined ? {} : { format: input.format }),
     ...(input.hours === undefined ? {} : { hours: input.hours }),
@@ -437,7 +470,7 @@ export async function updateTraining(
     const updated = await tx.training.update({
       where: { id },
       data,
-      include: { _count: { select: { submissions: true } } },
+      include: { category: includeCategory, _count: { select: { submissions: true } } },
     });
 
     await recordAuditWithin(tx, {
@@ -488,7 +521,7 @@ export async function softDeleteTraining(id: string, audit: AuditContext): Promi
     const updated = await tx.training.update({
       where: { id },
       data: { deletedAt: new Date(), isActive: false },
-      include: { _count: { select: { submissions: true } } },
+      include: { category: includeCategory, _count: { select: { submissions: true } } },
     });
 
     await recordAuditWithin(tx, {
@@ -499,7 +532,7 @@ export async function softDeleteTraining(id: string, audit: AuditContext): Promi
       metadata: {
         slug: updated.slug,
         title: updated.title,
-        category: updated.category,
+        category: updated.category.name,
         submissionCount: updated._count.submissions,
       },
     });
@@ -519,7 +552,12 @@ export async function softDeleteTraining(id: string, audit: AuditContext): Promi
 export type PublicTrainingCard = {
   readonly slug: string;
   readonly title: string;
-  readonly category: Training['category'];
+  /**
+   * `name` and `slug` only — the id is an internal handle the catalogue has no use for,
+   * and the chips filter on the slug. The visitor reads `name` directly, which is what
+   * retired the hard-coded label map the marketing site used to carry.
+   */
+  readonly category: { readonly name: string; readonly slug: string };
   readonly startDate: Date | null;
   readonly format: Training['format'];
   readonly hours: number | null;
@@ -575,11 +613,11 @@ export type PublicTrainingDetail = PublicTrainingCard & {
   readonly form: { readonly slug: string; readonly title: string } | null;
 };
 
-function toCard(row: Training): PublicTrainingCard {
+function toCard(row: Training & { category: TrainingCategoryRef }): PublicTrainingCard {
   return {
     slug: row.slug,
     title: row.title,
-    category: row.category,
+    category: { name: row.category.name, slug: row.category.slug },
     startDate: row.startDate,
     format: row.format,
     hours: row.hours,
@@ -596,11 +634,14 @@ export async function listPublicTrainings(
   const rows = await prisma.training.findMany({
     where: {
       ...publiclyVisible(),
-      ...(query.category ? { category: query.category } : {}),
+      // By SLUG, not by id: the catalogue's filter lives in a shareable URL, and a
+      // cuid in a query string is neither readable nor stable across environments.
+      ...(query.category ? { category: { slug: query.category } } : {}),
       ...(query.city ? { city: query.city } : {}),
       // Absent means "both": a finished training still belongs in the catalogue, badged.
       ...(query.status ? { status: query.status } : {}),
     },
+    include: { category: includeCategory },
     orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
   });
 
@@ -608,7 +649,10 @@ export async function listPublicTrainings(
 }
 
 export async function getPublicTrainingBySlug(slug: string): Promise<PublicTrainingDetail> {
-  const row = await prisma.training.findFirst({ where: { slug, ...publiclyVisible() } });
+  const row = await prisma.training.findFirst({
+    where: { slug, ...publiclyVisible() },
+    include: { category: includeCategory },
+  });
 
   if (!row) {
     throw ApiError.notFound('Training not found.');
@@ -652,16 +696,32 @@ export async function getPublicTrainingBySlug(slug: string): Promise<PublicTrain
  * Cities come from a free-text column, so they are de-duplicated and sorted here.
  */
 export async function getPublicTrainingFilters(): Promise<{
-  readonly categories: readonly Training['category'][];
+  readonly categories: readonly { readonly name: string; readonly slug: string }[];
   readonly cities: readonly string[];
 }> {
   const rows = await prisma.training.findMany({
     where: publiclyVisible(),
-    select: { category: true, city: true },
-    distinct: ['category', 'city'],
+    select: {
+      city: true,
+      category: { select: { id: true, name: true, slug: true, sortOrder: true } },
+    },
   });
 
-  const categories = [...new Set(rows.map((row) => row.category))].sort();
+  /*
+   * Categories come from the TABLE now, but still only the ones a visible training
+   * actually uses — the chip behaviour is unchanged. Reading every row of
+   * `training_categories` instead would put a chip on screen that leads to an empty
+   * grid, which is the same dead end the old enum-driven version avoided.
+   *
+   * Ordered by the admin's `sortOrder` rather than alphabetically, because that column
+   * exists precisely so the chips can be arranged deliberately. `distinct` is gone: it
+   * de-duplicated on the raw pair, which no longer collapses now that the category is a
+   * joined row, so the de-duplication happens here on the id.
+   */
+  const byId = new Map(rows.map((row) => [row.category.id, row.category]));
+  const categories = [...byId.values()]
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'sq'))
+    .map((category) => ({ name: category.name, slug: category.slug }));
   const cities = [...new Set(rows.map((row) => row.city).filter((city): city is string => Boolean(city)))].sort(
     (a, b) => a.localeCompare(b, 'sq'),
   );

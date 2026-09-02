@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TrainingCategory, TrainingFormat, TrainingStatus } from '@prisma/client';
+import { TrainingFormat, TrainingStatus } from '@prisma/client';
 import { FIELD_LIMITS } from '../config/constants';
 import { paginationQuerySchema, searchSchema, slugSchema, sortOrderSchema } from './common.schema';
 
@@ -97,7 +97,13 @@ const uploadedUrlSchema = z.string().trim().url().max(FIELD_LIMITS.URL_MAX);
 export const createTrainingSchema = z.object({
   slug: slugSchema.optional(),
   title: z.string().trim().min(1).max(FIELD_LIMITS.TITLE_MAX),
-  category: z.nativeEnum(TrainingCategory),
+  /**
+   * A `training_categories` row id, not an enum member any more. Validated as a plain
+   * bounded string here and resolved against the table in the service: a Zod schema
+   * cannot know which categories exist, and pretending otherwise would mean regenerating
+   * this file every time an admin adds one — the exact coupling the enum had.
+   */
+  categoryId: z.string().trim().min(1).max(FIELD_LIMITS.NAME_MAX),
 
   // --- Card ---
   startDate: startDateSchema.nullable().optional(),
@@ -143,7 +149,7 @@ export const updateTrainingSchema = createTrainingSchema
 export type UpdateTrainingInput = z.infer<typeof updateTrainingSchema>;
 
 export const listTrainingsQuerySchema = paginationQuerySchema.extend({
-  category: z.nativeEnum(TrainingCategory).optional(),
+  categoryId: z.string().trim().min(1).max(FIELD_LIMITS.NAME_MAX).optional(),
   city: z.string().trim().min(1).max(FIELD_LIMITS.NAME_MAX).optional(),
   isActive: z
     .enum(['true', 'false'])
@@ -166,7 +172,8 @@ export type ListTrainingsQuery = z.infer<typeof listTrainingsQuerySchema>;
 
 /** Public catalogue filters. No pagination: the catalogue is a browse-all grid. */
 export const publicTrainingsQuerySchema = z.object({
-  category: z.nativeEnum(TrainingCategory).optional(),
+  /** A category SLUG. The catalogue's filter belongs in a shareable, readable URL. */
+  category: slugSchema.optional(),
   city: z.string().trim().min(1).max(FIELD_LIMITS.NAME_MAX).optional(),
   /** Omitted means "both" — the catalogue shows finished trainings too, just badged. */
   status: z.nativeEnum(TrainingStatus).optional(),

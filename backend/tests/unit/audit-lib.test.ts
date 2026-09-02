@@ -187,6 +187,14 @@ describe('auditContextForActor', () => {
 
 describe('AUDIT_ENTITY_TYPES', () => {
   it('mirrors the vocabulary documented on the schema', () => {
-    expect([...AUDIT_ENTITY_TYPES]).toEqual(['Form', 'Submission', 'User', 'Post', 'Auth']);
+    expect([...AUDIT_ENTITY_TYPES]).toEqual([
+      'Form',
+      'Submission',
+      'User',
+      'Post',
+      'Auth',
+      'Training',
+      'TrainingCategory',
+    ]);
   });
 });

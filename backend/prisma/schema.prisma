@@ -92,6 +92,12 @@ enum AuditAction {
   TRAINING_CREATED
   TRAINING_UPDATED
   TRAINING_DELETED
+  // The catalogue taxonomy, once an enum and now an editable table. DELETED is a HARD
+  // delete here, unlike every other *_DELETED in this enum — a category has no history
+  // to preserve and is refused outright while any training still references it.
+  TRAINING_CATEGORY_CREATED
+  TRAINING_CATEGORY_UPDATED
+  TRAINING_CATEGORY_DELETED
 }
 
 model User {
@@ -354,7 +360,7 @@ model AuditLog {
   actorRole  Role
 
   action     AuditAction
-  /// "Form" | "Submission" | "User" | "Post" | "Auth"
+  /// "Form" | "Submission" | "User" | "Post" | "Auth" | "Training" | "TrainingCategory"
   entityType String
   // Null for auth events, which act on a session rather than on a row.
   entityId   String?
