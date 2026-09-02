@@ -14,79 +14,7 @@ import rrethNeshStafi from "../imports/rrethNeshStafi.jpeg";
 /* Hero photo for /biznese/trajnime, replacing the Unsplash stock URL. Same 3:2 source in
    a 4:3 frame — see BIZNESE_TRAJNIME_IMG_POSITION. */
 import trajnimePersonalizuara from "../imports/trajnimePersonalizuara.jpeg";
-/* The five faces in the overlapping circle row on /biznese/talente, in the order they
-   are shown left to right. NOTE the filename: the photo is `fatjonKerceli`, with a C —
-   it was asked for as "fatjonKerqeli", with a Q. The file on disk wins. */
-import talentMirlindArifi from "../imports/mirlindArifi.jpeg";
 import talentDinaZejneli from "../imports/dinaZejneli.jpeg";
-import talentAltinMorina from "../imports/altinMorina.jpeg";
-import talentArjanaBellaqa from "../imports/arjanaBellaqa.jpeg";
-import talentFatjonKerceli from "../imports/fatjonKerceli.jpeg";
-/* The rest of the talent-network faces. Filenames differ from how they were listed,
-   so they are spelled out here rather than guessed at the call site:
-     - Eda Nuka   -> edaNukaRrjeti.jpeg, NOT the EdaNuka.png already imported above as
-       `suksesEdaNuka` (that one is her success-story portrait, a different crop).
-     - Gjin Bardhi -> gjinBardhi.jpeg, likewise distinct from `suksesGjinBardhi`.
-     - Resul Manxholli -> .jpg, while its neighbours are .jpeg. */
-import talentEdaNuka from "../imports/edaNukaRrjeti.jpeg";
-import talentNoraBekteshi from "../imports/noraBekteshi.png";
-import talentFlamurHaxholli from "../imports/flamurHaxholli.jpeg";
-import talentResulManxholli from "../imports/resulManxholliRrjeti.jpg";
-import talentKaltrinaQerimi from "../imports/kaltrinaQerimi.jpeg";
-import talentErnataKoliqi from "../imports/nataDita.jpeg";
-import talentGjinBardhi from "../imports/gjinBardhi.jpeg";
-import talentTritMeri from "../imports/tritMeri.jpeg";
-/* Instructor portraits — /ligjërueit. See LIGJËRUEIT for which card each lands on.
-   The `2` files are the small ones (~1MB); the plain .jpg originals are ~9MB each. */
-import lektorLuani from "../imports/luani2.png";
-import lektorNaimi from "../imports/naimi2.png";
-import lektorGezimi from "../imports/gezimi2.png";
-import lektorJoni from "../imports/joni2.png";
-import lektorJehona from "../imports/jehona.png";
-import lektorVetoni from "../imports/vetoni.png";
-import lektorAzra from "../imports/azra.png";
-import lektorDrenusha from "../imports/drenusha.png";
-/* Filenames here are the ones actually on disk, which differ slightly from how these six
-   were listed: engjulli / valton / rafet, not engjull / valtoni / rafeti. */
-import lektorPegmatiti from "../imports/pegmatiti.png";
-import lektorGili from "../imports/gili.png";
-import lektorEngjulli from "../imports/engjulli.png";
-import lektorValtoni from "../imports/valton.png";
-import lektorArditi from "../imports/arditi.png";
-import lektorRafeti from "../imports/rafet.png";
-/* Newer instructor portraits, shared by TWO lists: TRAINERS (the /trajnime "Ligjëruesit
-   tanë" strip) and LIGJËRUEIT (the /ligjërueit page). Alban, Ali and Hana appear on both,
-   which is why these are one import each rather than a set per page.
-
-   Delivered as Figma SVG exports — an 810x1012 wrapper around an embedded PNG — rather
-   than the plain .png the older portraits use, and heavy with it: 23MB across the five.
-   See the note on `lektorLuani` above; the same shrink was done there once already. */
-import trajnerAlban from "../imports/albantrajner.png";
-import trajnerAli from "../imports/alitrajner.png";
-/* `ardititrajner.png` is on disk but no longer imported: the /trajnime card for Ardit
-   Beqiri was pointed back at `lektorArditi` (arditi.png). Re-add this line and swap the
-   `imgUrl` in TRAINERS to use the newer export instead. */
-import trajnerFisnik from "../imports/fisniktrajner.png";
-import trajnereHana from "../imports/hanatrajnere.png";
-/* Elmaze Gashi, /ekipi. */
-import ekipiElmaze from "../imports/eli.png";
-/* Dinion Svirca, /ligjërueit. */
-import lektorDinion from "../imports/dinionProfa.png";
-/* Graduate portraits for the "Histori suksesi" carousel — see STUDENT_PHOTOS. Each is a
-   finished 292x164 card: portrait on the brand purple, with the graduate's name, role and
-   employer already set INTO the artwork. That matters downstream — the carousel must not
-   print a name of its own over these or it would say it twice. The older lowercase files
-   (eltonismaili / edanuka / erisuruqi / partin) were the first cut of this same set and
-   are no longer imported anywhere. */
-import suksesEltonIsmailii from "../imports/EltonIsmailii.png";
-import suksesErisUruqi from "../imports/ErisUruqi.png";
-import suksesPartinNallbani from "../imports/PartinNallbani.png";
-import suksesEdaNuka from "../imports/EdaNuka.png";
-import suksesArdiHyseni from "../imports/ArdiHyseni.png";
-import suksesGjinBardhi from "../imports/GjinBardhi.png";
-import suksesGjinMirdita from "../imports/GjinMirdita.png";
-import suksesAgonKrasniqi from "../imports/AgonKrasniqi.png";
-import suksesErnataKoliqi from "../imports/ErnataKoliqi.png";
 /* Hero photo for /biznese/bursa. A 1279x1600 portrait dropped into a 16:10 landscape
    frame, so roughly two thirds of its height is cropped away — which slice survives is
    BURSA_HERO_IMG_POSITION, next to the component that uses it. */
@@ -123,52 +51,6 @@ import hapsira3 from "../imports/hapsira3.jpg";
 import hapsira4 from "../imports/hapsira4.jpg";
 import hapsira5 from "../imports/hapsira5.jpg";
 import hapsira6 from "../imports/hapsira6.jpg";
-import sponsorHarrisia from "../imports/harrisia.png";
-import sponsorDoni from "../imports/doni.png";
-import sponsorCacttus from "../imports/cacttus.png";
-/* Partner logos for the scrolling marquee — see PARTNER_LOGO_IMAGES. Numeric filenames
-   are the export names as delivered; the readable label lives in the data array. */
-import partner17 from "../imports/17.svg";
-import partner18 from "../imports/18.svg";
-import partner19 from "../imports/19.svg";
-import partner20 from "../imports/20.svg";
-import partner21 from "../imports/21.svg";
-import partner22 from "../imports/22.svg";
-import partner23 from "../imports/23.svg";
-import partner24 from "../imports/24.svg";
-import partner25 from "../imports/25.svg";
-import partner26 from "../imports/26.svg";
-import partner27 from "../imports/27.svg";
-import partner28 from "../imports/28.svg";
-import partner29 from "../imports/29.svg";
-/* Four more employer logos. PNG rather than SVG because that is what was delivered; they
-   were 4:5 portrait canvases like the rest and have been trimmed to their artwork. */
-import partner51 from "../imports/51.png";
-import partner53 from "../imports/53.png";
-import partner54 from "../imports/54.png";
-import partner55 from "../imports/55.png";
-/* Project-partner logos for the /projektet hero grid — see HERO_PARTNERS. */
-import heroPartner30 from "../imports/30.svg";
-import heroPartner31 from "../imports/31.svg";
-import heroPartner32 from "../imports/32.svg";
-import heroPartner33 from "../imports/33.svg";
-import heroPartner34 from "../imports/34.svg";
-import heroPartner35 from "../imports/35.svg";
-/* The two projects with no entry in HERO_PARTNERS — their funders never appeared in the
-   /projektet hero grid, so these are the only files that carry their marks. Used by
-   PROJEKTET_LIST so all eight dropdown rows can show a logo rather than six of eight. */
-import projectSkillFactory from "../imports/skill factory.png";
-import projectLuxDev from "../imports/luxdev.png";
-/* Certification-body logos for the /trajnime strip — see PARTNER_LOGOS. */
-import cert36 from "../imports/36.svg";
-import cert37 from "../imports/37.svg";
-import cert38 from "../imports/38.svg";
-import cert39 from "../imports/39.svg";
-import cert40 from "../imports/40.svg";
-import cert41 from "../imports/41.svg";
-import cert42 from "../imports/42.svg";
-import cert43 from "../imports/43.svg";
-import cert44 from "../imports/44.svg";
 import {
   BrowserRouter,
   Routes,
@@ -221,6 +103,27 @@ import { ApplyPopupContext, useApplyPopup } from "./hooks/apply-popup";
 import { useBusinessLead } from "./hooks/useBusinessLead";
 import { useClassBooking } from "./hooks/useClassBooking";
 import { useHasEnteredView } from "./hooks/useHasEnteredView";
+import { ABOUT_MISSION_POINTS, ABOUT_STAT_ICONS, ABOUT_VALUES } from "./data/about";
+import { BURSA_SPONSORS } from "./data/bursa-sponsors";
+import { HERO_PARTNERS } from "./data/hero-partners";
+import { HERO_STATS } from "./data/hero-stats";
+import { LIGJËRUEIT } from "./data/lecturers";
+import { MarqueeLogo, PARTNER_LOGOS, PARTNER_LOGO_IMAGES } from "./data/partner-logos";
+import { PROJECTS, PROJECT_FALLBACK_GALLERY } from "./data/projects";
+import { PROJEKTET_LIST } from "./data/projektet-list";
+import { SEM_PROGRAMIM, SEM_SIGURIA } from "./data/semesters";
+import { CONTACT_SOCIALS, FOOTER_LINKS, FOOTER_SOCIALS } from "./data/socials";
+import { STUDENT_PHOTOS } from "./data/student-photos";
+import { TALENT_CATEGORIES, TalentPerson } from "./data/talents";
+import { TEAM_MEMBERS } from "./data/team";
+import { TESTIMONIALS } from "./data/testimonials";
+import { TRAINERS } from "./data/trainers";
+import talentMirlindArifi from "../imports/mirlindArifi.jpeg";
+import talentAltinMorina from "../imports/altinMorina.jpeg";
+import talentArjanaBellaqa from "../imports/arjanaBellaqa.jpeg";
+import talentFatjonKerceli from "../imports/fatjonKerceli.jpeg";
+
+
 
 
 
@@ -257,9 +160,6 @@ import {
   X,
   Menu,
   Check,
-  Facebook,
-  Instagram,
-  Linkedin,
   MapPin,
   Phone,
   Mail,
@@ -553,28 +453,6 @@ function DropdownStudime({ onClose }: { onClose: () => void }) {
   );
 }
 
-/*
-  Each row carries the funder's mark so the dropdown is scannable by logo, not just by a
-  wall of eight similar-length Albanian titles.
-
-  `icon` is deliberately the SAME file the /projektet hero grid already shows for that
-  funder — see HERO_PARTNERS below, where 30–35 are keyed by partner name. The imports are
-  referenced directly rather than read off HERO_PARTNERS because that const is declared
-  further down the module and would still be in its temporal dead zone here; the comments
-  are what keep the two lists honest with each other. Skill Factory and LuxDev have no
-  HERO_PARTNERS entry at all, so they use their own dedicated files.
-*/
-const PROJEKTET_LIST = [
-  { name: "Skill Factory", path: "/projektet/skill-factory", icon: projectSkillFactory },
-  { name: "Partneriteti për Impaktin në TIK", path: "/projektet/usaid", icon: heroPartner30 }, // HERO_PARTNERS "USAID"
-  { name: "SDC", path: "/projektet/sdc", icon: heroPartner31 }, // HERO_PARTNERS "Helvetas" — the SDC project's implementer
-  { name: "Gratë në Punë Online", path: "/projektet/wow", icon: heroPartner32 }, // HERO_PARTNERS "WOW"
-  { name: "KODE", path: "/projektet/kode", icon: heroPartner33 }, // HERO_PARTNERS "KODE — Kosovo Digital Economy"
-  { name: "Regional Challenge Fund (RCF)", path: "/projektet/rcf", icon: heroPartner34 }, // HERO_PARTNERS "Regional Challenge Fund"
-  { name: "LuxDev Smart Mobility Project", path: "/projektet/luxdev", icon: projectLuxDev },
-  { name: "Virtual Innovation Consortium (VIC)", path: "/projektet/vic", icon: heroPartner35 }, // HERO_PARTNERS "Virtual Innovation Consortium"
-];
-
 function DropdownProjektet({ onClose }: { onClose: () => void }) {
   return (
     <div
@@ -791,94 +669,6 @@ function AccordionMobile({ label, id, expanded, toggle, overviewPath, onClose, c
     </>
   );
 }
-
-/* ─── FOOTER ─── */
-/* ── FOOTER ──
-   Four columns: identity, contact, navigation, social + CTA.
-
-   Rendered ONCE from `Layout`, not from `PageWrapper`. It used to hang off PageWrapper
-   behind a `withFooter` prop, and `ProgramPage` passed `withFooter={false}` — which is
-   how /programim and /siguria ended up with no footer at all. A footer is chrome, same as
-   the navbar, so it belongs with the navbar in the shell where no page can opt out. */
-
-/**
- * TikTok, drawn here rather than imported.
- *
- * lucide-react (0.487) has no TikTok icon at all — its brand glyphs are legacy, already
- * flagged deprecated, and no new ones are being added. So this is an inline SVG built to
- * lucide's own conventions: a 24×24 viewBox, `fill="none"`, and a `currentColor` stroke at
- * width 2 with round caps and joins.
- *
- * Stroke rather than fill is the load-bearing detail. The usual TikTok mark is a solid
- * shape, and a solid glyph sitting beside four outline ones reads as heavier and darker
- * even when the colour value is character-for-character identical. Matching the drawing
- * style is what makes it match the colour.
- *
- * Because it inherits `currentColor` exactly as a lucide icon does, the `style={{ color }}`
- * already on the row applies to it unchanged — no per-icon colour anywhere.
- */
-function TikTokIcon({ size = 24, ...rest }: React.SVGProps<SVGSVGElement> & { size?: number }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...rest}
-    >
-      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
-    </svg>
-  );
-}
-
-/**
- * The real Cacttus Education profiles, in ONE place.
- *
- * Both social rows on the site (the footer and /kontakti's "Na ndiq") read from here, so
- * a profile URL is corrected once rather than in two files that drift apart.
- */
-const SOCIAL_URLS = {
-  facebook: "https://www.facebook.com/cacttusedu",
-  instagram: "https://www.instagram.com/cacttuseducation/",
-  linkedin: "https://www.linkedin.com/school/cacttusedu/posts/?feedView=all",
-  tiktok: "https://www.tiktok.com/@cacttuseducation",
-} as const;
-
-type SocialLink = { Icon: React.ElementType; label: string; href: string };
-
-const FOOTER_SOCIALS: readonly SocialLink[] = [
-  { Icon: Facebook, label: "Facebook", href: SOCIAL_URLS.facebook },
-  { Icon: TikTokIcon, label: "TikTok", href: SOCIAL_URLS.tiktok },
-  { Icon: Instagram, label: "Instagram", href: SOCIAL_URLS.instagram },
-  { Icon: Linkedin, label: "LinkedIn", href: SOCIAL_URLS.linkedin },
-];
-
-/**
- * The same four profiles for /kontakti's "Na ndiq" row.
- *
- * Separate array only because that row renders a different shape of control; the ORDER
- * matches the footer so the two rows read alike. It carries TikTok, not Twitter — the
- * row used to show a Twitter glyph, and Cacttus has no Twitter profile for it to open.
- */
-const CONTACT_SOCIALS: readonly SocialLink[] = [
-  { Icon: Facebook, label: "Facebook", href: SOCIAL_URLS.facebook },
-  { Icon: Instagram, label: "Instagram", href: SOCIAL_URLS.instagram },
-  { Icon: Linkedin, label: "LinkedIn", href: SOCIAL_URLS.linkedin },
-  { Icon: TikTokIcon, label: "TikTok", href: SOCIAL_URLS.tiktok },
-];
-
-const FOOTER_LINKS: readonly (readonly [string, string])[] = [
-  ["Rreth nesh", "/rreth-nesh"],
-  ["Projektet", "/projektet"],
-  ["Studime Profesionale", "/programim"],
-  ["Trajnime profesionale", "/trajnime"],
-  ["Biznese", "/biznese"],
-];
 
 function Footer({ onApplyClick }: { onApplyClick?: () => void }) {
   return (
@@ -1112,21 +902,6 @@ function GhostBtn({ children, className = "", onClick }: { children: React.React
 function Overline({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: C.brand, letterSpacing: "0.08em" }}>{children}</p>;
 }
-
-/**
- * The four headline numbers, in ONE place.
- *
- * These used to be inline markup inside the homepage hero. They are now a component
- * because the trainings catalogue and the About page show the same four figures, and
- * three hand-copied sets of numbers are three sets that drift the first time one of them
- * is updated. Editing `HERO_STATS` below changes every page at once.
- */
-const HERO_STATS: readonly (readonly [string, string])[] = [
-  ["1,000+", "Studentë të diplomuar"],
-  ["88%", "Studentë të punësuar"],
-  ["120+", "Bursa të ofruara"],
-  ["40+", "Partnerë nga industria"],
-];
 
 function HeroStats({ className = "" }: { className?: string }) {
   return (
@@ -2659,43 +2434,6 @@ function RotatingWord({ words }: { words: string[] }) {
   );
 }
 
-/* ── SUCCESS CAROUSEL ── */
-interface StudentPhoto {
-  /* Always set, even when the artwork already shows it — the carousel needs a name it can
-     hand to a screen reader whether or not it draws one. */
-  readonly name: string;
-  readonly src: string;
-  /* True when the graphic itself already carries the name, so the code must NOT draw its
-     own label on top. Every card in the current set is `true`; the flag exists because a
-     plain photograph dropped in later would need the opposite, and the alternative — a
-     future editor eyeballing nine images to work out which ones are safe — is exactly the
-     kind of thing that gets a name printed twice. */
-  readonly nameInImage: boolean;
-  /* CSS `object-position` for this one slide. Per-entry, not one value for the carousel:
-     each photo is framed differently, so a single shared setting would only ever be right
-     for one of them. Second number is vertical — raise it to push the image DOWN. */
-  readonly imgPosition: string;
-}
-
-const STUDENT_PHOTOS: readonly StudentPhoto[] = [
-  /* Real graduates, bundled rather than stock URLs. All nine are 292x164 — the same 16:9
-     the slide frame uses — so they need no special handling and drop into the same
-     `aspect-[16/9]` + `object-cover` box as every other slide.
-
-     Everything downstream counts this array: the auto-advance wraps on its length, and
-     the pagination dots are mapped straight off it. Adding an entry here is the whole
-     edit — a new slide gets its own dot and its own step in the arrows for free. */
-  { name: "Elton Ismaili", src: suksesEltonIsmailii, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Eris Uruqi", src: suksesErisUruqi, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Partin Nallbani", src: suksesPartinNallbani, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Eda Nuka", src: suksesEdaNuka, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Ardi Hyseni", src: suksesArdiHyseni, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Gjin Bardhi", src: suksesGjinBardhi, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Gjin Mirdita", src: suksesGjinMirdita, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Agon Krasniqi", src: suksesAgonKrasniqi, nameInImage: true, imgPosition: "center 50%" },
-  { name: "Ernata Koliqi", src: suksesErnataKoliqi, nameInImage: true, imgPosition: "center 50%" },
-];
-
 function SuccessCarousel() {
   const [current, setCurrent] = useState(0);
   useEffect(() => {
@@ -2839,35 +2577,6 @@ function PersonCard({
     </div>
   );
 }
-
-/* ── PARTNER LOGO GRID (/projektet hero) ──
-
-   The organisations behind the projects listed further down the page.
-
-   ┌─── ADDING OR SWAPPING A LOGO ───────────────────────────────────────────────┐
-   │ 1. Put the file in `src/imports/` — the same folder as the marquee logos.    │
-   │ 2. Import it at the TOP of this file, beside the other image imports.        │
-   │ 3. Add or edit an entry below.                                               │
-   │ The grid lays itself out from this array, but it is sized for SIX: three     │
-   │ across makes two clean rows. A seventh would leave a ragged last row, so     │
-   │ adjust `sm:grid-cols-3` below if the count ever changes.                     │
-   └─────────────────────────────────────────────────────────────────────────────┘
-
-   A slot with `src: null` still falls back to its label, so a logo that has not been
-   delivered yet leaves a named card rather than a hole.
-
-   Imported rather than referenced by URL string so a missing or renamed file fails
-   the build instead of leaving a broken image on a live page. Each file arrived as a
-   4:5 portrait canvas with the logo adrift in the middle; their root viewBoxes were
-   tightened onto the artwork itself, as with the marquee set. */
-const HERO_PARTNERS: readonly { name: string; src: string | null }[] = [
-  { name: "USAID", src: heroPartner30 },
-  { name: "Helvetas", src: heroPartner31 },
-  { name: "WOW", src: heroPartner32 },
-  { name: "KODE — Kosovo Digital Economy", src: heroPartner33 },
-  { name: "Regional Challenge Fund", src: heroPartner34 },
-  { name: "Virtual Innovation Consortium", src: heroPartner35 },
-];
 
 function PartnerLogoGrid() {
   return (
@@ -3352,126 +3061,6 @@ function TrajnimePromoSection() {
   );
 }
 
-/* ══════════════════════════════════════════
-   PART 3 — PROGRAMIM PAGE
-══════════════════════════════════════════ */
-
-/* 3.2 — INFINITE LOGO MARQUEE
-
-   Two logo sets feed the same marquee. A card renders the artwork when the entry has a
-   `src` and falls back to its label when it does not, so the two sets can coexist without
-   the component branching on which page it is on.
-
-   `PARTNER_LOGOS` is the /trajnime strip: the bodies whose certifications the trainings
-   are built against, which is a different list from the employer logos below. It is also
-   the component's default, and /trajnime is the only caller that takes that default. */
-type MarqueeLogo = string | { name: string; src: string };
-
-/* Order is deliberate and matches the delivered file numbering — keep 36 first, 44 last. */
-const PARTNER_LOGOS: readonly MarqueeLogo[] = [
-  { name: "Microsoft", src: cert36 },
-  { name: "Cisco", src: cert37 },
-  { name: "Oracle", src: cert38 },
-  { name: "CompTIA", src: cert39 },
-  { name: "Linux Professional Institute", src: cert40 },
-  { name: "EC-Council", src: cert41 },
-  { name: "Palo Alto Networks", src: cert42 },
-  { name: "ECDL", src: cert43 },
-  { name: "Pearson", src: cert44 },
-];
-
-/* The real employer logos, shown on the programme pages and the /biznese section.
-
-   ┌─── ADDING A PARTNER ────────────────────────────────────────────────────────┐
-   │ 1. Drop the file in `src/imports/`.                                         │
-   │ 2. `import partnerX from "../imports/<file>";` at the top of this file.     │
-   │ 3. Append `{ name: "Company", src: partnerX }` below.                       │
-   │ Both marquee rows are built from this array's length, so nothing else needs │
-   │ touching — the loop stays seamless at any count.                            │
-   └─────────────────────────────────────────────────────────────────────────────┘
-
-   `name` is what screen readers announce, since the artwork itself carries no text they
-   can reach. The delivered files were 4:5 portrait canvases with the logo floating in the
-   middle and 70-85% of the height empty, which renders unreadably small in a 180x90 card;
-   each file's root viewBox was tightened onto its own artwork so `object-contain` has a
-   box worth fitting. The embedded artwork is untouched. */
-const PARTNER_LOGO_IMAGES: readonly MarqueeLogo[] = [
-  { name: "Kosbit", src: partner17 },
-  { name: "dua.com", src: partner18 },
-  { name: "TEB", src: partner19 },
-  { name: "Ritech", src: partner20 },
-  { name: "KEDS", src: partner21 },
-  { name: "Gjirafa.com", src: partner22 },
-  { name: "Borek Solutions Group", src: partner23 },
-  { name: "Frakton", src: partner24 },
-  { name: "Raiffeisen Bank", src: partner25 },
-  { name: "Mikkena", src: partner26 },
-  { name: "Starlabs", src: partner27 },
-  { name: "Cacttus", src: partner28 },
-  { name: "IPKO", src: partner29 },
-  /* More distinct names in the loop = a longer gap before any one logo comes round
-     again, which is the point of adding these.
-
-     Two of the six delivered files were left out on purpose: 52.png is KEDS and 56.png
-     is Frakton, both already above as 21.svg and 24.svg. Adding them would put those two
-     brands in the loop twice and make the repetition worse, not better. */
-  { name: "ProCredit Bank", src: partner51 },
-  { name: "KEK", src: partner53 },
-  { name: "NLB Banka", src: partner54 },
-  { name: "UNMIK", src: partner55 },
-];
-
-/* ── TESTIMONIALS ──
-   Real, attributable reviews from past participants.
-
-   Text only, by design: no avatars. A testimonial card with a stock face reads as
-   decoration and quietly implies the person is a stock photo too — the quote and who
-   said it are the whole payload. Card shell (radius, border, brandSoft fill) is lifted
-   from "Pikat e Forta" on the training detail page so it needs no new design language.
-
-   ┌─── ADDING A SIXTH REVIEW ───────────────────────────────────────────────────┐
-   │ Append one object below — name, role, quote, stars. Nothing else to touch:  │
-   │ the carousel counts the slides itself, so an extra entry gets its own dot   │
-   │ and its own step in the arrows automatically.                               │
-   └─────────────────────────────────────────────────────────────────────────────┘ */
-const TESTIMONIALS: readonly { quote: string; name: string; role: string; stars: number }[] = [
-  {
-    quote:
-      "Kam pasur shumë përvojë duke përdorur Azure në laboratorë, më dha shumë gjëra. Trajnerët ishin të mrekullueshëm, ata kishin shumë njohuri për atë që spjegonin. Ata na dhanë shumë aftësi dhe sygjerime se çfarë mund të bëjmë me Azure.",
-    name: "Cansel Zurnaci",
-    role: "Microsoft Azure Cloud",
-    stars: 5,
-  },
-  {
-    quote:
-      "Trajnimi më ndihmoi shumë në avancimin profesional, duke më ofruar përvojë të vlefshme falë mbështetjes së trajnerëve dhe bashkëpunimit me grupin e trajnimit.",
-    name: "Elinda Osmani",
-    role: "Burime Njerëzore",
-    stars: 5,
-  },
-  {
-    quote:
-      "Si një nënë e re, për mua ishte e vështirë të aplikoja për punë, prandaj vendosa që të ndjek disa trajnime profesionale. Trajnimet që përfundova me sukses përfshijnë Social Media Marketing, dhe Dizajn Grafik.",
-    name: "Aida Kastrati Miftari",
-    role: "Social Media Marketing & Dizajn Grafik",
-    stars: 5,
-  },
-  {
-    quote:
-      "Kam përfituar shumë njohuri në lidhje me Cloud dhe Linux. Ky trajnim ka hapur mundësi për avancimin tim të mëtejshëm në karrierë.",
-    name: "Uvejs Danjolli",
-    role: "Microsoft Azure Cloud & LINUX",
-    stars: 5,
-  },
-  {
-    quote:
-      "Trajnimi në PHP dhe ReactJS ka luajtur një rol thelbësor në ndihmën time për të krijuar sisteme menaxhimi të suksesshme. Pas këtij trajnimi, kam zhvilluar dhe implementuar disa sisteme menaxhimi të cilat tani janë në përdorim në kompani të ndryshme.",
-    name: "Jeta Shehu",
-    role: "React JS & PHP",
-    stars: 5,
-  },
-];
-
 /**
  * The reviews as a carousel.
  *
@@ -3687,111 +3276,6 @@ function LogoCard({ logo }: { logo: MarqueeLogo }) {
     </div>
   );
 }
-
-/* 3.1 — INTERACTIVE SEMESTER TABS */
-
-/**
- * One course: [name, ECVET credits, contact hours].
- *
- * The credit figure is part of the DATA now. It used to be a literal `6 ECTS` inside the
- * row markup, which meant every course on every semester of both programmes claimed six
- * credits regardless of its real weight — the same shape of bug the "Çfarë do të mësosh"
- * descriptions had. The semester total in the panel header is summed from these rather
- * than hardcoded, so editing a course's credits keeps the badge honest by itself.
- */
-type SemesterModule = readonly [name: string, ecvet: number, hours: number];
-type Semester = { readonly sem: string; readonly modules: readonly SemesterModule[] };
-
-/* ── /programim curriculum — EDIT COURSES HERE ── */
-const SEM_PROGRAMIM: readonly Semester[] = [
-  {
-    sem: "Semestri 1",
-    modules: [
-      ["Gjuhë angleze për TI", 4, 80],
-      ["Bazat e Ueb-it", 4, 80],
-      ["Matematikë për shkencat kompjuterike", 6, 120],
-      ["Bazat e TIK", 8, 160],
-      ["Hyrje në programim", 8, 160],
-    ],
-  },
-  {
-    sem: "Semestri 2",
-    modules: [
-      ["Algoritmet dhe strukturat e të dhënave", 6, 120],
-      ["Dizajnimi dhe zhvillimi i bazave të të dhënave", 8, 160],
-      ["Programimi i Ueb-it interaktiv", 4, 80],
-      ["Programimi i orientuar në objekte", 8, 160],
-      ["Lëndë zgjedhore", 4, 80],
-    ],
-  },
-  {
-    sem: "Semestri 3",
-    modules: [
-      ["Inxhinieria softuerike", 6, 120],
-      ["Zhvillimi i Ueb-it", 7, 140],
-      ["Zhvillimi i aplikacioneve mobile", 7, 140],
-      ["Dizajni i ndërfaqes së përdoruesit dhe përdorshmëria", 6, 120],
-      ["Lëndë zgjedhore", 4, 80],
-    ],
-  },
-  {
-    sem: "Semestri 4",
-    modules: [
-      ["Zhvillimi i avancuar i Ueb-it", 7, 140],
-      ["Zhvillimi i avancuar i aplikacioneve mobile", 7, 140],
-      ["Hyrje në siguri kibernetike", 6, 120],
-      ["Analiza dhe vizualizimi i të dhënave", 6, 120],
-      ["Lëndë zgjedhore", 4, 80],
-    ],
-  },
-];
-
-/* ── /siguria curriculum — EDIT COURSES HERE ──
-   Note the totals are NOT all 30: semester 3 sums to 29 and semester 4 to 31. That is
-   the real programme, not a typo — and it is exactly why the panel badge is summed from
-   these rows rather than printing a fixed "30". */
-const SEM_SIGURIA: readonly Semester[] = [
-  {
-    sem: "Semestri 1",
-    modules: [
-      ["Gjuhë angleze për TI", 4, 80],
-      ["Matematikë për shkencat kompjuterike", 6, 120],
-      ["Bazat e TIK", 8, 160],
-      ["Rrjetat Kompjuterike 1", 6, 120],
-      ["Hyrje në programim", 6, 120],
-    ],
-  },
-  {
-    sem: "Semestri 2",
-    modules: [
-      ["Rrjetat Kompjuterike 2", 6, 120],
-      ["Linux 1", 7, 140],
-      ["Teknologjitë Cloud", 7, 140],
-      ["Gjuhë skriptuese", 6, 120],
-      ["Lëndë zgjedhore", 4, 80],
-    ],
-  },
-  {
-    sem: "Semestri 3",
-    modules: [
-      ["Rrjetat Kompjuterike 3", 6, 120],
-      ["Linux 2", 6, 120],
-      ["Administrimi i bazave të të dhënave", 6, 120],
-      ["Siguria e Informacionit", 7, 140],
-      ["Lëndë zgjedhore", 4, 80],
-    ],
-  },
-  {
-    sem: "Semestri 4",
-    modules: [
-      ["Virtualizimi", 6, 120],
-      ["Siguria Kibernetike", 7, 140],
-      ["Operacionet Kibernetike / Cyber Operations", 7, 140],
-      ["Testimi i Sigurisë / Penetration Testing", 7, 140],
-      ["Lëndë zgjedhore", 4, 80],
-    ],
-  },
-];
 
 function SemesterTabs({ semesters }: { semesters: typeof SEM_PROGRAMIM }) {
   const [active, setActive] = useState(0);
@@ -4218,30 +3702,6 @@ function PageSiguria() {
     />
   );
 }
-
-/* ══════════════════════════════════════════
-   PART 4 — TRAJNIME PAGE (filter labels)
-══════════════════════════════════════════ */
-const TRAINERS = [
-  /*
-    Four real, photographed instructors. This list held six until the last two stock-photo
-    placeholders — "Mentor Berisha" (Ethical Hacking) and "Enes Sermaxhaj" (Dizajn Grafik),
-    Unsplash headshots of nobody in particular — were dropped, along with "Arsim Susuri"
-    and "Era Gjakova" before them. The grid below is set to four tracks to match; adding a
-    fifth person means widening it again, or the row breaks.
-
-    `role` is blank on every entry. The
-    card DOES render this line, so a blank leaves a small gap — that is deliberate. The
-    roles here were invented alongside the stock photos, and attaching one of them to a
-    named, photographed person would be asserting something about them that nobody has
-    confirmed. Same reasoning already applied to LIGJËRUEIT further down. Fill them in
-    once the real specialisations are known.
-  */
-  { name: "Ardit Beqiri", role: "", imgUrl: lektorArditi, imgPosition: "center 50%" },
-  { name: "Hana Hoxha", role: "", imgUrl: trajnereHana, imgPosition: "center 50%" },
-  { name: "Ali Kaçamaku", role: "", imgUrl: trajnerAli, imgPosition: "center 50%" },
-  { name: "Alban Krasniqi", role: "", imgUrl: trajnerAlban, imgPosition: "center 50%" },
-];
 
 /* 4.1 — Filter chips with labels */
 function FilterRow({ label, options, active, onSelect }: { label: string; options: string[]; active: string; onSelect: (v: string) => void }) {
@@ -5375,113 +4835,6 @@ function PageBizneseTrajnime() {
   );
 }
 
-/* ── 5.2 RRJETI I TALENTËVE ── */
-/* `object-position` for the framed image in this component. Second number is the
-   vertical one — raise it to push the image DOWN inside its frame. */
-/*
-  ─── TALENT NETWORK ───
-
-  One person = one entry here, and the categories below REFERENCE these objects rather
-  than repeating them. Several people belong to more than one category (Arjana Bellaqa is
-  in three), and duplicating a card per category is how a name, a role or — later — a CV
-  link ends up corrected in one place and stale in another. Edit a person once; every
-  carousel they appear in follows.
-
-  `photo: null` renders the icon placeholder instead of an <img>. Every person has a real
-  photo now — Trit Meri was the last holdout and his arrived — so nothing hits that branch
-  today. It is kept because a new name added here before their portrait exists should
-  render a complete card, not a broken image box.
-
-  `imgPosition` is per person: a face sits differently in every crop, so one shared value
-  cannot centre all twelve. Raise the second number to push that face DOWN in its circle.
-
-  `cvUrl` is a PLAIN PATH into `public/`, never an `import`. Vite copies `public/` through
-  untouched, so `/pdfs/cvs/x.pdf` stays that exact URL in dev and in the build and a CV can
-  be replaced by dropping in a new file — no rebuild, no code change. Importing them would
-  put twelve PDFs in the bundle graph under content-hashed names instead.
-
-  Set once per PERSON, which is the point of this table: Eda Nuka appears in two carousels
-  and Arjana Bellaqa in three, and they each resolve to one file rather than a copy per
-  category. Correct a path here and every card showing that person follows.
-
-  TalentCard still branches on it — a `null` renders the plain, inert button — so a new
-  person can be added before their CV exists without producing a link to nothing.
-*/
-type TalentPerson = {
-  readonly name: string;
-  readonly role: string;
-  readonly photo: string | null;
-  readonly imgPosition: string;
-  readonly cvUrl: string | null;
-};
-
-const TALENT_PEOPLE = {
-  altinMorina: { name: "Altin Morina", role: "Web & Mobile Development", photo: talentAltinMorina, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/altinCV.pdf" },
-  edaNuka: { name: "Eda Nuka", role: "Web & Mobile Development and UI/UX", photo: talentEdaNuka, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/edaCV.pdf" },
-  arjanaBellaqa: { name: "Arjana Bellaqa", role: "Web & Mobile Development, UI/UX Designer, Data Analysis", photo: talentArjanaBellaqa, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/arjanaCV.pdf" },
-  noraBekteshi: { name: "Nora Bekteshi", role: "Web & Mobile Development and UI/UX Designer", photo: talentNoraBekteshi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/noraCV.pdf" },
-  flamurHaxholli: { name: "Flamur Haxholli", role: "Web & Mobile Development", photo: talentFlamurHaxholli, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/flamurCV.pdf" },
-  resulManxholli: { name: "Resul Manxholli", role: "Web & Mobile Development", photo: talentResulManxholli, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/resulCV.pdf" },
-  kaltrinaQerimi: { name: "Kaltrina Qerimi", role: "Web & Mobile Development", photo: talentKaltrinaQerimi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/kaltrinaCV.pdf" },
-  ernataKoliqi: { name: "Ernata Koliqi", role: "Web & Mobile Development and UI/UX Designer", photo: talentErnataKoliqi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/ernataCV.pdf" },
-  mirlindArifi: { name: "Mirlind Arifi", role: "Data Analysis", photo: talentMirlindArifi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/mirlindCV.pdf" },
-  gjinBardhi: { name: "Gjin Bardhi", role: "DevOps Engineer", photo: talentGjinBardhi, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/gjinCV.pdf" },
-  tritMeri: { name: "Trit Meri", role: "Network Engineer", photo: talentTritMeri, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/tritCV.pdf" },
-  fatjonKerceli: { name: "Fatjon Kërqeli", role: "Network Engineer", photo: talentFatjonKerceli, imgPosition: "center 50%", cvUrl: "/pdfs/cvs/fatjonCV.pdf" },
-} satisfies Record<string, TalentPerson>;
-
-/*
-  The left-hand list AND the carousel both read this one array, so a category cannot exist
-  in the list without a carousel behind it. `people` order IS carousel order.
-
-  ⚠ The `skills` strings are carried over EXACTLY as they were on the page before this
-  change, including the fact that three of them are attached to the wrong role — UI/UX
-  Designers reads "Penetration testing, SOC, incident response" and Network Engineers reads
-  "Figma, prototyping, user research". That mismatch predates this work and is left alone
-  rather than silently rewritten; it is flagged so it can be fixed deliberately.
-*/
-const TALENT_CATEGORIES = [
-  {
-    role: "Web & Mobile Developers",
-    skills: "React, Node.js, React Native, API design",
-    people: [
-      TALENT_PEOPLE.altinMorina,
-      TALENT_PEOPLE.edaNuka,
-      TALENT_PEOPLE.arjanaBellaqa,
-      TALENT_PEOPLE.noraBekteshi,
-      TALENT_PEOPLE.flamurHaxholli,
-      TALENT_PEOPLE.resulManxholli,
-      TALENT_PEOPLE.kaltrinaQerimi,
-      TALENT_PEOPLE.ernataKoliqi,
-    ],
-  },
-  {
-    role: "UI/UX Designers",
-    skills: "Penetration testing, SOC, incident response",
-    people: [
-      TALENT_PEOPLE.edaNuka,
-      TALENT_PEOPLE.arjanaBellaqa,
-      TALENT_PEOPLE.noraBekteshi,
-      TALENT_PEOPLE.ernataKoliqi,
-    ],
-  },
-  {
-    role: "Data Analysts",
-    skills: "Python, SQL, visualization, reporting",
-    people: [TALENT_PEOPLE.arjanaBellaqa, TALENT_PEOPLE.mirlindArifi],
-  },
-  {
-    role: "DevOps Engineers",
-    skills: "Cloud (AWS/Azure), CI/CD, containerization",
-    people: [TALENT_PEOPLE.gjinBardhi],
-  },
-  {
-    role: "Network Engineers",
-    skills: "Figma, prototyping, user research",
-    people: [TALENT_PEOPLE.tritMeri, TALENT_PEOPLE.fatjonKerceli],
-  },
-];
-
 /*
   One person's card. Same frame as the sample card it replaces — same padding, radius,
   shadow, border, the same 64px circle and the same divider under the header.
@@ -6005,40 +5358,6 @@ function PageBizneseTalente() {
 */
 const BURSA_HERO_IMG_POSITION = "center 40%";
 
-/*
-  ┌──────────────────────────────────────────────────────────────────────────────┐
-  │  SPONSORS — ⚠ PLACEHOLDER DATA. This is the array to edit.                   │
-  │                                                                              │
-  │  To add a real sponsor:                                                      │
-  │    1. drop the logo file into src/imports/                                   │
-  │    2. `import sponsorTeb from "../imports/teb.svg";` up with the other        │
-  │       image imports at the top of this file                                  │
-  │    3. set `logo: sponsorTeb` on its row below, and set `name` + `scholarships`│
-  │                                                                              │
-  │  `logo: null` is what marks a row as still-a-placeholder — the card then      │
-  │  draws a building glyph and the word "Logo" instead of an image. Nothing      │
-  │  else needs touching; the card renders whichever branch applies, so real and  │
-  │  placeholder sponsors can sit side by side while the set is filled in.        │
-  │                                                                              │
-  │  Row count is free — the grid is 1 / 2 / 4 across and reflows on its own.     │
-  └──────────────────────────────────────────────────────────────────────────────┘
-*/
-interface BursaSponsor {
-  /* Shown under the logo area and used as the image's alt text. */
-  readonly name: string;
-  /* An imported image, or null while this row is a placeholder. */
-  readonly logo: string | null;
-  /* Scholarships funded, rendered as "20x Bursa". */
-  readonly scholarships: number;
-}
-
-const BURSA_SPONSORS: readonly BursaSponsor[] = [
-  /* ⚠ Logos are real; the scholarship counts are still placeholders. */
-  { name: "Harrisia", logo: sponsorHarrisia, scholarships: 20 },
-  { name: "Doni", logo: sponsorDoni, scholarships: 20 },
-  { name: "Cacttus", logo: sponsorCacttus, scholarships: 20 },
-];
-
 function PageBizneseBursa() {
   return (
     <PageWrapper>
@@ -6507,271 +5826,6 @@ function PageBiznestKlasa() {
   );
 }
 
-/* ══════════════════════════════════════════
-   REMAINING UNCHANGED PAGES
-══════════════════════════════════════════ */
-/**
- * The project catalogue.
- *
- * `about` is the "Rreth projektit" copy, one entry per paragraph. It lives here because
- * the detail page used to print two fixed paragraphs of filler for EVERY project — the
- * same shape of bug the course cards and the semester credits had: content written into
- * the markup instead of into the data, so eight different projects all said the same
- * thing. Adding a project without its own text is now a type error.
- *
- * Several of these were supplied as bullet lists and deliberately rewritten as prose:
- * this block is a narrative about a finished piece of work, not a spec sheet.
- */
-/* Project photos — /projektet/[slug]. `Main` is the large shot beside the "Rreth
-   projektit" copy; the numbered ones fill the three-up strip below it. Six of the eight
-   projects have real photos; SDC alone still has none and falls back to the stock images
-   hard-coded in ProjectDetailPage. The delivered names differ slightly from how they were
-   listed: us2/us3/us4, not us-2/us-3/us-4. */
-/* LuxDev. `1` is the large shot; 2-4 fill the strip, left to right. All four are .jpeg
-   now: luxdev1 was delivered as a 5208px PNG, and a PNG that wide is ~3.7MB even after
-   resizing because PNG cannot compress a photograph. It is re-encoded as JPEG at 1600px
-   (0.11MB) — 2x its 556px display slot, so it stays sharp on retina.
-   `luxdev.png` is something else entirely: the FUNDER LOGO for the navbar dropdown,
-   imported as `projectLuxDev` far above. Do not conflate the two. */
-import projLuxDevMain from "../imports/luxdev1.jpg";
-import projLuxDev2 from "../imports/luxdev2.jpeg";
-import projLuxDev3 from "../imports/luxdev3.jpeg";
-import projLuxDev4 from "../imports/luxdev4.jpeg";
-/* SDC / Helvetas. `1` is the large shot; 2 and 3 fill the strip, which is a TWO-up
-   row for this project rather than the usual three — only two extra photos exist.
-   Mixed extensions, as delivered: sdc1 is .webp, 2 and 3 are .jpg. */
-import projSdcMain from "../imports/sdc1.webp";
-import projSdc2 from "../imports/sdc2.jpg";
-import projSdc3 from "../imports/sdc3.jpg";
-import projSkillMain from "../imports/skill7.jpeg";
-import projSkill1 from "../imports/skill1.jpeg";
-import projSkill3 from "../imports/skill3.jpeg";
-import projSkill4 from "../imports/skill4.jpeg";
-import projUsaidMain from "../imports/usaid.jpg";
-import projUs2 from "../imports/us2.jpg";
-import projUs3 from "../imports/us3.png";
-import projUs4 from "../imports/us4.jpg";
-import projGraMain from "../imports/gra2.jpg";
-import projGra1 from "../imports/gra1.jpg";
-import projGra3 from "../imports/gra3.jpg";
-import projGra4 from "../imports/gra4.jpg";
-import projKodeMain from "../imports/kode1.jpeg";
-import projKode2 from "../imports/kode2.jpg";
-import projKode3 from "../imports/kode3.jpg";
-import projRcfMain from "../imports/rcf3.jpg";
-import projRcf1 from "../imports/rcf1.jpg";
-import projRcf2 from "../imports/rcf2.jpg";
-import projRcf4 from "../imports/rcf4.jpg";
-import projVicMain from "../imports/vic.png";
-import projVic1 from "../imports/vic1.jpg";
-import projVic2 from "../imports/vic2.jpg";
-import projVic3 from "../imports/vic3.jpg";
-
-const PROJECTS = [
-  {
-    title: "Skill Factory",
-    partner: "PARTNER",
-    desc: "Skill Factory nga Cacttus Education ishte një akademi trajnimi inovative, e mbështetur nga Bashkimi Evropian dhe Qeveria Gjermane përmes iniciativës Digital4Business.",
-    path: "/projektet/skill-factory",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["1,200", "Pjesëmarrës"],
-      ["35", "Trajnime"],
-      ["10+", "Kategori Trajnimesh"],
-    ],
-    mainImg: projSkillMain,
-    gallery: [
-      { url: projSkill1, imgPosition: "center 50%" },
-      { url: projSkill3, imgPosition: "center 50%" },
-      { url: projSkill4, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Në kuadër të këtij projekti janë organizuar 35 trajnime, duke përfshirë 20 në Prizren dhe 15 në Prishtinë, të cilat kanë trajnuar mbi 1,200 kandidatë nga kategori të ndryshme, përfshirë të rinjtë e papunë dhe profesionistët e ndërmarrjeve të vogla dhe të mesme (MSEs). Programi ka ofruar kurse në programim, digjitalizimi të biznesit, menaxhim të projekteve, dizajn grafik, marketing dixhital dhe përdorimin e paketës Microsoft Office, duke i ndihmuar pjesëmarrësit të fitojnë aftësi praktike të aplikueshme në tregun e punës.",
-      "Një aspekt kyç i Skill Factory ka qenë qasja e tij e hapur dhe gjithëpërfshirëse, me formate hibride të mësimdhënies që kanë kombinuar mësimin online dhe pjesëmarrjen fizike. Ky model ka lehtësuar qasjen për pjesëmarrës nga e gjithë Kosova, duke përfshirë edhe trajnime të ofruara plotësisht falas për periudha të caktuara. Një tjetër arritje e rëndësishme ka qenë pjesëmarrja e lartë e grave, veçanërisht në trajnimet e marketingut dhe dizajnit grafik.",
-      "Skill Factory nuk ishte vetëm një akademi trajnimi, por një hapësirë ku talentet zhvillohen dhe mundësitë e reja krijohen. Përmes bashkëpunimeve me biznese dhe institucione të ndryshme, pjesëmarrësit tanë kanë arritur të punësohen, të hapin biznese të reja dhe të avancohen në karrierat e tyre.",
-    ],
-  },
-  {
-    title: "Partneriteti për Impaktin në TIK",
-    partner: "USAID",
-    desc: "Cacttus Education zbaton Programin YOU, i mbështetur nga USAID Kosovo, për të rritur qasjen e të rinjve në arsim profesional, njohuri dhe tregun e punës në ICT. Projekti ofron trajnime praktike në zhvillim softueri, administrim rrjetesh, siguri kibernetike dhe sipërmarrësi digjitale, duke i lidhur pjesëmarrësit me sektorin privat për praktika dhe mentorim.",
-    path: "/projektet/usaid",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["250", "Pjesëmarrës"],
-      ["60", "Bursa"],
-      ["32", "Programe Trajnimi"],
-    ],
-    mainImg: projUsaidMain,
-    gallery: [
-      { url: projUs2, imgPosition: "center 50%" },
-      { url: projUs3, imgPosition: "center 50%" },
-      { url: projUs4, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Gjatë katër viteve të implementimit, programi përfshiu 450 aplikantë, ku 250 u përzgjodhën për trajnime aktive. U ofruan 32 programe dhe 60 studentë përfituan bursa, nga të cilët 22 ishin gra, duke promovuar barazinë gjinore në ICT. Pjesëmarrësit ishin kryesisht të moshës 18-25 vjeç, ndërsa shumë u punësuan ose themeluan startup-e. Për të siguruar suksesin afatgjatë, u krijuan partneritete me kompani teknologjike për mbështetje të karrierës.",
-      "Programi u ndërtua si një cikël katërvjeçar trajnimi për aftësi në ICT, i zhvilluar njëkohësisht në institucione arsimore dhe në kompani partnere në Kosovë. Përmes 32 programeve të trajnimit, 250 të rinj përfituan mentorim nga profesionistë të fushës dhe praktikë të drejtpërdrejtë në industri, ndërsa 60 studentë — 22 prej tyre gra — u mbështetën me bursa.",
-      "Pjesëmarrësit dolën me aftësi teknike dhe sipërmarrëse njëkohësisht, të cilat u hapën mundësi të reja punësimi. Mbi të gjitha, projekti krijoi një lidhje të qëndrueshme mes arsimit dhe tregut të punës — një model që mbetet i zbatueshëm për zhvillimin e aftësive në ICT edhe pas përfundimit të tij.",
-    ],
-  },
-  {
-    title: "SDC",
-    partner: "SDC",
-    desc: "Projekti synon përmirësimin e punësimit të të rinjve në sektorin ICT në Kosovë, duke ndërtuar ura bashkëpunimi mes arsimit dhe industrisë dhe duke rritur kapacitetet për eksport të shërbimeve ICT drejt tregjeve të BE-së dhe vendeve gjermanofolëse (DACH).",
-    path: "/projektet/sdc",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["30+", "Të Punësuar"],
-      ["340+", "Orë Trajnuese"],
-      ["14+", "Trajnime Të Personalizuara"],
-    ],
-    mainImg: projSdcMain,
-    /* TWO entries, not three. The strip's column count follows this array's length —
-       see `shots` in ProjectDetailPage — so two photos make a two-up row that fills the
-       width, rather than three columns with one left empty. */
-    gallery: [
-      { url: projSdc2, imgPosition: "center 50%" },
-      { url: projSdc3, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Projekti, i financuar nga SDC dhe i zbatuar nga Helvetas dhe MDA, zhvilloi një model inovativ të trajnimit dhe punësimit për të rinjtë në sektorin ICT.",
-      "Përmes një programi intensiv katërmujor për Full-Stack Web Development, të zhvilluar në bashkëpunim me kompanitë ICT në Kosovë, u ofrua trajnim i përshtatur me kërkesat reale të tregut.",
-      "Pjesëmarrësit përzgjidheshin bashkë me kompanitë ICT dhe pas përfundimit të trajnimit u garantohej punësimi. Pagesa e trajnimit bëhej përmes një skeme ku shuma e trajnimit zbritej nga pagat e tyre pas punësimit, duke ulur barrierat financiare.",
-      "Që kompanitë të bien dakord për kontrata të tilla, ato do të përfshihen shumë në përzgjedhjen e kandidatëve. Nëpërmjet kësaj, kompanitë do të kenë mundësinë të përzgjedhin njerëz që u përshtaten nevojave të tyre për sa i përket karakterit, aftësive të buta dhe të përgjithshme.",
-    ],
-  },
-  {
-    title: "Gratë në Punë Online",
-    partner: "WoW",
-    desc: "Projekti, zbatuar nga Cacttus Education me mbështetjen e USAID Kosovo, fuqizon gratë e papuna dhe të nënpunësuara me aftësi për punë online — freelancing, zhvillim web, dizajn grafik, SEO, menaxhim rrjetesh sociale dhe përkthim — duke i ndihmuar të ndërtojnë profile profesionale dhe të fitojnë të ardhura të pavarura.",
-    path: "/projektet/wow",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["135+", "Gra Të Trajnuara"],
-      ["35+", "fituan 2,511€"],
-      ["1,670+", "Aplikime"],
-    ],
-    mainImg: projGraMain,
-    gallery: [
-      { url: projGra1, imgPosition: "center 50%" },
-      { url: projGra3, imgPosition: "center 50%" },
-      { url: projGra4, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Nga 1,670 aplikime, 250 gra u përzgjodhën për testim dhe 135 u trajnuan. Programi përfshinte ndërtimin e profileve online, strategji për aplikim, menaxhimin e kohës dhe pagesave ndërkombëtare. Monitorimi pas trajnimit ndihmoi pjesëmarrëset të aplikojnë për projekte dhe të sigurojnë të ardhura përmes platformave online. Për të rritur impaktin, organizoheshin sesione informuese dhe takime me mentorë, duke forcuar lidhjet mes pjesëmarrëseve dhe komunitetit profesional.",
-      "Trajnimi u ofrua për aftësi digjitale dhe punë online, në një format që kombinonte mësimin online me praninë fizike, dhe përfshiu 135 gra nga Prishtina dhe Gjilani. Deri në fund të programit, 35 prej tyre kishin siguruar të ardhura prej 2,511 € përmes platformave online.",
-      "Rezultati kryesor ishte rritja e pavarësisë financiare dhe e mundësive të punësimit për gratë në Kosovë — një model i suksesshëm për integrimin e tyre në tregun digjital.",
-    ],
-  },
-  {
-    title: "KODE",
-    partner: "KODE",
-    desc: "Cacttus Education zbaton Projektin KODE të Programit YOU, duke rikualifikuar përfitues të përzgjedhur në Komunën e Prizrenit përmes kurseve në Microsoft Azure Cloud, Linux dhe aftësi të buta, me katër klasa trajnimi dhe rreth 80 përfitues gjithsej.",
-    path: "/projektet/kode",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["285+", "Orë Të Mbajtura"],
-      ["80+", "Përfitues"],
-      ["6", "Muaj"],
-    ],
-    mainImg: projKodeMain,
-    gallery: [
-      { url: projKode2, imgPosition: "center 50%" },
-      { url: projKode3, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Zbatimi i kursit Microsoft Azure Cloud dhe Linux dhe aftësive të buta të listuara në Komunën e Prizrenit është pjesë e përgjegjësisë së Cacttus Education, e cila ka përfshirë organizimin e katër klasave të trajnimit me afërsisht 20 përfitues për klasë, për gjithsej 80 përfitues. Ofrimi i trajnimeve është kryer nga Cacttus Education.",
-      "Gjatë projektit, Cacttus Education ka implementuar një program trajnimi gjithëpërfshirës me një kohëzgjatje prej gjashtë muajsh për klasë, i cili përfshin trajnime me qasje në klasë dhe laboratore digjitale në shtëpi. Qëllimi ynë është t'i pajisim përfituesit me aftësi teknike dhe të buta për të rritur punësimin e tyre në tregun e TI-së në Kosovë dhe/ose në platformat e pavarura online. Programi ynë i trajnimit fokusohet në rikualifikimin dhe, në disa raste, përmirësimin e aftësive të përfituesve në ekspertizën teknike dhe aftësitë e buta që lidhen me zhvillimin e tyre profesional. Kohëzgjatja totale e parashikuar e programit ishte 285 orë, e cila ka përfshirë udhëzime në klasë, detyra individuale në shtëpi dhe detyra grupore për zbatimin praktik të koncepteve teorike.",
-    ],
-  },
-  {
-    title: "Regional Challenge Fund (RCF)",
-    partner: "RCF",
-    desc: "Projekti, zbatuar nga Cacttus Education me partnerë teknologjikë, përmirëson aftësitë digjitale dhe punësueshmërinë e të rinjve përmes trajnimit bashkëpunues (Cooperative Training), duke kombinuar mësimin teorik me praktikën në zhvillim web, mobile dhe administrim sistemesh.",
-    path: "/projektet/rcf",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["60+", "Të Trajnuar"],
-      ["50%", "Gra"],
-      ["2", "Vite"],
-    ],
-    mainImg: projRcfMain,
-    gallery: [
-      { url: projRcf1, imgPosition: "center 50%" },
-      { url: projRcf2, imgPosition: "center 50%" },
-      { url: projRcf4, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Projekti trajnon 60 të rinj në dy vite, me 50% gra, duke promovuar barazinë gjinore në sektorin e IT-së. Çdo vit, 30 studentë përfitojnë nga trajnimet e strukturuara dhe mentorimi nga profesionistë të industrisë. Programi përfshin teknologjitë më të fundit, softuerë të avancuar dhe pajisje moderne, duke i përgatitur pjesëmarrësit për tregun e punës.",
-      "Trajnimi u ndërtua si një program bashkëpunues për aftësi digjitale, i zhvilluar njëkohësisht në institucionet arsimore dhe në kompanitë partnere, me një ndarje të barabartë mes teorisë dhe praktikës — gjysma e kohës në klasë, gjysma në punë reale. Pjesëmarrësit dolën me aftësi teknike, njohuri për menaxhim projektesh dhe siguri kibernetike.",
-      "Ndikimi ndihet në tri drejtime: rritja e punësueshmërisë, fuqizimi i të rinjve dhe një lidhje më e ngushtë mes arsimit dhe industrisë së IT-së.",
-    ],
-  },
-  {
-    title: "LuxDev Smart Mobility Project",
-    partner: "LuxDev",
-    desc: "LuxDev Smart Mobility Project është një iniciativë e financuar nga LuxDev dhe fituar nga Cacttus Sh.A., që synon zhvillimin e zgjidhjeve të mençura dhe të qëndrueshme në mobilitetin urban të Kosovës, duke forcuar njohuritë lokale në smart mobility dhe teknologjitë e aplikuara.",
-    path: "/projektet/luxdev",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["100+", "Pjesëmarrës"],
-      ["5+", "Partnerë"],
-      ["4000+", "IoT Pajisje"],
-    ],
-    mainImg: projLuxDevMain,
-    /* Strip order IS the array order, left to right. */
-    gallery: [
-      { url: projLuxDev2, imgPosition: "center 50%" },
-      { url: projLuxDev3, imgPosition: "center 50%" },
-      { url: projLuxDev4, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Fokusi i projektit është forcimi i njohurive dhe aftësive lokale në fusha që lidhen me smart mobility, sistemet digjitale dhe teknologjitë e aplikuara, duke krijuar lidhje të drejtpërdrejta ndërmjet arsimit, nevojave të tregut të punës dhe zhvillimeve të ardhshme në sektorin e transportit dhe mobilitetit.",
-      "Roli i Cacttus Education në këtë projekt është i përqendruar kryesisht në arsim dhe zhvillim të aftësive profesionale. Si institucion i arsimit dhe trajnimit profesional, Cacttus Education është përgjegjës për dizajnimin dhe ofrimin e programeve trajnuese praktike, punëtorive dhe moduleve mësimore që pajisin studentët dhe profesionistët me aftësi konkrete digjitale dhe teknike të lidhura me smart mobility. CE kontribuon gjithashtu në zhvillimin e kurrikulave, aktiviteteve praktike dhe ndërtimin e kapaciteteve afatgjata, duke siguruar që rezultatet e projektit të jenë të matshme dhe të qëndrueshme.",
-      "LuxDev Smart Mobility Project është një iniciativë zhvillimore e financuar nga LuxDev dhe e fituar nga Cacttus Sh.A. Ajo synon zhvillimin e zgjidhjeve të mençura, të qëndrueshme dhe të bazuara në teknologji në fushën e mobilitetit urban në Kosovë, duke u mbështetur te ngritja e kapaciteteve dhe inovacioni si rruga kryesore drejt atij qëllimi.",
-    ],
-  },
-  {
-    title: "Virtual Innovation Consortium (VIC)",
-    partner: "VIC",
-    desc: "VIC është një iniciativë e mbështetur nga Bashkimi Evropian që zhvillon aftësi dixhitale të avancuara në Realitetin e Zgjeruar (AR/VR), duke bashkuar universitete, institucione kërkimore dhe liderë industrie për trajnime të përshtatura si për profesionistë të TIK-ut ashtu edhe për audiencat jo-tradicionale.",
-    path: "/projektet/vic",
-    /* Which slice of THIS project's main photo the 16:9 frame keeps. Raise the second
-       number to push the image DOWN inside the frame, lower it to pull it UP. */
-    mainImgPosition: "center 50%",
-    stats: [
-      ["500+", "Pjesëmarrës"],
-      ["11+", "Partnerë"],
-      ["25+", "Trajnime të Avancuara"],
-    ],
-    mainImg: projVicMain,
-    gallery: [
-      { url: projVic1, imgPosition: "center 50%" },
-      { url: projVic2, imgPosition: "center 50%" },
-      { url: projVic3, imgPosition: "center 50%" },
-    ],
-    about: [
-      "Duke kombinuar përsosmërinë akademike me bashkëpunimin e industrisë, VIC siguron që të diplomuarit të fitojnë aftësi praktike, të harmonizuara me tregun, duke rritur punësimin dhe duke kontribuar në transformimin dixhital të Evropës.",
-      "VIC është një iniciativë e mbështetur nga Bashkimi Evropian për zhvillimin e aftësive dixhitale të avancuara, e përqendruar te teknologjitë XR — duke përfshirë Realitetin e Shtuar (AR) dhe Realitetin Virtual (VR). Iniciativa bashkon universitete, institucione kërkimore, ofrues të arsimit profesional (VET) dhe liderë të industrisë.",
-      "Programet e trajnimit janë moderne, në teknologji gjithëpërfshirëse dhe të orientuara drejt nevojave të tregut të punës, dhe synojnë si profesionistët e TIK-ut ashtu edhe audienca jo-tradicionale — edukatorë, profesionistë shëndetësorë, dizajnerë dhe inxhinierë. Duke mbështetur rikualifikimin dhe përmirësimin e aftësive, ato rrisin punësueshmërinë dhe kontribuojnë në transformimin dixhital të Evropës.",
-    ],
-  },
-];
-
 function PageProjektet() {
   return (
     <PageWrapper>
@@ -6821,20 +5875,6 @@ function PageProjektet() {
     </PageWrapper>
   );
 }
-
-/* `object-position` for the framed image in this component. Second number is the
-   vertical one — raise it to push the image DOWN inside its frame. */
-
-/*
-  The strip shown for a project that has no photos of its own. Every project has real
-  ones now, so nothing reaches this today — it is kept so that a newly added project
-  renders a complete page before its photography arrives, rather than three empty boxes.
-*/
-const PROJECT_FALLBACK_GALLERY = [
-  { url: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
-  { url: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
-  { url: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=266&fit=crop&auto=format", imgPosition: "center 50%" },
-];
 
 function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
   /*
@@ -7423,107 +6463,6 @@ function PageKontakti() {
   );
 }
 
-/* Team portraits — /ekipi. See TEAM_MEMBERS. Prefixed `ekipi` because several of
-   these names already exist as other imports: `vetoni.png` is the LECTURER Veton on
-   /ligjërueit (this one is `vetoniEkipi.png`), and `ErnataKoliqi.png` is the graduate in
-   the homepage carousel. Same people, different photos and different pages.
-   `ekipiRilindi` points at `rilind.png` — the file arrived without the trailing i. */
-import ekipiDritoni from "../imports/dritoni.png";
-import ekipiVili from "../imports/vili.png";
-import ekipiShuki from "../imports/shuki.png";
-import ekipiVetoni from "../imports/vetoniEkipi.png";
-import ekipiDonjeta from "../imports/donjeta.png";
-import ekipiVjosa from "../imports/vjosa.png";
-import ekipiRinoni from "../imports/rinoni.png";
-import ekipiTina from "../imports/tina.png";
-import ekipiGona from "../imports/gona.png";
-import ekipiArnisa from "../imports/arnisa.png";
-import ekipiEdona from "../imports/edona.png";
-import ekipiYlljeta from "../imports/ylljeta.png";
-import ekipiFinesa from "../imports/finesa.png";
-import ekipiDafina from "../imports/dafina.png";
-import ekipiRinesa from "../imports/rinesa.png";
-import ekipiErnata from "../imports/ernata.png";
-import ekipiBani from "../imports/bani.png";
-import ekipiRilindi from "../imports/rilind.png";
-import ekipiKrenare from "../imports/krenare.png";
-import ekipiAnesa from "../imports/anesa.png";
-
-const TEAM_MEMBERS = [
-  /*
-    The real team, in the order given. `city` is what the filter on this page compares
-    against with `===`, so these three strings must match the buttons exactly, diacritics
-    and all — "Prishtine" or "Prishtinë " would silently filter to an empty grid rather
-    than error. They were copied out of the `cities` list rather than retyped.
-
-    Elmaze Gashi now has her photo; her `role` is still empty, which PersonCard renders as
-    a blank line rather than inventing a title. Fill it in when it is known. The `role`-less
-    entries are deliberate everywhere on this page — see LIGJËRUEIT for the same reasoning.
-  */
-  { name: "Driton Hapçiu", role: "Chairman of the Board", city: "Prishtinë", imgUrl: ekipiDritoni },
-  { name: "Vildane Kelmendi", role: "CEO", city: "Prishtinë", imgUrl: ekipiVili },
-  { name: "Shukran Murseli-Hapçiu", role: "Vice President of Administration, Operations, and Human Resources", city: "Prishtinë", imgUrl: ekipiShuki },
-  { name: "Veton Xhelili", role: "BDM and Training Manager", city: "Prishtinë", imgUrl: ekipiVetoni },
-  { name: "Donjeta Ismajli", role: "Chief Operating Officer", city: "Prishtinë", imgUrl: ekipiDonjeta },
-  { name: "Vjosa Osmani", role: "Head of Human Resources and Quality Control", city: "Prishtinë", imgUrl: ekipiVjosa },
-  { name: "Rinon Hoxha", role: "Project Manager", city: "Prishtinë", imgUrl: ekipiRinoni },
-  { name: "Elmaze Gashi", role: "", city: "Prishtinë", imgUrl: ekipiElmaze },
-  { name: "Florentina Osmani", role: "Marketing Manager", city: "Prishtinë", imgUrl: ekipiTina },
-  { name: "Antigona Beha-Breznica", role: "Financial Assistant", city: "Prishtinë", imgUrl: ekipiGona },
-  { name: "Arnisa Aliqkaj", role: "Career Counsellor", city: "Prishtinë", imgUrl: ekipiArnisa },
-  { name: "Edona Selmani", role: "Sales Specialist", city: "Prishtinë", imgUrl: ekipiEdona },
-  { name: "Ylljeta Morina", role: "Sales Assistant", city: "Prishtinë", imgUrl: ekipiYlljeta },
-  { name: "Finesa Hiseni", role: "Financial and Administrative Officer", city: "Prishtinë", imgUrl: ekipiFinesa },
-  { name: "Dafina Paqarizi", role: "Financial and Administrative Officer", city: "Prishtinë", imgUrl: ekipiDafina },
-  { name: "Rinesa Gashi", role: "Social Media Specialist", city: "Prishtinë", imgUrl: ekipiRinesa },
-  { name: "Ernata Koliqi", role: "Marketing Assistant", city: "Prishtinë", imgUrl: ekipiErnata },
-  { name: "Shaban Rexhepi", role: "Logistic Officer", city: "Prishtinë", imgUrl: ekipiBani },
-  { name: "Rilind Zulfiu", role: "Coordinator of Parku Teknologjik", city: "Kamenicë", imgUrl: ekipiRilindi },
-  { name: "Krenare Pireva", role: "Administration and Marketing Assistant", city: "Kamenicë", imgUrl: ekipiKrenare },
-  { name: "Anesa Topko", role: "Business Development Manager", city: "Prizren", imgUrl: ekipiAnesa },
-];
-
-/* ══════════════════════════════════════════
-   /rreth-nesh — ABOUT
-
-   Order: story → vision & mission → values → numbers → apply band. It runs from the
-   softest claim to the hardest: who we are, what we are aiming at, what we hold
-   ourselves to, and only then the figures that back it up. Numbers land better as
-   evidence for something already said than as an opening statistic.
-
-   The route is Albanian and dash-separated to match /trajnime, /programim and
-   /biznese/talente rather than introducing an English /about.
-
-   It does NOT duplicate the dropdown's destinations: Ekipi and Ligjëruesit remain their
-   own pages, and this links to them instead of restating their content.
-══════════════════════════════════════════ */
-
-/** The three commitments under the mission statement. */
-const ABOUT_MISSION_POINTS: readonly string[] = [
-  "Dizajnojmë dhe ofrojmë programe profesionale cilësore, të orientuara drejt industrisë dhe tregut të punës.",
-  "Zhvillojmë të menduarit kritik, zgjidhjen e problemeve, komunikimin dhe aftësitë profesionale.",
-  "Krijojmë përvoja praktike të të nxënit përmes metodave bashkëkohore dhe bashkëpunimit me industrinë.",
-];
-
-/**
- * The seven company values, in the order the company states them.
- *
- * Numbered rather than illustrated: seven icons distinct enough to mean anything on their
- * own do not exist, and seven near-identical ones would be visual noise. The index does
- * the work instead, which also keeps each card small — the point here is that there are
- * SEVEN of these, not that any one of them is a feature.
- */
-const ABOUT_VALUES: readonly { title: string; body: string }[] = [
-  { title: "Integriteti", body: "Veprojmë me etikë dhe transparencë, duke bërë gjithmonë atë që është e drejtë." },
-  { title: "Cilësia dhe përsosmëria", body: "Synojmë standardet më të larta në gjithçka që bëjmë dhe përmirësohemi vazhdimisht." },
-  { title: "Respekti", body: "I trajtojmë të gjithë me respekt dhe dinjitet, duke ndërtuar marrëdhënie të besueshme." },
-  { title: "Bashkëpunimi", body: "Punojmë së bashku dhe ndajmë njohuritë për të krijuar rezultate më të mira për të gjithë." },
-  { title: "Përgjegjësia", body: "Marrim përgjegjësi për vendimet, veprimet, sjelljet dhe rezultatet tona." },
-  { title: "Inovacioni", body: "Zhvillojmë vazhdimisht forma më bashkëkohore dhe efektive të edukimit." },
-];
-
-const ABOUT_STAT_ICONS: readonly React.ElementType[] = [Award, Users, Clock, Briefcase];
-
 /* ── Count-up ──
    Hand-rolled rather than reached for from a library. `motion` is in package.json but is
    imported nowhere in src/, and every other animation on this site is plain React plus a
@@ -7930,44 +6869,6 @@ function PageEkipi() {
     </PageWrapper>
   );
 }
-
-const LIGJËRUEIT = [
-  /* ── First four cards, in this exact order. `role` is intentionally blank: this page
-     renders name only, and inventing specialisations would put words in people's mouths.
-     `city` stays because the shared PersonCard type requires it, not because it shows. */
-  { name: "Luan Gashi", role: "", city: "Prishtinë", imgUrl: lektorLuani },
-  { name: "Naim Sulejmani", role: "", city: "Prishtinë", imgUrl: lektorNaimi },
-  { name: "Gëzim Ciriku", role: "", city: "Prishtinë", imgUrl: lektorGezimi },
-  { name: "Jon Kursani", role: "", city: "Prishtinë", imgUrl: lektorJoni },
-  /* ── Second row, same order as given. Same blank `role` as row 1: this page renders
-     name only. */
-  { name: "Jehona Xhaferi", role: "", city: "Prishtinë", imgUrl: lektorJehona },
-  { name: "Veton Xhelili", role: "", city: "Prishtinë", imgUrl: lektorVetoni },
-  { name: "Azra Krasniqi", role: "", city: "Prishtinë", imgUrl: lektorAzra },
-  { name: "Drenushe Imeraj", role: "", city: "Prishtinë", imgUrl: lektorDrenusha },
-  /* ── Cards 9-14. Blank `role` like the real instructors above: the page renders name
-     only, so a specialisation would never be seen anyway.
-
-     Four stock-photo entries used to sit here — Arber Gashi, Era Gjakova, Fatlum Ahmeti
-     and Vlora Dema, all pointing at Unsplash headshots of nobody in particular. They
-     were the placeholders showing at positions 9-12; removing them leaves fourteen real
-     instructors and puts the six below where they belong. */
-  { name: "Pegmatit Bruçi", role: "", city: "Prishtinë", imgUrl: lektorPegmatiti },
-  { name: "Gili Hoxhaj", role: "", city: "Prishtinë", imgUrl: lektorGili },
-  { name: "Engjëll Gashi", role: "", city: "Prishtinë", imgUrl: lektorEngjulli },
-  { name: "Valton Kamberaj", role: "", city: "Prishtinë", imgUrl: lektorValtoni },
-  { name: "Ardit Beqiri", role: "", city: "Prishtinë", imgUrl: lektorArditi },
-  { name: "Rafet Duriqi", role: "", city: "Prishtinë", imgUrl: lektorRafeti },
-  /* ── Cards 15-18. Ardit Beqiri is NOT repeated here: he is already card 13 above, on
-     `lektorArditi`. The newer `trajnerArdit` export belongs to the /trajnime strip. */
-  { name: "Alban Krasniqi", role: "", city: "Prishtinë", imgUrl: trajnerAlban },
-  { name: "Ali Kaçamaku", role: "", city: "Prishtinë", imgUrl: trajnerAli },
-  { name: "Fisnik Avdiu", role: "", city: "Prishtinë", imgUrl: trajnerFisnik },
-  { name: "Hana Hoxha", role: "", city: "Prishtinë", imgUrl: trajnereHana },
-  /* Card 19. `role` left empty like every other entry here — see the note at the top of
-     this array: a title nobody has confirmed is worse than a blank line. */
-  { name: "Dinion Svirca", role: "", city: "Prishtinë", imgUrl: lektorDinion },
-];
 
 function PageLigjërueit() {
   return (
