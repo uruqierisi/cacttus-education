@@ -151,7 +151,6 @@ import { HeroStats } from "./ui/HeroStats";
 import { MetaChip } from "./ui/MetaChip";
 import { Overline } from "./ui/Overline";
 import { PageWrapper } from "./ui/PageWrapper";
-import { TrainingStatusBadge } from "./ui/TrainingStatusBadge";
 import { Footer } from "./layout/Footer";
 import { MobileMenu } from "./layout/MobileMenu";
 import { Navbar } from "./layout/Navbar";
@@ -159,6 +158,13 @@ import { TopBanner } from "./layout/TopBanner";
 import { HorizontalApplicationBand } from "./forms/HorizontalApplicationBand";
 import { PublicApplicationForm } from "./forms/PublicApplicationForm";
 import { ScrollPopupForm } from "./forms/ScrollPopupForm";
+import { ArticleCard } from "./cards/ArticleCard";
+import { LogoCard } from "./cards/LogoCard";
+import { PersonCard } from "./cards/PersonCard";
+import { ProjectCard } from "./cards/ProjectCard";
+import { TalentCard } from "./cards/TalentCard";
+import { TrainingCard } from "./cards/TrainingCard";
+
 
 
 /* ── ROTATING HEADLINE ── */
@@ -244,96 +250,6 @@ function SuccessCarousel() {
   );
 }
 
-/* ── TRAINING CARD ── */
-
-/* ── ARTICLE CARD ── */
-/**
- * A card in the /lajme grid.
- *
- * A real `<Link>` rather than a `div` with an onClick, which is what this was while the
- * feed was mock data: the card is a navigation, so it must be middle-clickable,
- * keyboard-reachable and readable by a screen reader as a link.
- *
- * There is no category chip because `Post` has no category column — see the note on
- * PageLajme. Showing an invented one would be the card lying about the data.
- */
-function ArticleCard({ post }: { post: PostCardData }) {
-  return (
-    <Link
-      to={`/lajme/${post.slug}`}
-      className="block rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
-      style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}
-    >
-      <div className="aspect-[16/9] overflow-hidden" style={{ backgroundColor: C.n100 }}>
-        {post.coverImage ? (
-          <img src={post.coverImage} alt={post.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        ) : (
-          <div className="w-full h-full" style={{ backgroundColor: C.brandSoft }} />
-        )}
-      </div>
-      <div className="p-5">
-        <h4 className="text-sm font-semibold mb-2 leading-snug line-clamp-2" style={{ color: C.n900 }}>{post.title}</h4>
-        {post.excerpt && (
-          <p className="text-xs mb-3 leading-relaxed line-clamp-3" style={{ color: C.muted }}>{post.excerpt}</p>
-        )}
-        <p className="text-xs" style={{ color: C.n400 }}>{formatPostDate(post.createdAt)}</p>
-      </div>
-    </Link>
-  );
-}
-
-/* ── PERSON CARD ── */
-function PersonCard({
-  person,
-  nameOnly = false,
-  imgPosition = "center 50%",
-}: {
-  person: { name: string; role: string; city: string; imgUrl?: string };
-  /**
-   * Photo + name only: no role line, no city pill, no LinkedIn button, and a slightly
-   * shorter portrait so the card does not carry the whitespace those three used to fill.
-   *
-   * A flag rather than a second component, and OFF by default, because this card is
-   * shared: /ekipi opts in, /ligjërueit does not and keeps its role and city exactly as
-   * they are. Editing the markup directly would have silently stripped that page too.
-   */
-  nameOnly?: boolean;
-  /**
-   * Which slice of the portrait survives the crop. Second number is vertical — raise it to
-   * push the image DOWN. Worth reaching for here more than anywhere else on the site: this
-   * frame is a tall 4:5 (or 6:7) and headroom varies wildly between photos, so a face that
-   * sits high in one shot and low in another cannot both be right at the default centre.
-   */
-  imgPosition?: string;
-}) {
-  return (
-    <div className="rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}>
-      <div className={`${nameOnly ? "aspect-[6/7]" : "aspect-[4/5]"} overflow-hidden`} style={{ backgroundColor: C.n100 }}>
-        {person.imgUrl ? <img src={person.imgUrl} alt={person.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style={{ objectPosition: imgPosition }} /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: C.brandSoft }}><Users size={36} style={{ color: C.p300 }} /></div>}
-      </div>
-      <div className="p-4">
-        <h4 className="font-semibold text-sm" style={{ color: C.n900 }}>{person.name}</h4>
-        {/*
-          Not rendered at all when `nameOnly` — not hidden with CSS. A `display: none`
-          role would still be in the DOM for a screen reader to read out and for a
-          "find on page" to match, which is not "removed", it is just invisible.
-        */}
-        {!nameOnly && (
-          <>
-            <p className="text-xs mt-0.5 mb-3" style={{ color: C.n500 }}>{person.role}</p>
-            {/* The LinkedIn button that used to sit opposite the city chip is gone: it had
-                no href and no onClick on any card, so it was a control that looked
-                interactive and did nothing. The chip now owns the row on its own. */}
-            <div className="flex items-center">
-              <MetaChip>{person.city}</MetaChip>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function PartnerLogoGrid() {
   return (
     /*
@@ -368,24 +284,6 @@ function PartnerLogoGrid() {
           )}
         </div>
       ))}
-    </div>
-  );
-}
-
-/* ── PROJECT CARD ── */
-function ProjectCard({ project, to }: { project: { title: string; partner: string; desc: string }; to: string }) {
-  const navigate = useNavigate();
-  /*
-    No partner badge. It used to sit above the title as a `brandLight` pill; removing the
-    element rather than hiding it is what lets the title rise into the space — the card is
-    a flex column with `gap-4`, so a hidden-but-present child would still cost one gap.
-    `project.partner` is still carried in the data and still shown on the detail page.
-  */
-  return (
-    <div className="rounded-2xl p-6 flex flex-col gap-4 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group" style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }} onClick={() => navigate(to)}>
-      <h4 className="text-base font-semibold leading-snug" style={{ color: C.n900 }}>{project.title}</h4>
-      <p className="text-sm flex-1 line-clamp-2" style={{ color: C.n500 }}>{project.desc}</p>
-      <GhostBtn>Shiko projektin</GhostBtn>
     </div>
   );
 }
@@ -1005,34 +903,6 @@ function InfiniteLogoMarquee({
   );
 }
 
-function LogoCard({ logo }: { logo: MarqueeLogo }) {
-  const name = typeof logo === "string" ? logo : logo.name;
-  const src = typeof logo === "string" ? null : logo.src;
-
-  return (
-    /*
-      Logos sit at their own colour and opacity at rest — no grayscale, no dimming. The
-      partners are the point of the section, so there is nothing to gain by hiding them
-      until the pointer happens to land on one, and on touch there is no hover at all.
-
-      Hover is a scale-up and nothing else: no lift, no shadow. `transition-transform`
-      rather than `transition-all` so only the scale animates.
-    */
-    <div
-      className="shrink-0 flex items-center justify-center rounded-xl transition-transform duration-200 hover:scale-105 cursor-default"
-      style={{ width: 180, height: 90, border: `1px solid #EEE8EF`, backgroundColor: C.n0 }}
-    >
-      {src ? (
-        /* `contain` inside a padded box: logos differ in aspect from 1:1 to 5:1, and this
-           is what keeps the tall ones and the wide ones optically the same weight. */
-        <img src={src} alt={name} loading="lazy" className="max-w-full max-h-full object-contain p-4" />
-      ) : (
-        <span className="text-xs font-semibold tracking-wide" style={{ color: C.n600 }}>{name}</span>
-      )}
-    </div>
-  );
-}
-
 function SemesterTabs({ semesters }: { semesters: typeof SEM_PROGRAMIM }) {
   const [active, setActive] = useState(0);
   const [fade, setFade] = useState(true);
@@ -1480,56 +1350,6 @@ function FilterRow({ label, options, active, onSelect }: { label: string; option
           </button>
         ))}
       </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════
-   4 — TRAJNIME: catalogue grid (live data)
-
-   The card list, the category chips and the city chips all come from the API. The
-   previous version hard-coded 14 trainings and two chip lists in this file, which meant
-   publishing a training was a code change. Chips are DERIVED from what is actually on
-   live cards, so a filter can never lead to an empty grid.
-══════════════════════════════════════════ */
-function TrainingCard({ training }: { training: TrainingCardData }) {
-  return (
-    <div
-      className="rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
-      style={{ border: `1px solid ${C.n200}`, backgroundColor: C.n0 }}
-    >
-      {/* Category left, status right — the badge sits beside the tag rather than being
-          absolutely positioned, so it can never overlap a long category label. */}
-      <div className="flex items-start justify-between gap-2">
-        <MetaChip>{TRAINING_CATEGORY_LABELS[training.category]}</MetaChip>
-        <TrainingStatusBadge status={training.status} />
-      </div>
-      <h4 className="text-base font-semibold leading-snug" style={{ color: C.n900 }}>{training.title}</h4>
-      <div className="flex flex-col gap-2 flex-1">
-        {/*
-          "Qyteti" is CONDITIONAL, not defaulted to an em dash. An online training has no
-          city — that is what `format` says — so printing "Qyteti: —" invents a field the
-          training does not have. The row is omitted entirely instead. `format` is
-          unaffected and still renders one line above, which is where Klasë / Hibrid /
-          Online is expressed.
-        */}
-        {([
-          ["Fillimi", formatTrainingDate(training.startDate)],
-          ["Formati", TRAINING_FORMAT_LABELS[training.format]],
-          ["Orët", training.hours === null ? "—" : `${training.hours} orë`],
-          ["Ligjëruesi", training.instructor || "—"],
-          ...(training.city ? [["Qyteti", training.city] as const] : []),
-        ] as readonly (readonly [string, string])[]).map(([label, val]) => (
-          <div key={label} className="flex items-center justify-between text-sm gap-2">
-            <span style={{ color: C.n500 }}>{label}</span>
-            <span className="font-medium text-right" style={{ color: C.n700 }}>{val}</span>
-          </div>
-        ))}
-      </div>
-      {/* Navigates to the DETAIL page — not a modal, and not the form directly. */}
-      <Link to={training.applyUrl}>
-        <PrimaryBtn className="text-sm px-5 py-2.5 w-full justify-center">Apliko</PrimaryBtn>
-      </Link>
     </div>
   );
 }
@@ -2588,154 +2408,6 @@ function PageBizneseTrajnime() {
         </div>
       </section>
     </PageWrapper>
-  );
-}
-
-/*
-  One person's card. Same frame as the sample card it replaces — same padding, radius,
-  shadow, border, the same 64px circle and the same divider under the header.
-
-  What is GONE, deleted rather than hidden: the five-star row with "4.9", the tech tag
-  pills, and the small outlined "CV" button. Their space is not left empty — the header's
-  own `pb-5` and the divider now carry the rhythm, and the purple button spans the full
-  width the two buttons used to share. Three elements out, nothing floating.
-
-  `h-full` matters inside the carousel: every card sits in the same flex row, so the row is
-  as tall as the tallest of them and each card stretches to match. Without it, moving from
-  a one-line role to a three-line one would change the card's height mid-slide.
-*/
-/*
-  ─── Talent card: NO shadow, by decision ───
-
-  Two shadow attempts were rejected on this card — Tailwind's `shadow-2xl` (one hard
-  offset, reads as a dark smear) and a layered purple-tinted elevation (too heavy against
-  the tinted panel it sits on). The card now casts nothing at all.
-
-  What separates it from the panel instead is cheaper and cleaner, and is what most
-  restrained "premium" UI actually leans on:
-
-    · a real 1px border in a brand tint, not a grey hairline
-    · white card on a tinted panel — the contrast IS the separation
-    · generous internal padding, so the content is not crowding its own edges
-    · one 3px brand accent along the top edge
-
-  Nothing here should reintroduce `boxShadow` on the card surface. The only shadow left
-  anywhere in this component is the white/lilac RING around the avatar, which is a
-  spread-only ring drawn with box-shadow — a border substitute, not an elevation effect.
-*/
-const TALENT_AVATAR_RING = (ringInner: string, ringOuter: string) =>
-  `0 0 0 3px ${ringInner}, 0 0 0 4px ${ringOuter}`;
-
-function TalentCard({ person }: { person: TalentPerson }) {
-  return (
-    <div
-      className="h-full rounded-[20px] overflow-hidden flex flex-col"
-      style={{
-        /* Flat white now, not a wash. With no shadow the border is doing all the
-           separating, and a gradient that fades toward the panel's own tint softened the
-           bottom edge exactly where that border needs to read hardest. */
-        backgroundColor: C.n0,
-        /* `p200` rather than the near-invisible `p100`: this line IS the card's edge now,
-           so it has to be visible on its own. Still a brand tint, never grey. */
-        border: `1px solid ${C.p200}`,
-      }}
-    >
-      {/* Brand accent, 3px, full bleed across the top. The card's one piece of saturated
-          colour besides the button — enough to tie it to #823685 without competing with
-          the photo. `overflow-hidden` on the parent is what keeps its ends rounded. */}
-      <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, ${C.brand} 0%, ${C.p400} 55%, ${C.p300} 100%)` }} />
-
-      {/* p-8, up from p-7: with no shadow the padding is doing more of the work of making
-          the card feel considered rather than cramped. */}
-      <div className="p-8 flex flex-col flex-1">
-        <div className="flex items-center gap-4">
-          {/*
-            72px, up from 64. The photo is the first thing read on this card and at 64 it
-            was the same weight as the text beside it.
-
-            The double ring is drawn with `box-shadow`, not `border`: a border would eat
-            into the 72px box and shrink the face inside it, while spread-only shadows are
-            painted outside the element and leave the image untouched. White ring first,
-            then the pale purple, so the photo is separated from the tint behind it.
-          */}
-          <div
-            className="w-[72px] h-[72px] rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-            style={{
-              backgroundColor: C.n100,
-              /* Ring only — the drop-shadow that used to trail this is gone with the rest. */
-              boxShadow: TALENT_AVATAR_RING(C.n0, C.p200),
-            }}
-          >
-            {person.photo ? (
-              <img src={person.photo} alt="" className="w-full h-full object-cover" style={{ objectPosition: person.imgPosition }} />
-            ) : (
-              /* Same placeholder the instructor cards use when a portrait is missing. */
-              <Users size={26} style={{ color: C.p300 }} />
-            )}
-          </div>
-          <div className="min-w-0">
-            {/* Bigger and heavier than the role beneath it — the two used to be a
-                half-step apart, which read as one block of text rather than a name with a
-                caption. Negative tracking is what the rest of the site's headings use. */}
-            <p className="text-lg font-bold leading-tight" style={{ color: C.n900, letterSpacing: "-0.01em" }}>{person.name}</p>
-            <p className="text-sm mt-1.5 leading-snug" style={{ color: C.muted }}>{person.role}</p>
-          </div>
-        </div>
-
-        {/* A hairline that FADES rather than a flat 1px rule running wall to wall. Drawn as
-            a 1px element with a gradient background, since a border cannot fade. */}
-        <div className="h-px my-6" style={{ background: `linear-gradient(90deg, ${C.p200} 0%, ${C.p100} 45%, transparent 100%)` }} />
-
-        {/* `mt-auto` pins the button to the bottom, so a short card and a tall one in the
-            same carousel line their buttons up instead of floating them mid-card. */}
-        <div className="mt-auto">
-          {/*
-            An <a> when there is a CV, a bare <button> when there is not — same markup and
-            styling either way, so the card looks identical in both states.
-
-            An anchor rather than `onClick={() => window.open(...)}` because opening a
-            document IS navigation: middle-click, ctrl-click, "open in new tab" and "copy
-            link address" all work on a real href and all silently do nothing on a button.
-            The same choice, for the same reason, as the "Shkarko planprogramin" links.
-
-            `rel="noopener noreferrer"` goes with every `target="_blank"`: without
-            `noopener` the opened tab gets a `window.opener` handle back into this one and
-            can navigate it somewhere else.
-
-            `block text-center` on the <a> reproduces what the <button> gave for free —
-            an anchor is inline by default and would otherwise shrink to its text.
-          */}
-          {person.cvUrl ? (
-            <a
-              href={person.cvUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center py-3 rounded-[14px] text-sm font-semibold text-white transition-colors active:scale-[0.98]"
-              style={{ backgroundColor: C.brand, letterSpacing: "0.01em" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.brandDark; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.brand; }}
-            >
-              Shkarko CV
-            </a>
-          ) : (
-            <button
-              className="w-full py-3 rounded-[14px] text-sm font-semibold text-white transition-colors active:scale-[0.98]"
-              style={{
-                /* Flat brand fill and no glow, to match the shadow-free card. Depth here
-                   comes from the colour darkening on hover — the same move PrimaryBtn
-                   makes everywhere else on the site — rather than from a cast shadow. */
-                backgroundColor: C.brand,
-                letterSpacing: "0.01em",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.brandDark; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.brand; }}
-            >
-              Shkarko CV
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
