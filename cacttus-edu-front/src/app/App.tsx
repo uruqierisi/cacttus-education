@@ -209,17 +209,10 @@ import {
   CONTACT_FORM_SLUG,
 } from "../marketing/lib/forms.config";
 
-/* ─── Albanian labels for the catalogue taxonomy ───
-   The API stores stable machine values; these are what a visitor reads. Renaming a
-   category is a change here, never a data migration. */
-const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = {
-  PROGRAMIM: "Programim",
-  ADMINISTRIM: "Administrim",
-  SIGURI_KIBERNETIKE: "Siguri Kibernetike",
-  MARKETING_DIZAJN: "Marketing & Dizajn",
-  MENAXHIM_PROJEKTEVE: "Menaxhim i Projekteve",
-  AFTESI_TE_BUTA: "Aftësi të buta",
-};
+/* The Albanian label map that used to live here is GONE. Categories are rows the
+   marketing team edits from the dashboard, and each one arrives carrying its own `name`
+   — so `training.category.name` is the label, and adding a category no longer means a
+   code change in this file AND in the dashboard's copy of the same map. */
 
 /* Lifecycle labels + the two badge palettes. Green reads as "open, you can still join",
    neutral grey as "closed" — the same green/grey pairing the rest of the site already
@@ -3665,13 +3658,13 @@ function StudimeProfesionaleSection() {
   taking the whole band down over a missing 18px glyph. Same guard `TrainingStatusBadge`
   applies to an unknown status.
 */
-const TRAINING_CATEGORY_ICONS: Record<TrainingCategory, LucideIcon> = {
-  PROGRAMIM: Code,
-  ADMINISTRIM: Monitor,
-  SIGURI_KIBERNETIKE: Shield,
-  MARKETING_DIZAJN: Laptop,
-  MENAXHIM_PROJEKTEVE: Briefcase,
-  AFTESI_TE_BUTA: Users,
+const TRAINING_CATEGORY_ICONS: Record<string, LucideIcon> = {
+  programim: Code,
+  administrim: Monitor,
+  "siguri-kibernetike": Shield,
+  "marketing-dizajn": Laptop,
+  "menaxhim-i-projekteve": Briefcase,
+  "aftesi-te-buta": Users,
 };
 
 /*
@@ -3775,7 +3768,7 @@ function TrajnimePromoSection() {
                   </div>
                 ))
               : trainings.map((t) => {
-                  const Icon = TRAINING_CATEGORY_ICONS[t.category] ?? BookOpen;
+                  const Icon = TRAINING_CATEGORY_ICONS[t.category.slug] ?? BookOpen;
 
                   /* The slot the hard-coded version filled with a marketing sentence. A
                      card payload carries no description — that field lives on the DETAIL
@@ -4761,7 +4754,7 @@ function TrainingCard({ training }: { training: TrainingCardData }) {
       {/* Category left, status right — the badge sits beside the tag rather than being
           absolutely positioned, so it can never overlap a long category label. */}
       <div className="flex items-start justify-between gap-2">
-        <MetaChip>{TRAINING_CATEGORY_LABELS[training.category]}</MetaChip>
+        <MetaChip>{training.category.name}</MetaChip>
         <TrainingStatusBadge status={training.status} />
       </div>
       <h4 className="text-base font-semibold leading-snug" style={{ color: C.n900 }}>{training.title}</h4>
@@ -4902,7 +4895,7 @@ function PageTrajnime() {
 
     const status = statusForLabel(sel);
     return status === undefined
-      ? TRAINING_CATEGORY_LABELS[t.category] === sel
+      ? t.category.name === sel
       : t.status === status;
   });
 
@@ -4917,7 +4910,7 @@ function PageTrajnime() {
     ...(["ACTIVE", "COMPLETED"] as const)
       .filter((value) => trainings.some((t) => t.status === value))
       .map((value) => TRAINING_STATUS_LABELS[value]),
-    ...categories.map((c) => TRAINING_CATEGORY_LABELS[c]),
+    ...categories.map((c) => c.name),
   ];
   const cityOptions = [ALL_FILTER, ...dedupeCities(cities)];
   /*
@@ -5170,7 +5163,7 @@ function PageTrajnimiDetal() {
             >
               Training
             </span>
-            <MetaChip>{TRAINING_CATEGORY_LABELS[training.category]}</MetaChip>
+            <MetaChip>{training.category.name}</MetaChip>
           </div>
           <h1 className="text-3xl md:text-5xl font-bold mb-6 max-w-3xl" style={{ color: C.n900, letterSpacing: "-0.01em" }}>
             {training.title}
