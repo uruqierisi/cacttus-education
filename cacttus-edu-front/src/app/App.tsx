@@ -201,13 +201,12 @@ import {
   type TrainingFormat,
 } from "../marketing/lib/public-api";
 import {
-  APPLICATION_FORM_SLUG,
+  APPLICATION_FORM_SLUGS,
   BUSINESS_FORM_SLUG,
   BUSINESS_REQUEST_TYPES,
   CLASS_BOOKING_FORM_SLUG,
   CLASS_BOOKING_ROOMS,
   CONTACT_FORM_SLUG,
-  STUDY_PROGRAMME_VALUES,
 } from "../marketing/lib/forms.config";
 
 /* ─── Albanian labels for the catalogue taxonomy ───
@@ -1520,17 +1519,21 @@ const POPUP_DREJTIMET = [
 ];
 
 /**
- * The popup's dropdown wording → the `programi` option VALUES the API accepts.
+ * The popup's dropdown wording → the FORM that choice submits to.
  *
- * These two lists read almost the same but are NOT identical ("Ueb" vs "Ueb-it",
- * "Siguri" vs "Siguria"), and a select answer is validated against `option.value`
- * exactly, so sending the visible label straight through would 400. The visible strings
- * above are Ernata's copy and stay untouched; this table is the only thing that moves if
- * either side is reworded.
+ * The popup is the one surface that cannot take a fixed slug: it asks which programme the
+ * visitor wants, so the answer decides the destination. Under the previous model this
+ * table mapped the visible label onto a `programi` option value, because a select answer
+ * is validated against `option.value` exactly and the two wordings differ ("Ueb" vs
+ * "Ueb-it", "Siguri" vs "Siguria"). The programme is now the form, so it maps onto a slug
+ * instead and no answer is sent at all.
+ *
+ * The visible strings in POPUP_DREJTIMET above are Ernata's copy and stay untouched; this
+ * table is still the only thing that moves if either side is reworded.
  */
-const POPUP_PROGRAMME_VALUES: Record<string, string> = {
-  "Zhvillim i Ueb dhe Aplikacioneve Mobile": STUDY_PROGRAMME_VALUES.ZHVAM,
-  "Siguri Kibernetike": STUDY_PROGRAMME_VALUES.CYBER,
+const POPUP_PROGRAMME_SLUGS: Record<string, string> = {
+  "Zhvillim i Ueb dhe Aplikacioneve Mobile": APPLICATION_FORM_SLUGS.ZHVAM,
+  "Siguri Kibernetike": APPLICATION_FORM_SLUGS.CYBER,
 };
 
 /* ─── Motion timings. POPUP_EXIT_MS also gates the delayed unmount below. ─── */
@@ -1650,9 +1653,14 @@ function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   }, [isOpen]);
 
   /**
-   * Sends the lead to the SAME application form the "Apliko tani" band posts to
-   * (APPLICATION_FORM_SLUG), so the popup is a second door onto one path rather than a
-   * parallel one — an admin sees both in a single list.
+   * Sends the lead to the form for the programme the visitor picked — the same form the
+   * band on that programme's own page posts to, so the popup stays a second door onto one
+   * path rather than becoming a parallel one.
+   *
+   * The `drejtimi` choice IS the routing decision, which is why nothing about it travels
+   * in the payload. An unrecognised value — only reachable if POPUP_DREJTIMET and
+   * POPUP_PROGRAMME_SLUGS are edited out of step — falls back to DEFAULT rather than
+   * dropping the lead on the floor.
    *
    * `sent` flips only after the POST resolves. A rejection leaves the card open with
    * every value still in it, so nothing has to be retyped.
@@ -1683,13 +1691,15 @@ function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     setIsSubmitting(true);
 
     try {
-      await submitPublicForm(APPLICATION_FORM_SLUG, {
+      await submitPublicForm(POPUP_PROGRAMME_SLUGS[drejtimi] ?? APPLICATION_FORM_SLUGS.DEFAULT, {
         // One `name` column server-side, so the two inputs are joined for it.
         name: `${emri.trim()} ${mbiemri.trim()}`,
         email: email.trim(),
         phone: telefoni.trim(),
-        // Mapped, not passed through: the dropdown's wording is not the option value.
-        data: { programi: POPUP_PROGRAMME_VALUES[drejtimi] ?? drejtimi },
+        // Empty: the programme is the form, and these two forms declare no other
+        // question. `data` is required by PublicSubmission rather than optional, so it is
+        // sent as {} instead of omitted — the server would default it to {} either way.
+        data: {},
       });
       setSent(true);
     } catch (cause: unknown) {
@@ -1854,7 +1864,10 @@ function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
    the API promotes those three to real columns and always requires them, and
    they are reserved names a form field may not use.
 
-   To point the band at a different form, edit APPLICATION_FORM_SLUG in
+   WHICH form it renders is the caller's decision, passed as `slug`: /programim hands it
+   the ZHVAM form and /siguria the CYBER one, so the programme is carried by the
+   destination rather than by a pre-selected answer on a shared form. Surfaces with no
+   programme of their own (home, /rreth-nesh) take the default. The slugs live in
    `src/marketing/lib/forms.config.ts`.
 ══════════════════════════════════════════ */
 
@@ -1872,30 +1885,23 @@ const TEXT_INPUT_TYPES: Partial<Record<PublicFormFieldType, string>> = {
   date: "date",
 };
 
-/** The blank answer for a field, used both on first render and after a successful send. */
-function emptyAnswer(field: PublicFormField, preselected: string): AnswerValue {
+/**
+ * The blank answer for a field, used both on first render and after a successful send.
+ *
+ * It used to take a `preselected` programme and match it against the options of the first
+ * select/radio, so /programim arrived with the shared form's `programi` question already
+ * answered. That existed only to serve the one-shared-form model and goes with it — the
+ * programme is now the form. `PublicApplicationForm` always passed "" here, so the branch
+ * only ever ran for the band.
+ */
+function emptyAnswer(field: PublicFormField): AnswerValue {
   if (field.type === "checkbox") return false;
   if (field.type === "multiselect") return [];
-
-  // Carry the programme the visitor arrived from into the first matching choice
-  // field, so /programim pre-selects "Zhvillues i Ueb-it..." exactly as before.
-  if (preselected && (field.type === "select" || field.type === "radio")) {
-    const match = field.options.find(
-      (option) =>
-        option.value.toLowerCase() === preselected.toLowerCase() ||
-        option.label.toLowerCase() === preselected.toLowerCase(),
-    );
-    if (match) return match.value;
-  }
-
   return "";
 }
 
-function blankAnswers(
-  fields: readonly PublicFormField[],
-  preselected: string,
-): Record<string, AnswerValue> {
-  return Object.fromEntries(fields.map((field) => [field.name, emptyAnswer(field, preselected)]));
+function blankAnswers(fields: readonly PublicFormField[]): Record<string, AnswerValue> {
+  return Object.fromEntries(fields.map((field) => [field.name, emptyAnswer(field)]));
 }
 
 function isBlank(value: AnswerValue): boolean {
@@ -2004,7 +2010,12 @@ function PublicFormFieldShell({
   );
 }
 
-function HorizontalApplicationBand({ preselected = "" }: { preselected?: string }) {
+function HorizontalApplicationBand({
+  slug = APPLICATION_FORM_SLUGS.DEFAULT,
+}: {
+  /** Which form to fetch and post to. Defaults to the non-programme surface's form. */
+  slug?: string;
+}) {
   const [form, setForm] = useState<PublicForm | null>(null);
   const [loadError, setLoadError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -2027,11 +2038,11 @@ function HorizontalApplicationBand({ preselected = "" }: { preselected?: string 
     setIsLoading(true);
     setLoadError("");
 
-    getPublicForm(APPLICATION_FORM_SLUG)
+    getPublicForm(slug)
       .then((loaded) => {
         if (!active) return;
         setForm(loaded);
-        setAnswers(blankAnswers(loaded.fields, preselected));
+        setAnswers(blankAnswers(loaded.fields));
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -2048,7 +2059,7 @@ function HorizontalApplicationBand({ preselected = "" }: { preselected?: string 
     return () => {
       active = false;
     };
-  }, [preselected, reloadKey]);
+  }, [slug, reloadKey]);
 
   const setAnswer = (name: string, value: AnswerValue) =>
     setAnswers((previous) => ({ ...previous, [name]: value }));
@@ -2129,7 +2140,7 @@ function HorizontalApplicationBand({ preselected = "" }: { preselected?: string 
       });
 
       setContact(EMPTY_CONTACT);
-      setAnswers(blankAnswers(form.fields, preselected));
+      setAnswers(blankAnswers(form.fields));
       setWebsite("");
       setSubmitted(true);
     } catch (error: unknown) {
@@ -2564,7 +2575,7 @@ function PublicApplicationForm({
       .then((loaded) => {
         if (!active) return;
         setForm(loaded);
-        setAnswers(blankAnswers(loaded.fields, ""));
+        setAnswers(blankAnswers(loaded.fields));
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -2646,7 +2657,7 @@ function PublicApplicationForm({
       });
 
       setContact(EMPTY_CONTACT);
-      setAnswers(blankAnswers(form.fields, ""));
+      setAnswers(blankAnswers(form.fields));
       setWebsite("");
       setSubmitted(true);
     } catch (error: unknown) {
@@ -4190,7 +4201,7 @@ function SemesterTabs({ semesters }: { semesters: typeof SEM_PROGRAMIM }) {
 
 /* ── PROGRAM PAGE TEMPLATE ── */
 function ProgramPage({
-  title, breadcrumbEnd, heroParagraph, whatCards, semesters, roles, preselected, imgUrl,
+  title, breadcrumbEnd, heroParagraph, whatCards, semesters, roles, formSlug, imgUrl,
   planUrl,
   imgPosition = "center 20%",
 }: {
@@ -4202,7 +4213,14 @@ function ProgramPage({
    * card cannot be added without one — TypeScript refuses the object.
    */
   whatCards: { title: string; icon: React.ElementType; description: string }[];
-  semesters: typeof SEM_PROGRAMIM; roles: string[]; preselected: string; imgUrl: string; to: string;
+  semesters: typeof SEM_PROGRAMIM; roles: string[]; imgUrl: string; to: string;
+  /**
+   * The application form THIS programme's apply band posts to — one of
+   * APPLICATION_FORM_SLUGS. Required, for the same reason `planUrl` is: /programim and
+   * /siguria are one component with different props, so a default here would silently
+   * file every /siguria applicant under ZHVAM.
+   */
+  formSlug: string;
   /**
    * Absolute path to THIS programme's curriculum PDF, served from `public/`.
    *
@@ -4386,7 +4404,7 @@ function ProgramPage({
       </section>
 
       {/* 3.3 — HORIZONTAL FORM instead of full ApplicationForm */}
-      <HorizontalApplicationBand preselected={preselected} />
+      <HorizontalApplicationBand slug={formSlug} />
     </PageWrapper>
   );
 }
@@ -4432,7 +4450,7 @@ function PageProgramim() {
       ]}
       semesters={SEM_PROGRAMIM}
       roles={["Full-Stack Developer", "Mobile App Developer", "QA / Software Tester", "UI/UX Designer", "Software Developer", "Junior AI Developer"]}
-      preselected="Zhvillim i Ueb-it dhe Aplikacioneve Mobile"
+      formSlug={APPLICATION_FORM_SLUGS.ZHVAM}
       /*
         Bundled asset rather than the stock photo this used to point at. `ProgramPage`
         takes the hero image as a prop, so swapping it here changes this page only —
@@ -4492,7 +4510,7 @@ function PageSiguria() {
       ]}
       semesters={SEM_SIGURIA}
       roles={["Cybersecurity Analyst", "SOC Analyst", "Network Administrator", "Penetration Tester", "Cloud Security Specialist", "Information Security Specialist"]}
-      preselected="Siguria Kibernetike"
+      formSlug={APPLICATION_FORM_SLUGS.CYBER}
       imgUrl={cyberHero}
       /* ── HERO IMAGE VERTICAL CROP — TUNE THE SECOND NUMBER ──
          Same knob as /programim above: higher % pushes the photo DOWN, lower % pulls it UP.
