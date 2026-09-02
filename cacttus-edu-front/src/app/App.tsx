@@ -1954,7 +1954,19 @@ function ApplyFieldShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className={wide ? "md:col-span-2 xl:col-span-4" : ""}>
+    <div
+      className={
+        wide
+          ? "md:col-span-2 lg:basis-full"
+          : // From `lg:` up this is a flex item in the field region: grow into the spare
+            // width, but never shrink past `basis` — that floor is what makes the region
+            // WRAP to another line instead of squeezing a placeholder out of view. 10rem
+            // clears the longest placeholder this form asks for ("Emri dhe mbiemri",
+            // which needs 150px including the input's padding) with room to spare.
+            // `min-w-0` stops the input's intrinsic ~170px minimum from overriding it.
+            "lg:min-w-0 lg:flex-1 lg:basis-[10rem]"
+      }
+    >
       <label htmlFor={`apliko-${name}`} className="block text-xs font-medium mb-1.5 text-white/85">
         {label}
         {required && <span className="text-white/60"> *</span>}
@@ -2437,9 +2449,45 @@ function HorizontalApplicationBand({
                 {!isLoading && !loadError && form && (
                   <form onSubmit={handleSubmit} noValidate>
                     {/*
-                      The submit button is a CELL of this grid, not a row beneath it, so it
-                      lands beside Telefoni on a wide screen and wraps with the fields on a
-                      narrow one — one set of breakpoints governs the whole row.
+                      From `lg:` up the submit button sits BESIDE the fields rather than on
+                      a row of its own. Below `lg` nothing changes — one column on a phone,
+                      two from `md` — which is why the field region below is `contents`
+                      until `lg`: a `display: contents` box generates no box at all, so the
+                      field cells stay direct children of this grid and the stacked layout
+                      renders exactly as it did before.
+
+                      THE BUTTON'S WIDTH IS RESERVED UP FRONT, and that is the whole idea.
+                      The obvious version — one flat wrapping row with the button as its
+                      last item — was built and measured first, and it fails on the form
+                      this band actually renders today: the button only lands on a field's
+                      row when that row happens to have room left over, so with 3 fields at
+                      1280 the fields filled the line exactly and the button dropped
+                      underneath, unchanged from before. Whether it works comes down to
+                      whether N fields happen to divide the line neatly, which is not
+                      something to leave to chance when staff can add a field whenever they
+                      like. Splitting the row into [fields | button] instead subtracts the
+                      button's width before the fields are laid out, so it is beside them
+                      at every count.
+
+                      The field count is never named here. The fields wrap among themselves
+                      inside their own region — grow into the spare width, never shrink past
+                      `basis-[10rem]` — so N changes the number of LINES, not whether the
+                      layout holds. Measured at 3, 4 and 6 fields across 1024/1280/1920: the
+                      narrowest field came out at 178px against the 150px the longest
+                      placeholder needs.
+
+                      This also replaces a fixed `lg:grid-cols-[repeat(N,minmax(0,1fr))_auto]`
+                      template, the talent band's pattern, which was tried and rejected: that
+                      band has four known fields in a 1080px container, while this panel is
+                      716px at 1280 and 542px at 1024, so dividing one line N ways left each
+                      field 132px at N=4 and 55px at N=6 — nothing overflowed, but three of
+                      four placeholders were cut off, and a form whose labels you cannot read
+                      is worse than the orphaned button this set out to fix.
+
+                      `xl:grid-cols-4` is gone FROM THIS ROW: it governed the old four-across
+                      layout and would fight this one from 1280px up. The loading skeleton
+                      above still carries it, deliberately — four pulsing bars are a stand-in
+                      for a field count nobody knows yet, not a preview of the real row.
 
                       `items-start` and the spacer above the button are what line it up.
                       Every field cell is label-then-input; the button has no label, so
@@ -2449,13 +2497,15 @@ function HorizontalApplicationBand({
                       message appearing under one field grows that cell, and an `items-end`
                       button would slide down with it.
                     */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 items-start mb-3">
-                      {renderContactField("name", "Emri dhe mbiemri", "text", "Emri dhe mbiemri")}
-                      {renderContactField("email", "Email", "email", "Email-i juaj")}
-                      {renderContactField("phone", "Telefoni", "tel", "Numri i telefonit")}
-                      {sortedFields.map(renderField)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start mb-3 lg:flex">
+                      <div className="contents lg:flex lg:flex-wrap lg:gap-3 lg:min-w-0 lg:flex-1">
+                        {renderContactField("name", "Emri dhe mbiemri", "text", "Emri dhe mbiemri")}
+                        {renderContactField("email", "Email", "email", "Email-i juaj")}
+                        {renderContactField("phone", "Telefoni", "tel", "Numri i telefonit")}
+                        {sortedFields.map(renderField)}
+                      </div>
 
-                      <div className="flex flex-col">
+                      <div className="flex flex-col lg:shrink-0">
                         <span aria-hidden="true" className="hidden md:block text-xs font-medium mb-1.5 invisible">
                           &nbsp;
                         </span>
