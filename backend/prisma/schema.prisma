@@ -46,15 +46,6 @@ enum SubmissionStatus {
 // public site renders these as FILTER CHIPS: a typo in a city is a cosmetic bug, but a
 // typo in a category silently creates a chip nobody can click twice. The Albanian display
 // labels live in the frontends — this is the stable machine value.
-enum TrainingCategory {
-  PROGRAMIM
-  ADMINISTRIM
-  SIGURI_KIBERNETIKE
-  MARKETING_DIZAJN
-  MENAXHIM_PROJEKTEVE
-  AFTESI_TE_BUTA
-}
-
 enum TrainingFormat {
   KLASE
   HIBRID
@@ -197,16 +188,51 @@ model Submission {
   @@map("submissions")
 }
 
+/// The catalogue taxonomy, as DATA rather than as an enum.
+///
+/// It began as `enum TrainingCategory`, which meant every new category was a schema
+/// change, a migration and a deploy of three apps — for what is editorial vocabulary the
+/// marketing team owns. The six original values migrated across verbatim, labels
+/// included, so nothing a visitor reads changed on the day this landed.
+///
+/// `name` IS the label. There is no machine-value/display-label pair any more: the old
+/// `PROGRAMIM` -> "Programim" map lived in two frontends and had to be edited in both,
+/// which is exactly the coupling this removes. `slug` is the stable handle for URLs and
+/// query parameters, so renaming a category for display does not break a shared link.
+model TrainingCategory {
+  id        String   @id @default(cuid())
+  /// Shown to admins and visitors verbatim. Unique so two categories cannot read alike.
+  name      String   @unique
+  /// URL-safe handle: the public catalogue filters on `?category=<slug>`.
+  slug      String   @unique
+  /// Display order in the dashboard select and in the public filter chips. Ties fall
+  /// back to `name`, so the ordering is total even when several share a number.
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  trainings Training[]
+
+  @@index([sortOrder])
+  @@map("training_categories")
+}
+
 model Training {
-  id    String           @id @default(cuid())
-  slug  String           @unique
+  id    String @id @default(cuid())
+  slug  String @unique
   title String
-  category TrainingCategory
+
+  categoryId String
+  /// `Restrict`, not `Cascade` or `SetNull`: deleting a category that trainings still
+  /// reference must FAIL. The service layer counts references inside the delete
+  /// transaction and returns a readable Albanian error before it ever gets here — this
+  /// constraint is the backstop for anything that bypasses the service (a script, a
+  /// manual psql session), not the primary guard.
+  category   TrainingCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   // --- Catalog card (marketing site listing) ---
-  startDate  DateTime?
-  format     TrainingFormat
-  hours      Int?
+  startDate       DateTime?
+  format          TrainingFormat
+  hours           Int?
   // The instructor, denormalised onto the training rather than modelled as its own
   // entity. Still free text: the marketing site has never needed to link an instructor
   // across trainings, filter by them, or show a standalone profile page. The detail
@@ -220,15 +246,15 @@ model Training {
   // Capped at FIELD_LIMITS.INSTRUCTOR_BIO_MAX (5 000) at the validation boundary.
   // `@db.Text` precisely so that ceiling can be re-tuned without a migration — which is
   // what happened when it moved from 600 to 5 000; the real ceiling is the Zod one.
-  instructorBio   String? @db.Text
-  city       String?
+  instructorBio   String?        @db.Text
+  city            String?
 
   // Whole euros, not cents. The catalogue has never priced anything in fractions and an
   // Int keeps the dashboard input, the API and the rendered "250 €" the same number all
   // the way through — no scaling step to get wrong. Nullable because a training whose
   // price is not settled yet still belongs in the catalogue; the detail page renders "—"
   // for it exactly like the other optional card fields.
-  price      Int?
+  price Int?
 
   // --- Detail page, all optional: the admin fills only what a given training needs ---
   description String? @db.Text // "Çfarë do të mësosh" — free text.
@@ -245,7 +271,7 @@ model Training {
   /// make awkward. Postgres scalar lists cannot be null, only empty, which is exactly
   /// the optionality wanted here: a training with no roles set stores `[]` and the
   /// detail page renders no section at all.
-  jobRoles    String[]
+  jobRoles String[]
 
   syllabusPdf String? // Public URL of an uploaded PDF, not the file itself.
 
@@ -263,10 +289,10 @@ model Training {
 
   /// Defaults to ACTIVE so creating a training needs no extra decision, and so the
   /// migration backfills every existing row as active without a data step.
-  status   TrainingStatus @default(ACTIVE)
+  status TrainingStatus @default(ACTIVE)
 
-  isActive Boolean   @default(true)
-  order    Int       @default(0)
+  isActive  Boolean   @default(true)
+  order     Int       @default(0)
   deletedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -275,7 +301,7 @@ model Training {
   submissions Submission[]
 
   // The public catalog's category filter tabs.
-  @@index([category])
+  @@index([categoryId])
   // The public catalog's city filter.
   @@index([city])
   // The public catalog's status filter, same shape as the two above.
