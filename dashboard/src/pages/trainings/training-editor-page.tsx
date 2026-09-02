@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/page-header';
+import { FormActions } from '@/components/common/form-actions';
 import { ErrorState, LoadingRows } from '@/components/common/state-views';
 import { CoverImageField } from '@/components/posts/cover-image-field';
 import { JobRoleTagInput } from '@/components/trainings/job-role-tag-input';
@@ -331,21 +332,6 @@ export default function TrainingEditorPage(): JSX.Element {
       <PageHeader
         title={isEditing ? 'Ndrysho trajnimin' : 'Krijo trajnim të ri'}
         description="Kartela shfaqet në listën e trajnimeve; pjesa tjetër ndërton faqen e trajnimit."
-        actions={
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSaving}
-              onClick={() => navigate(ROUTES.TRAININGS)}
-            >
-              Anulo
-            </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Duke ruajtur…' : 'Ruaj'}
-            </Button>
-          </div>
-        }
       />
 
       <div className="space-y-6">
@@ -678,6 +664,12 @@ export default function TrainingEditorPage(): JSX.Element {
           </CardContent>
         </Card>
       </div>
+
+      <FormActions
+        onCancel={() => navigate(ROUTES.TRAININGS)}
+        isSaving={isSaving}
+        saveLabel="Ruaj"
+      />
     </form>
   );
 }
