@@ -12,3 +12,4 @@ Thumbs.db
 # Standardized on pnpm - see pnpm-lock.yaml
 yarn.lock
 package-lock.json
+SECURITY_AUDIT.md
