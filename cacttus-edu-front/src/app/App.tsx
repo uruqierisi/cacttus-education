@@ -572,8 +572,24 @@ type DropdownId = "studime" | "projektet" | "biznese" | "rreth" | null;
 /* 1.1 — TOP BANNER: deep brand purple #823685 */
 function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
   return (
+    /*
+      WIDE SCREENS: the bar stays full-bleed, but its CONTENT is pulled in to the
+      navbar's content edges so the message and the pill line up with the logo and
+      the CTA directly below them. Past 1536px the bar is far wider than the 1200px
+      page container, and without this the text sat against the left edge of the
+      viewport with the button ~350px to the right of everything else on the page.
+
+      Done with padding rather than a `max-w-[1200px] mx-auto` wrapper because the
+      background must keep spanning the full width — constraining this element would
+      shrink the purple bar itself. `calc(50% - 600px + 20px)` is the navbar's own
+      geometry written out: half the viewport, minus half of the 1200px container,
+      plus that container's own `px-5`.
+
+      `2xl:` only. Below 1536px the existing `px-4 sm:px-7` is unchanged, so every
+      narrower width — including the 375px overflow fix below — renders as before.
+    */
     <div
-      className="w-full flex items-center justify-between gap-2 px-4 sm:px-7 relative overflow-hidden"
+      className="w-full flex items-center justify-between gap-2 px-4 sm:px-7 2xl:px-[calc(50%_-_600px_+_20px)] relative overflow-hidden"
       style={{ backgroundColor: C.brand, height: 40 }}
     >
       {/*
@@ -6403,7 +6419,21 @@ function PageBizneseTalente() {
             ] as const).map(({ ph, key }) => (
               <input key={ph} type="text" placeholder={ph} value={talente[key]} onChange={(e) => setTalente({ ...talente, [key]: key === "telefoni" ? sanitizePhone(e.target.value) : e.target.value })} className="px-4 text-sm rounded-xl" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
             ))}
-            <button onClick={() => lead.submit({ name: talente.kompania, email: talente.email, phone: talente.telefoni }, { kompania: talente.kompania, fusha_interesit: talente.fusha })} className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Regjistrohu në rrjet"}</button>
+            {/*
+              The four inputs fill row 1 of the 4-column grid exactly, which leaves this
+              button alone in row 2 — pinned to the left with ~650px of empty space
+              beside it, under a heading that is centred. Spanning all four tracks and
+              centring the button inside them puts it back under the heading;
+              `justify-self-center` keeps its own width rather than stretching it across
+              the row.
+
+              Keyed to `md:`, the SAME breakpoint that turns the grid into four columns.
+              Tying it to the row layout rather than to a screen size is what keeps the
+              two from ever disagreeing: below `md` the grid is a single column, this
+              button is the only thing in its row, and both utilities are inert — so the
+              stacked phone layout is untouched.
+            */}
+            <button onClick={() => lead.submit({ name: talente.kompania, email: talente.email, phone: talente.telefoni }, { kompania: talente.kompania, fusha_interesit: talente.fusha })} className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white md:col-span-4 md:justify-self-center" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Regjistrohu në rrjet"}</button>
           </div>
               {lead.error && <p className="text-white text-sm mt-3 text-center">{lead.error}</p>}
             </>
