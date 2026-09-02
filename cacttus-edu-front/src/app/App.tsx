@@ -200,9 +200,7 @@ import {
 } from "../marketing/lib/public-api";
 import {
   APPLICATION_FORM_SLUG,
-  BUSINESS_FORM_SLUG,
   BUSINESS_REQUEST_TYPES,
-  CLASS_BOOKING_FORM_SLUG,
   CLASS_BOOKING_ROOMS,
   CONTACT_FORM_SLUG,
   STUDY_PROGRAMME_VALUES,
@@ -219,6 +217,11 @@ import {
   TRAINING_STATUS_STYLES,
 } from "./lib/training-labels";
 import { renderSafeHtml } from "./lib/sanitize";
+import { ApplyPopupContext, useApplyPopup } from "./hooks/apply-popup";
+import { useBusinessLead } from "./hooks/useBusinessLead";
+import { useClassBooking } from "./hooks/useClassBooking";
+import { useHasEnteredView } from "./hooks/useHasEnteredView";
+
 
 
 
@@ -5161,138 +5164,6 @@ function PageBiznese() {
   );
 }
 
-/* ══════════════════════════════════════════
-   PART 5 — CUSTOM BIZNESE SUBPAGES
-══════════════════════════════════════════ */
-
-/* ── 5.1 TRAJNIME TË PERSONALIZUARA ── */
-/* `object-position` for the framed image in this component. Second number is the
-   vertical one — raise it to push the image DOWN inside its frame. */
-/**
- * Submit state and POST for the /biznese lead boxes.
- *
- * The three boxes ask for different things but do the same job, so the transport,
- * validation and error wording live here once. `requestType` is the ONLY thing that
- * differs at the API level: it becomes `tipi_kerkeses`, which is how the inbox tells a
- * trainings enquiry from a partnership one from a room booking.
- *
- * `extra` holds that page's optional answers. Empty ones are sent as-is and dropped
- * server-side (an unanswered optional field is simply absent from the stored data), so a
- * caller does not have to prune them.
- */
-function useBusinessLead(requestType: string) {
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function submit(
-    contact: { name: string; email: string; phone: string },
-    extra: Record<string, string>,
-  ) {
-    // The buttons stay enabled, so a double click would otherwise send the lead twice.
-    if (isSubmitting) return;
-
-    if (!contact.name.trim() || !contact.email.trim() || !contact.phone.trim()) {
-      setError("Ju lutemi plotësoni emrin, email-in dhe numrin e telefonit.");
-      return;
-    }
-    if (!isValidPhone(contact.phone)) {
-      setError(PHONE_ERROR);
-      return;
-    }
-
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      await submitPublicForm(BUSINESS_FORM_SLUG, {
-        name: contact.name.trim(),
-        email: contact.email.trim(),
-        phone: contact.phone.trim(),
-        data: { tipi_kerkeses: requestType, ...extra },
-      });
-      setSent(true);
-    } catch (cause: unknown) {
-      if (cause instanceof PublicApiError) {
-        setError(
-          cause.isValidation
-            ? "Disa fusha nuk janë të vlefshme. Kontrollo të dhënat dhe provo përsëri."
-            : cause.message,
-        );
-      } else {
-        setError("Diçka shkoi keq. Provo përsëri.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return { sent, error, isSubmitting, submit };
-}
-
-/**
- * Submit state and POST for the /biznese/klasa room booking band.
- *
- * A sibling of `useBusinessLead` rather than a parameter on it: this posts to a different
- * form (CLASS_BOOKING_FORM_SLUG) with a different answer shape, and folding both into one
- * hook would mean every caller passing a slug plus a field map to satisfy the other one.
- *
- * `klasa` is REQUIRED by the form, so it is validated here too — the visitor gets an
- * Albanian sentence instead of a 400 from the server.
- */
-function useClassBooking() {
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function submit(
-    contact: { name: string; email: string; phone: string },
-    answers: { klasa: string; data_deshiruar: string; nr_personave: string; shenime: string },
-  ) {
-    if (isSubmitting) return;
-
-    if (!answers.klasa) {
-      setError("Ju lutemi zgjidhni klasën që doni të rezervoni.");
-      return;
-    }
-    if (!contact.name.trim() || !contact.email.trim() || !contact.phone.trim()) {
-      setError("Ju lutemi plotësoni emrin, email-in dhe numrin e telefonit.");
-      return;
-    }
-    if (!isValidPhone(contact.phone)) {
-      setError(PHONE_ERROR);
-      return;
-    }
-
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      await submitPublicForm(CLASS_BOOKING_FORM_SLUG, {
-        name: contact.name.trim(),
-        email: contact.email.trim(),
-        phone: contact.phone.trim(),
-        data: answers,
-      });
-      setSent(true);
-    } catch (cause: unknown) {
-      if (cause instanceof PublicApiError) {
-        setError(
-          cause.isValidation
-            ? "Disa fusha nuk janë të vlefshme. Kontrollo të dhënat dhe provo përsëri."
-            : cause.message,
-        );
-      } else {
-        setError("Diçka shkoi keq. Provo përsëri.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return { sent, error, isSubmitting, submit };
-}
-
 /** Anchor for the room cards' "Rezervo" buttons to scroll to. */
 const KLASA_BOOKING_ID = "rezervo-klasen";
 
@@ -7661,44 +7532,6 @@ const ABOUT_STAT_ICONS: readonly React.ElementType[] = [Award, Users, Clock, Bri
 const COUNT_UP_MS = 1600;
 
 /**
- * True once the element has been scrolled into view — and it never goes back to false.
- *
- * That one-way latch IS the "plays once" requirement: the observer disconnects on the
- * first intersection, so scrolling the section off screen and back does nothing. The
- * state lives in the component, so a page refresh remounts it and the count starts at 0
- * again, which is the other half of what was asked.
- */
-function useHasEnteredView<T extends HTMLElement>(threshold = 0.35) {
-  const ref = useRef<T | null>(null);
-  const [entered, setEntered] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    // Someone who asked the OS for less motion gets the final number, not a 1.6s crawl.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setEntered(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setEntered(true);
-          observer.disconnect();
-        }
-      },
-      { threshold },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, entered };
-}
-
-/**
  * Splits a display figure into the number to animate and the text around it, so "1,000+",
  * "88%" and "9 vite" all count while keeping whatever they are written with. Anything
  * without digits falls through and is rendered untouched.
@@ -8160,30 +7993,6 @@ function PageLigjërueit() {
       </section>
     </PageWrapper>
   );
-}
-
-/* ══════════════════════════════════════════
-   APPLY POPUP ACCESS + IN-PAGE SCROLL
-══════════════════════════════════════════ */
-
-/*
-  The application popup is owned by `Layout` — the banner, the navbar and the footer all
-  open it from there. Pages, though, arrive as `children` inside <main>, so they have no
-  prop path back up to that opener.
-
-  A context is what closes the gap WITHOUT a second popup existing anywhere. One state,
-  one <ScrollPopupForm>, and any page deep in the tree can ask for the same door the
-  navbar uses. Threading an `onApplyClick` prop through every page component instead
-  would touch a dozen signatures to deliver one function.
-
-  The default is a no-op rather than a throw: a page rendered outside Layout (a test, a
-  future embed) should degrade to a dead button, not crash the route.
-*/
-const ApplyPopupContext = React.createContext<() => void>(() => {});
-
-/** Opens the same application popup as the navbar's "Apliko tani". */
-function useApplyPopup(): () => void {
-  return React.useContext(ApplyPopupContext);
 }
 
 /* ══════════════════════════════════════════
