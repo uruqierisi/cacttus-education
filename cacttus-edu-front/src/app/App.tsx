@@ -198,7 +198,6 @@ import {
   type TrainingStatus,
   type TrainingCategory,
   type TrainingDetail,
-  type TrainingFormat,
 } from "../marketing/lib/public-api";
 import {
   APPLICATION_FORM_SLUG,
@@ -210,32 +209,17 @@ import {
   STUDY_PROGRAMME_VALUES,
 } from "../marketing/lib/forms.config";
 import { C, globalStyle } from "./theme";
+import { cityKey, dedupeCities } from "./lib/cities";
+import { formatPostDate, formatTrainingDate } from "./lib/dates";
+import { PHONE_ERROR, isValidPhone, sanitizePhone } from "./lib/phone";
+import { BALLINA_PROGRAMS_ID, TALENTE_LIST_ID, scrollToSection } from "./lib/scroll";
+import {
+  TRAINING_CATEGORY_LABELS,
+  TRAINING_FORMAT_LABELS,
+  TRAINING_STATUS_LABELS,
+  TRAINING_STATUS_STYLES,
+} from "./lib/training-labels";
 
-
-/* ─── Albanian labels for the catalogue taxonomy ───
-   The API stores stable machine values; these are what a visitor reads. Renaming a
-   category is a change here, never a data migration. */
-const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = {
-  PROGRAMIM: "Programim",
-  ADMINISTRIM: "Administrim",
-  SIGURI_KIBERNETIKE: "Siguri Kibernetike",
-  MARKETING_DIZAJN: "Marketing & Dizajn",
-  MENAXHIM_PROJEKTEVE: "Menaxhim i Projekteve",
-  AFTESI_TE_BUTA: "Aftësi të buta",
-};
-
-/* Lifecycle labels + the two badge palettes. Green reads as "open, you can still join",
-   neutral grey as "closed" — the same green/grey pairing the rest of the site already
-   uses for success and muted states, so this adds no new colours. */
-const TRAINING_STATUS_LABELS: Record<TrainingStatus, string> = {
-  ACTIVE: "Aktive",
-  COMPLETED: "Përfunduar",
-};
-
-const TRAINING_STATUS_STYLES: Record<TrainingStatus, { bg: string; fg: string }> = {
-  ACTIVE: { bg: "#E6F6EF", fg: "#1E9E6A" },
-  COMPLETED: { bg: "#F4F4F6", fg: "#71717D" },
-};
 
 /**
  * The card's status pill. Same shape as `MetaChip`, different palette.
@@ -260,84 +244,6 @@ function TrainingStatusBadge({ status }: { status: TrainingStatus }) {
       {TRAINING_STATUS_LABELS[status]}
     </span>
   );
-}
-
-/* ─── Phone number rule ───
-   A MIRROR of the API's `phoneSchema` (backend/src/schemas/common.schema.ts), never a
-   replacement for it: this half only buys instant feedback, and anything that skips the
-   browser is still stopped server-side. Kept here, once, so all four phone inputs on this
-   site enforce the same thing — a copy per form is a copy that drifts. */
-const PHONE_RULE = /^\+?[0-9]{5,}$/;
-const PHONE_ERROR = "Numri lejon vetëm shifra, me një '+' opsional në fillim.";
-
-/**
- * Drops what the API would reject, as it is typed. Spaces survive so "+383 44 123 456"
- * stays readable while being entered; the server strips them before storing.
- *
- * The `+` needs its own pass: it is legal only as the very first character, so a stray one
- * typed mid-number is removed rather than allowed to sit there and fail validation later.
- */
-function sanitizePhone(value: string): string {
-  const allowed = value.replace(/[^\d+\s]/g, "");
-  const lead = allowed.startsWith("+") ? "+" : "";
-  return lead + allowed.slice(lead.length).replace(/\+/g, "");
-}
-
-/** Judged on the stripped form, exactly as the server judges it. */
-function isValidPhone(value: string): boolean {
-  return PHONE_RULE.test(value.replace(/\s+/g, ""));
-}
-
-const TRAINING_FORMAT_LABELS: Record<TrainingFormat, string> = {
-  KLASE: "Klasë",
-  HIBRID: "Hibrid",
-  ONLINE: "Online",
-};
-
-/**
- * `DD.MM.YYYY` — the Albanian convention.
- *
- * Built by hand rather than with `Intl.DateTimeFormat('sq-AL')`: browsers without
- * Albanian in their ICU data silently fall back to the default locale, which rendered
- * 15 April as `04/15/2026`. A date that reads as a different date depending on the
- * visitor's browser is worse than a hard-coded format.
- *
- * Read in UTC because start dates are stored as midnight UTC — using local getters
- * would show the previous day for anyone west of Greenwich.
- */
-function formatTrainingDate(iso: string | null): string {
-  if (!iso) return "—";
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-
-  return `${day}.${month}.${date.getUTCFullYear()}`;
-}
-
-/**
- * `5 shkurt 2026` — the longer form, for article bylines.
- *
- * Separate from `formatTrainingDate` rather than a flag on it: a training's date is a
- * scheduling fact that must stay compact inside a meta row, an article's is prose. Month
- * names are a literal table for the reason given above — `Intl` cannot be trusted to have
- * Albanian, and a byline that reads "February" on some browsers is worse than no byline.
- *
- * Read in UTC to match the rest of this file, so the displayed day never shifts by one
- * for a visitor west of Greenwich.
- */
-const ALBANIAN_MONTHS = [
-  "janar", "shkurt", "mars", "prill", "maj", "qershor",
-  "korrik", "gusht", "shtator", "tetor", "nëntor", "dhjetor",
-];
-
-function formatPostDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return `${date.getUTCDate()} ${ALBANIAN_MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 /**
@@ -4488,39 +4394,6 @@ function TrainingCard({ training }: { training: TrainingCardData }) {
 
 const ALL_FILTER = "Të gjitha";
 
-/**
- * Fold a city name for COMPARISON only: trim, lowercase, drop diacritics.
- *
- * The chips are built from the distinct `city` values on the trainings, so one record
- * typed "Prishtine" and another "Prishtinë" produced two chips for one city — which is
- * exactly what happened in production. The data itself has been normalised, and that is
- * the real fix; this is the guard that stops the next stray entry from doing it again.
- */
-function cityKey(value: string): string {
-  return value.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
-}
-
-/**
- * Collapse spelling variants of one city down to a single chip.
- *
- * Keeps the ACCENTED spelling when both exist: after `normalize("NFD")` an accented
- * letter is two code points to the plain letter's one, so the longer decomposition is
- * the one carrying the diacritics — "Prishtinë" wins over "Prishtine" rather than the
- * chip label depending on which record happened to be created first.
- */
-function dedupeCities(values: readonly (string | null | undefined)[]): string[] {
-  const byKey = new Map<string, string>();
-  for (const raw of values) {
-    // A training with no city (an online one) contributes no chip at all.
-    const value = (raw ?? "").trim();
-    if (!value) continue;
-    const key = cityKey(value);
-    const kept = byKey.get(key);
-    if (!kept || value.normalize("NFD").length > kept.normalize("NFD").length) byKey.set(key, value);
-  }
-  return [...byKey.values()];
-}
-
 function PageTrajnime() {
   const [trainings, setTrainings] = useState<readonly TrainingCardData[]>([]);
   const [categories, setCategories] = useState<readonly TrainingCategory[]>([]);
@@ -8388,38 +8261,6 @@ const ApplyPopupContext = React.createContext<() => void>(() => {});
 /** Opens the same application popup as the navbar's "Apliko tani". */
 function useApplyPopup(): () => void {
   return React.useContext(ApplyPopupContext);
-}
-
-/*
-  Anchors for the two in-page "scroll down to…" buttons. Declared as constants because
-  each id is written twice — once on the section, once on the button that jumps to it —
-  and a typo in either half fails silently as a button that does nothing.
-*/
-const BALLINA_PROGRAMS_ID = "programet";
-const TALENTE_LIST_ID = "talentet";
-
-/*
-  Smooth in-page scroll.
-
-  `scrollIntoView` rather than a hand-rolled `requestAnimationFrame` easing loop, which is
-  what this briefly was. The rAF version was written after the native call appeared to be
-  a no-op in testing — but the real cause was that the test tab was BACKGROUNDED, and
-  Chrome suspends animation frames in a hidden tab. That kills a rAF loop exactly as dead
-  as it kills the native animation, so the extra 25 lines bought nothing. In a tab the
-  user is actually looking at, this animates.
-
-  It also gets two things free that the hand-rolled version had to spell out: it honours
-  `prefers-reduced-motion` on its own, and it recomputes the distance if an image above
-  the target finishes loading and shifts the page mid-scroll.
-
-  The sticky navbar would otherwise cover the top of whatever we land on. That offset
-  comes from the target's own `scroll-mt-28`, the CSS property built for this, so the
-  number lives with the element rather than being guessed here.
-
-  A missing id is a no-op by design — a dead button beats a crash.
-*/
-function scrollToSection(id: string): void {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ══════════════════════════════════════════
