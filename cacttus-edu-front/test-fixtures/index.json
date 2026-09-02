@@ -1,0 +1,124 @@
+[
+  {
+    "path": "/api/public/trainings",
+    "status": 200,
+    "file": "api/trainings.json",
+    "bytes": 1832
+  },
+  {
+    "path": "/api/public/trainings/filters",
+    "status": 200,
+    "file": "api/trainings_filters.json",
+    "bytes": 128
+  },
+  {
+    "path": "/api/public/posts",
+    "status": 200,
+    "file": "api/posts.json",
+    "bytes": 1982
+  },
+  {
+    "path": "/api/public/trainings/ethical-hacking-dhe-penetration-testing-3",
+    "status": 200,
+    "file": "api/trainings_ethical-hacking-dhe-penetration-testing-3.json",
+    "bytes": 633
+  },
+  {
+    "path": "/api/public/trainings/ethical-hacking-dhe-penetration-testing-2",
+    "status": 200,
+    "file": "api/trainings_ethical-hacking-dhe-penetration-testing-2.json",
+    "bytes": 628
+  },
+  {
+    "path": "/api/public/trainings/ethical-hacking-training",
+    "status": 200,
+    "file": "api/trainings_ethical-hacking-training.json",
+    "bytes": 1412
+  },
+  {
+    "path": "/api/public/trainings/ethical-hacking-dhe-penetration-testing",
+    "status": 200,
+    "file": "api/trainings_ethical-hacking-dhe-penetration-testing.json",
+    "bytes": 1265
+  },
+  {
+    "path": "/api/public/trainings/javascript-nga-zero",
+    "status": 200,
+    "file": "api/trainings_javascript-nga-zero.json",
+    "bytes": 837
+  },
+  {
+    "path": "/api/public/trainings/dizajn-grafik-me-ai",
+    "status": 200,
+    "file": "api/trainings_dizajn-grafik-me-ai.json",
+    "bytes": 558
+  },
+  {
+    "path": "/api/public/posts/cacttus-education-test",
+    "status": 200,
+    "file": "api/posts_cacttus-education-test.json",
+    "bytes": 1838
+  },
+  {
+    "path": "/api/public/posts/ballina-e-ngarkuar",
+    "status": 200,
+    "file": "api/posts_ballina-e-ngarkuar.json",
+    "bytes": 548
+  },
+  {
+    "path": "/api/public/posts/ngarkim-foto-1785828809",
+    "status": 200,
+    "file": "api/posts_ngarkim-foto-1785828809.json",
+    "bytes": 514
+  },
+  {
+    "path": "/api/public/posts/njoftim-smoke-test-msdtk9g9",
+    "status": 200,
+    "file": "api/posts_njoftim-smoke-test-msdtk9g9.json",
+    "bytes": 828
+  },
+  {
+    "path": "/api/public/forms/aplikim-studime-profesionale",
+    "status": 200,
+    "file": "api/forms_aplikim-studime-profesionale.json",
+    "bytes": 395
+  },
+  {
+    "path": "/api/public/forms/kontakt",
+    "status": 200,
+    "file": "api/forms_kontakt.json",
+    "bytes": 273
+  },
+  {
+    "path": "/api/public/forms/kontakt-biznesi",
+    "status": 200,
+    "file": "api/forms_kontakt-biznesi.json",
+    "bytes": 937
+  },
+  {
+    "path": "/api/public/forms/rezervo-klase",
+    "status": 200,
+    "file": "api/forms_rezervo-klase.json",
+    "bytes": 825
+  },
+  {
+    "path": "/api/public/forms/regjistrimi-kiber-siguri",
+    "status": 200,
+    "file": "api/forms_regjistrimi-kiber-siguri.json",
+    "bytes": 121
+  },
+  {
+    "path": "/api/public/forms/regjistrim-nga-instagram",
+    "status": 200,
+    "file": "api/forms_regjistrim-nga-instagram.json",
+    "bytes": 629
+  },
+  {
+    "path": "/api/public/posts/sanitizer-probe",
+    "status": 200,
+    "file": "api/posts_sanitizer-probe.json",
+    "bytes": 897,
+    "synthetic": true,
+    "note": "hand-authored DOMPurify probe; not from the DB"
+  }
+]
