@@ -325,13 +325,18 @@ export default function TrainingEditorPage(): JSX.Element {
   const isKnownCity =
     state.city === '' || (TRAINING_CITIES as readonly string[]).includes(state.city);
   const formOptions = formOptionsQuery.data ?? [];
-  /* A form that was switched off after this training was saved is no longer offered by
-     the dropdown, which would silently reset the field on the next save. Surfaced. */
+  /* The dropdown now lists inactive forms too, so a missing entry means the form was
+     soft-deleted — the one case where the link really is broken and must be repointed. */
   const linkedFormMissing =
     isEditing &&
     state.formSlug !== '' &&
     formOptionsQuery.isSuccess &&
     !formOptions.some((option) => option.slug === state.formSlug);
+  /* Selected but closed: the training still publishes, the apply box just shows the
+     closed-applications notice until the form is switched back on. Not an error. */
+  const linkedFormInactive = formOptions.some(
+    (option) => option.slug === state.formSlug && !option.isActive,
+  );
 
   return (
     <form onSubmit={handleSubmit}>
@@ -591,7 +596,7 @@ export default function TrainingEditorPage(): JSX.Element {
                 <SelectContent>
                   {formOptions.map((option) => (
                     <SelectItem key={option.slug} value={option.slug}>
-                      {option.title}
+                      {option.isActive ? option.title : `${option.title} (e mbyllur)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -603,8 +608,17 @@ export default function TrainingEditorPage(): JSX.Element {
               {linkedFormMissing ? (
                 <p className="flex items-start gap-2 text-xs text-warning">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  Forma e lidhur («{state.formSlug}») nuk është më aktive. Zgjidh një tjetër,
+                  Forma e lidhur («{state.formSlug}») është fshirë. Zgjidh një tjetër,
                   përndryshe aplikimi nga kjo faqe nuk do të funksionojë.
+                </p>
+              ) : null}
+
+              {linkedFormInactive ? (
+                <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Kjo formë është e mbyllur për momentin. Trajnimi publikohet normalisht;
+                  te faqja e tij shfaqet njoftimi që aplikimet janë mbyllur, derisa forma
+                  të rihapet.
                 </p>
               ) : null}
             </div>

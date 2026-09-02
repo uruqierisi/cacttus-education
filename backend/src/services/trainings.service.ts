@@ -176,10 +176,25 @@ async function assertSlugIsFree(slug: string, ignoreId?: string): Promise<void> 
 
 /**
  * The write-side half of the `formSlug` contract documented in schema.prisma: a training
- * may only point at a form that exists, is active and is not soft-deleted. Saving a
- * training whose Apliko button leads nowhere is the failure this prevents, and catching
- * it here means the admin sees it on the field rather than a visitor seeing it on the
- * public page.
+ * may only point at a form that EXISTS and is not soft-deleted.
+ *
+ * IT DELIBERATELY DOES NOT REQUIRE THE FORM TO BE ACTIVE, and that is a change from the
+ * original rule. Requiring it conflated two independent lifecycles: a training is a page
+ * that should be readable for as long as it is worth reading, and a form is an intake
+ * channel that opens and closes. Tying the write to `isActive` meant a training could not
+ * be prepared before its form opened, and — worse — that once a form was switched off,
+ * every subsequent edit to a training pointing at it was rejected with "form is not
+ * active", on a field the admin had not touched.
+ *
+ * Nothing downstream depends on the form being active at write time. The public detail
+ * endpoint resolves the form separately (`getPublicTrainingBySlug` below) and returns
+ * `form: null` when it is inactive or gone, which the marketing page already renders as a
+ * closed-applications notice with a phone number instead of the apply form. The training
+ * stays visible; only the intake closes.
+ *
+ * A slug naming NO form is still rejected: that is a typo, not a lifecycle state, and it
+ * would leave a training permanently unable to accept applications with nothing in the
+ * dashboard to explain why.
  */
 async function assertFormSlugUsable(formSlug: string): Promise<void> {
   const form = await prisma.form.findFirst({
@@ -190,12 +205,6 @@ async function assertFormSlugUsable(formSlug: string): Promise<void> {
   if (!form) {
     throw ApiError.badRequest('The selected application form does not exist.', [
       { field: 'body.formSlug', message: 'no form with this slug' },
-    ]);
-  }
-
-  if (!form.isActive) {
-    throw ApiError.badRequest('The selected application form is switched off.', [
-      { field: 'body.formSlug', message: 'form is not active' },
     ]);
   }
 }
@@ -281,11 +290,23 @@ export async function getTrainingById(id: string): Promise<TrainingDto> {
 }
 
 /** Active forms, for the editor's "Forma e aplikimit" dropdown. */
-export async function listFormOptions(): Promise<readonly { slug: string; title: string }[]> {
+/**
+ * The editor's "Forma e aplikimit" dropdown.
+ *
+ * Inactive forms are INCLUDED, carrying `isActive` so the dashboard can mark them. They
+ * used to be filtered out, which had two bad consequences: a training could not be
+ * prepared against a form that had not opened yet, and editing a training whose form was
+ * later switched off found its own saved value missing from the list — so any edit
+ * silently threatened to repoint it. Soft-deleted forms stay out: those are gone, not
+ * closed.
+ */
+export async function listFormOptions(): Promise<
+  readonly { slug: string; title: string; isActive: boolean }[]
+> {
   return prisma.form.findMany({
-    where: { deletedAt: null, isActive: true },
-    select: { slug: true, title: true },
-    orderBy: { title: 'asc' },
+    where: { deletedAt: null },
+    select: { slug: true, title: true, isActive: true },
+    orderBy: [{ isActive: 'desc' }, { title: 'asc' }],
   });
 }
 

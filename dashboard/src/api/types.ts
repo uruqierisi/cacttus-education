@@ -210,4 +210,6 @@ export type Training = {
 export type FormOption = {
   readonly slug: string;
   readonly title: string;
+  /** False for a form that exists but is not accepting submissions. Still selectable. */
+  readonly isActive: boolean;
 };
