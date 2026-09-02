@@ -185,13 +185,22 @@ export const FIELD_LIMITS = {
   CONTENT_MAX: 200_000,
   TEXT_ANSWER_MAX: 5_000,
   /**
-   * The trainer bio on a training's detail page. Deliberately far tighter than
-   * `CONTENT_MAX`: that block is a few sentences beside a portrait, and its layout only
-   * holds up while the text stays short. Enforcing brevity here — rather than trusting
-   * the admin to be brief — is what keeps the section from turning into a second
-   * description that overruns the photo beside it.
+   * The trainer bio on a training's detail page.
+   *
+   * Was 600 — about a paragraph — on the reasoning that the block sits beside a portrait
+   * and its layout only holds up while the text stays short. In practice that turned a
+   * guardrail into an obstacle: real trainer bios arrive longer than a paragraph and were
+   * being truncated at the point of entry, so the cap is now 5 000.
+   *
+   * The layout concern behind the old number was real but was solved in the wrong place:
+   * the marketing block renders the bio with `whitespace-pre-line` in a flex column that
+   * grows, so a long bio makes the card taller rather than overrunning the photo. Length
+   * is an editorial judgement; this bound exists only to stop an unbounded write.
+   *
+   * `Training.instructorBio` is `String? @db.Text` in Prisma — no length constraint at the
+   * database level — so raising this needs no migration.
    */
-  INSTRUCTOR_BIO_MAX: 600,
+  INSTRUCTOR_BIO_MAX: 5_000,
   FORM_FIELDS_MAX: 60,
 } as const;
 

@@ -217,9 +217,9 @@ model Training {
   // Public URL of an uploaded portrait, not the file itself — same contract as
   // `syllabusPdf` and `Post.coverImage`, so an upload and a pasted link are one shape.
   instructorPhoto String?
-  // A few sentences, capped at FIELD_LIMITS.INSTRUCTOR_BIO_MAX at the validation
-  // boundary. `@db.Text` only because a bounded varchar would need a migration to
-  // re-tune; the real ceiling is the Zod one.
+  // Capped at FIELD_LIMITS.INSTRUCTOR_BIO_MAX (5 000) at the validation boundary.
+  // `@db.Text` precisely so that ceiling can be re-tuned without a migration — which is
+  // what happened when it moved from 600 to 5 000; the real ceiling is the Zod one.
   instructorBio   String? @db.Text
   city       String?
 

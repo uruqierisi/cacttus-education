@@ -59,8 +59,14 @@ import {
 import { describeApiError } from '@/lib/api-error';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
-/** Matches the API's `FIELD_LIMITS.INSTRUCTOR_BIO_MAX`. */
-const INSTRUCTOR_BIO_MAX = 600;
+/**
+ * Matches the API's `FIELD_LIMITS.INSTRUCTOR_BIO_MAX`.
+ *
+ * Duplicated rather than imported because the dashboard has no build-time dependency on
+ * the backend package. The two must be changed together; the API is the one that actually
+ * rejects, this only stops the textarea accepting what the API will refuse.
+ */
+const INSTRUCTOR_BIO_MAX = 5_000;
 
 type EditorState = {
   title: string;
@@ -560,8 +566,7 @@ export default function TrainingEditorPage(): JSX.Element {
                   onChange={(event) => update('instructorBio', event.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {state.instructorBio.trim().length}/{INSTRUCTOR_BIO_MAX} karaktere — mbaje të
-                  shkurtër, është një bllok i vogël pranë fotos.
+                  {state.instructorBio.trim().length}/{INSTRUCTOR_BIO_MAX} karaktere.
                 </p>
               </div>
             </div>
