@@ -586,9 +586,26 @@ function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
 
       `2xl:` only. Below 1536px the existing `px-4 sm:px-7` is unchanged, so every
       narrower width — including the 375px overflow fix below — renders as before.
+
+      CENTRING THE MESSAGE, from `sm:` up, is a THREE-COLUMN GRID `[1fr_auto_1fr]`
+      rather than a centred paragraph with an absolutely-positioned pill. Two reasons.
+      Taking the pill out of flow would let the message run underneath it — grid tracks
+      cannot overlap, so the two can never collide however long the message gets. And an
+      absolute pill would have to restate this element's padding at all three breakpoints
+      to sit on the right edge, including the `calc()` above; as a grid item it simply
+      ends at the content edge, and the `2xl:` geometry keeps working untouched.
+
+      Because the outer tracks are an equal `1fr` and the gaps between them are equal, the
+      middle track lands on the bar's centre line — centred against the WHOLE bar, not
+      against the space left over beside the pill. The first track holds nothing; the two
+      children name their columns explicitly, so no spacer element is needed.
+
+      Below `sm` this stays the original flex row: `grid` only takes over at the same
+      breakpoint that gives the pill its full "Apliko tani" label, so the 375px layout —
+      message left, short "Apliko" pill right — is byte for byte what it was.
     */
     <div
-      className="w-full flex items-center justify-between gap-2 px-4 sm:px-7 2xl:px-[calc(50%_-_600px_+_20px)] relative overflow-hidden"
+      className="w-full flex items-center justify-between gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr] px-4 sm:px-7 2xl:px-[calc(50%_-_600px_+_20px)] relative overflow-hidden"
       style={{ backgroundColor: C.brand, height: 40 }}
     >
       {/*
@@ -600,7 +617,7 @@ function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
         paragraph keeps its full width and pushes the button off the end of the bar. The
         message gives up characters; the call to action never gives up space.
       */}
-      <p className="text-white text-xs sm:text-sm font-medium truncate min-w-0">
+      <p className="text-white text-xs sm:text-sm font-medium truncate min-w-0 sm:col-start-2 sm:text-center">
         Regjistrohu me <span className="font-bold">20%</span> zbritje
       </p>
       {/* A button, not a Link: it opens the popup instead of navigating — the same
@@ -621,7 +638,7 @@ function TopBanner({ onApplyClick }: { onApplyClick: () => void }) {
           the right edge of the screen counts as horizontal overflow for no benefit — the
           pill is already ~100px wide, far past the 44px minimum.
         */
-        className="relative shrink-0 flex items-center gap-1 whitespace-nowrap text-white text-xs font-medium px-3 rounded-full transition-all hover:bg-white/20 after:absolute after:content-[''] after:-inset-y-[9px]"
+        className="relative shrink-0 flex items-center gap-1 whitespace-nowrap text-white text-xs font-medium px-3 rounded-full transition-all hover:bg-white/20 after:absolute after:content-[''] after:-inset-y-[9px] sm:col-start-3 sm:justify-self-end"
         style={{ border: "1px solid rgba(255,255,255,0.5)", height: 30, minHeight: 30 }}
       >
         {/* Short label on the narrowest screens so the pill can never be squeezed at
