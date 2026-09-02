@@ -73,31 +73,15 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 /** Field types that require an option list. */
 export const CHOICE_FIELD_TYPES: readonly FieldType[] = ['select', 'multiselect', 'radio'];
 
-export const TRAINING_CATEGORIES = [
-  'PROGRAMIM',
-  'ADMINISTRIM',
-  'SIGURI_KIBERNETIKE',
-  'MARKETING_DIZAJN',
-  'MENAXHIM_PROJEKTEVE',
-  'AFTESI_TE_BUTA',
-] as const;
-export type TrainingCategoryValue = (typeof TRAINING_CATEGORIES)[number];
-
-/**
- * Albanian display labels for the catalogue taxonomy.
- *
- * The enum values are stable machine strings; these are what an admin and a visitor
- * read. Keeping the mapping here — rather than storing pretty text in the database —
- * means renaming a category is a code change in two frontends, never a data migration.
+/*
+ * The catalogue taxonomy USED TO LIVE HERE, as `TRAINING_CATEGORIES` plus a
+ * `TRAINING_CATEGORY_LABELS` map from enum value to Albanian label. Both are gone: the
+ * categories are rows now, fetched from `/api/admin/training-categories`, and the row's
+ * `name` IS the label. The old comment here argued that keeping the mapping in code made
+ * renaming "a code change, never a data migration" — which was true, and was the
+ * problem: it made renaming a DEPLOY of two frontends instead of an edit an admin could
+ * make themselves.
  */
-export const TRAINING_CATEGORY_LABELS: Record<TrainingCategoryValue, string> = {
-  PROGRAMIM: 'Programim',
-  ADMINISTRIM: 'Administrim',
-  SIGURI_KIBERNETIKE: 'Siguri Kibernetike',
-  MARKETING_DIZAJN: 'Marketing & Dizajn',
-  MENAXHIM_PROJEKTEVE: 'Menaxhim i Projekteve',
-  AFTESI_TE_BUTA: 'Aftësi të buta',
-};
 
 export const TRAINING_FORMATS = ['KLASE', 'HIBRID', 'ONLINE'] as const;
 export type TrainingFormatValue = (typeof TRAINING_FORMATS)[number];

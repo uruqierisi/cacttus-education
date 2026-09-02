@@ -36,6 +36,9 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
   POST_CREATED: 'Krijim artikulli',
   POST_UPDATED: 'Përditësim artikulli',
   POST_DELETED: 'Fshirje artikulli',
+  TRAINING_CATEGORY_CREATED: 'Krijim kategorie trajnimi',
+  TRAINING_CATEGORY_UPDATED: 'Përditësim kategorie trajnimi',
+  TRAINING_CATEGORY_DELETED: 'Fshirje kategorie trajnimi',
 });
 
 export const AUDIT_ENTITY_LABELS: Readonly<Record<string, string>> = Object.freeze({
