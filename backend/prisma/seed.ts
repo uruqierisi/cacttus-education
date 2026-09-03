@@ -1,6 +1,11 @@
 /**
- * Database seed — two users (one ADMIN, one EDITOR) and the three canonical
+ * Database seed — two users (one ADMIN, one EDITOR), then the three canonical
  * marketing forms.
+ *
+ * The forms are NOT defined here. They live in `src/lib/canonical-forms.ts` because the
+ * running server needs them too, and `tsc` only emits `src/**` into `dist/` — a copy in
+ * this directory is invisible to the compiled container. The seed just calls the same
+ * function the server calls at boot.
  *
  * Passwords are read from the environment and bcrypt-hashed before insert; no
  * plaintext credential is ever written to a file in this repository. The defaults
@@ -10,7 +15,13 @@
  * Run with:  npm run db:seed
  */
 import 'dotenv/config';
-import { FormType, PrismaClient, Role } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
+/*
+ * From src/, deliberately. The seed runs through tsx so it could have kept its own
+ * copy, but a second copy is how the two drift — and the RUNTIME needs this module
+ * compiled into dist/, which is only true for files under src/.
+ */
+import { CANONICAL_FORMS, upsertCanonicalForms } from '../src/lib/canonical-forms';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -99,170 +110,6 @@ async function upsertUser(user: SeedUser, rounds: number): Promise<void> {
   console.log(`  seeded ${user.role.padEnd(6)} ${user.email}`);
 }
 
-/* ── Canonical marketing forms ────────────────────────────────────────────────
- *
- * Three forms whose SLUGS AND FIELD KEYS ARE COMPILED INTO THE MARKETING SITE. The page
- * UIs are hand-built React, not rendered from the form definition, so these records are
- * the server-side half of a contract the client already assumes: without them
- * /kontakti, /biznese/trajnime, /biznese/talente and /biznese/klasa all 404 the moment
- * a visitor presses submit. Slugs and values are mirrored in
- * `cacttus-edu-front/src/marketing/lib/forms.config.ts`.
- *
- * NOT the application forms. `aplikim-zhvam` and `aplikim-siguria-kibernetike` are
- * editorial content staff own — the band reads whatever fields they declare — so
- * creating them here would fight the dashboard rather than support it.
- *
- * EXISTENCE ONLY. If a slug is already present the record is left completely alone: no
- * field sync, no `isActive` flip, no `updatedAt` bump. Staff customise these — adding a
- * question to `kontakt-biznesi` is a supported thing to do — and a seed that "restored"
- * the canonical shape on every deploy would silently undo their work. That is also why
- * this reads and creates rather than calling `upsert` with an empty update: Prisma
- * stamps `@updatedAt` on any update it issues, so even a no-op upsert would rewrite the
- * row and make an untouched form look edited.
- */
-type SeedField = {
-  readonly name: string;
-  readonly label: string;
-  readonly type: string;
-  readonly required: boolean;
-  readonly placeholder: string;
-  readonly helpText: string;
-  readonly order: number;
-  readonly options: readonly { readonly value: string; readonly label: string }[];
-};
-
-type SeedForm = {
-  readonly slug: string;
-  readonly title: string;
-  readonly type: FormType;
-  readonly isActive: boolean;
-  readonly fields: readonly SeedField[];
-};
-
-/**
- * Shape a field the way the dashboard's form editor emits one, so a seeded form opens in
- * that editor with nothing missing. `createEmptyField` there sets `placeholder` and
- * `helpText` to empty strings and `order` to the array index — both reproduced here, and
- * `order` is 0-based for the same reason: the editor re-stamps it from array position
- * whenever a field is moved or deleted.
- */
-function seedField(
-  order: number,
-  name: string,
-  label: string,
-  type: string,
-  required: boolean,
-  options: readonly string[] = [],
-): SeedField {
-  return {
-    name,
-    label,
-    type,
-    required,
-    placeholder: '',
-    helpText: '',
-    order,
-    // The marketing pages send the VALUE, and for these three the value is the label —
-    // `BUSINESS_REQUEST_TYPES` and `CLASS_BOOKING_ROOMS` are literal display strings, so
-    // splitting them would mean two things to keep in step instead of one.
-    options: options.map((option) => ({ value: option, label: option })),
-  };
-}
-
-const CANONICAL_FORMS: readonly SeedForm[] = [
-  {
-    slug: 'kontakt',
-    title: 'Kontakt',
-    type: FormType.SCHOOL,
-    isActive: true,
-    fields: [
-      seedField(0, 'subjekti', 'Subjekti', 'text', true),
-      seedField(1, 'mesazhi', 'Mesazhi', 'textarea', true),
-    ],
-  },
-  {
-    slug: 'kontakt-biznesi',
-    title: 'Kontakt biznesi',
-    type: FormType.SCHOOL,
-    isActive: true,
-    fields: [
-      // One form serves every /biznese lead box; `tipi_kerkeses` is what tells them apart
-      // in the inbox. Its options must equal `BUSINESS_REQUEST_TYPES` exactly — the pages
-      // send those strings and the server validates a select answer against the option
-      // values character for character.
-      seedField(0, 'tipi_kerkeses', 'Tipi i kërkesës', 'select', true, [
-        'Trajnime të personalizuara',
-        'Partneritet / Punëdhënës',
-        'Rezervim klase',
-      ]),
-      // OPTIONAL, and that is the point: no single page sends both. /biznese/trajnime
-      // sends `kompania`, /biznese/talente sends `kompania` and `fusha_interesit`. A key
-      // the form does not DECLARE is dropped server-side, so an undeclared answer would
-      // vanish silently rather than fail loudly — declaring them optional is what keeps
-      // each page's data.
-      seedField(1, 'kompania', 'Kompania', 'text', false),
-      seedField(2, 'fusha_interesit', 'Fusha e interesit', 'text', false),
-    ],
-  },
-  {
-    slug: 'rezervo-klase',
-    title: 'Rezervo klasë',
-    type: FormType.SCHOOL,
-    isActive: true,
-    fields: [
-      // Must equal `CLASS_BOOKING_ROOMS` byte for byte, diacritics included: the room
-      // card's button sends the string straight through as the select answer.
-      seedField(0, 'klasa', 'Klasa', 'select', true, [
-        'Klasa Portokalli',
-        'Klasa Rozë',
-        'Klasa e verdhë',
-        'Klasa e gjelbër',
-        'Klasa e kuqe',
-        'Hapsira e përbashkët',
-      ]),
-      seedField(1, 'data_deshiruar', 'Data e dëshiruar', 'text', true),
-      seedField(2, 'nr_personave', 'Numri i personave', 'text', true),
-      seedField(3, 'shenime', 'Shënime', 'textarea', false),
-    ],
-  },
-];
-
-async function seedCanonicalForm(form: SeedForm): Promise<void> {
-  const existing = await prisma.form.findUnique({
-    where: { slug: form.slug },
-    select: { id: true, isActive: true, deletedAt: true },
-  });
-
-  if (existing) {
-    console.log(`  ${form.slug.padEnd(16)} exists, skipped`);
-
-    /*
-     * Not a modification — a warning. The seed guarantees the ROW exists; it does not
-     * guarantee the form is REACHABLE, and the public endpoint serves neither a
-     * soft-deleted nor an inactive form. Staying silent here would hide exactly the
-     * outage this section exists to prevent.
-     */
-    if (existing.deletedAt !== null) {
-      console.warn(`  ${' '.repeat(16)} ^ WARNING: soft-deleted — the public endpoint will 404 it`);
-    } else if (!existing.isActive) {
-      console.warn(`  ${' '.repeat(16)} ^ WARNING: inactive — the public endpoint will 404 it`);
-    }
-    return;
-  }
-
-  await prisma.form.create({
-    data: {
-      slug: form.slug,
-      title: form.title,
-      type: form.type,
-      isActive: form.isActive,
-      fields: form.fields as unknown as object[],
-    },
-  });
-
-  console.log(`  ${form.slug.padEnd(16)} created`);
-}
-
 async function main(): Promise<void> {
   const isProductionLike = readEnv('NODE_ENV', 'development') !== 'development';
   const rounds = readBcryptRounds();
@@ -278,11 +125,8 @@ async function main(): Promise<void> {
     await upsertUser(user, rounds);
   }
 
-  console.log(`Seeding ${CANONICAL_FORMS.length} canonical marketing forms...`);
-
-  for (const form of CANONICAL_FORMS) {
-    await seedCanonicalForm(form);
-  }
+  console.log(`Ensuring ${CANONICAL_FORMS.length} canonical marketing forms...`);
+  await upsertCanonicalForms();
 
   console.log('Seed complete.');
 }

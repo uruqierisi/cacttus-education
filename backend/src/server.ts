@@ -9,6 +9,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { logger } from './lib/logger';
 import { disconnectPrisma } from './lib/prisma';
+import { upsertCanonicalForms } from './lib/canonical-forms';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -75,7 +76,19 @@ function resolveHost(): string | undefined {
   return env.isProduction ? undefined : '0.0.0.0';
 }
 
-function start(): void {
+/*
+ * IN server.ts, NOT app.ts. `createApp` is imported by `tests/helpers/api.ts`, so a
+ * database write hung off app construction would fire on every test file's import and
+ * write into the test database as a side effect of building an Express app. This is the
+ * process entry point — the one place a boot-time side effect belongs.
+ *
+ * Awaited BEFORE the port is bound, so the forms are in place before the first request
+ * can arrive. It never throws (see the module), so a database that is briefly down
+ * delays the listen by one failed round trip and nothing more.
+ */
+async function start(): Promise<void> {
+  await upsertCanonicalForms();
+
   const app = createApp();
 
   const host = resolveHost();
@@ -95,4 +108,4 @@ function start(): void {
   registerShutdownHandlers(server);
 }
 
-start();
+void start();
