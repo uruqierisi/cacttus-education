@@ -1,6 +1,6 @@
 import { usePageMeta } from "../hooks/usePageMeta";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import {
   getPublicPosts,
   getPublicPostCategories,
@@ -8,6 +8,7 @@ import {
   type PostCategory,
 } from "../../marketing/lib/public-api";
 import { FilterRow } from "../sections/FilterRow";
+import { Pagination } from "../sections/Pagination";
 import { ALL_FILTER } from "./PageTrajnime";
 import { ArticleCard } from "../cards/ArticleCard";
 import { formatPostDate } from "../lib/dates";
@@ -30,7 +31,27 @@ import { GhostBtn, SecondaryBtn } from "../ui/buttons";
    lie. The model has the field now, so the chips are real — and they still come from the
    DATA, never from a hard-coded list: the endpoint returns only categories that have a
    published post, so a chip can never lead to an empty page.
+
+   PAGINATION, AND WHY IT IS CLIENT-SIDE. `GET /api/public/posts` does support
+   `page`/`pageSize` and returns `{ page, pageSize, total, totalPages }` — that was
+   checked before any of this was written, which is why the backend is untouched. It is
+   still not used here, for one concrete reason: the hero is counted OUTSIDE the six, so
+   page 1 covers items 0–6 and page 2 items 7–12. The API addresses rows as
+   `(page - 1) * pageSize`, and no constant pageSize produces a window starting at 7.
+   Serving that would need an `offset` parameter the endpoint does not have.
+
+   Paginating in the browser costs nothing extra today because this page ALREADY fetches
+   every published post and always has — the filter above works the same way. What
+   changes is only what is drawn. That trade stops being right once the archive outgrows
+   a single response worth downloading; at roughly a hundred posts, add `offset` to the
+   endpoint and move both the filter and the paging behind it.
 ══════════════════════════════════════════ */
+
+/** Posts per page, hero excluded. */
+const POSTS_PER_PAGE = 6;
+
+/** The query parameter that carries the page. Albanian, like the rest of the URLs. */
+const PAGE_PARAM = "faqja";
 export function PageLajme() {
   usePageMeta(
     "Lajme dhe njoftime — Cacttus Education",
@@ -43,11 +64,16 @@ export function PageLajme() {
   const [reloadKey, setReloadKey] = useState(0);
 
   /*
-    The selected chip, held as the visible LABEL rather than a slug — `FilterRow` speaks
-    in labels and one row that can only have one answer is exactly what one string models.
-    Same shape the /trajnime row uses.
+    THE URL IS THE STATE, for both the chip and the page. Holding either in `useState`
+    would have made a filtered page 2 unshareable and the back button a no-op — the two
+    things this had to get right. `?faqja=2&category=karriera` restores the exact view.
+
+    The category travels as a SLUG, not as the visible label: a label can be renamed from
+    the dashboard, and a link somebody shared should survive that.
   */
-  const [selected, setSelected] = useState(ALL_FILTER);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categorySlug = searchParams.get("category");
+  const requestedPage = Number.parseInt(searchParams.get(PAGE_PARAM) ?? "1", 10);
 
   useEffect(() => {
     let active = true;
@@ -85,21 +111,82 @@ export function PageLajme() {
   }, [reloadKey]);
 
   /*
-    Filtered CLIENT-SIDE, from the list already loaded, rather than by re-requesting with
-    `?category=`. The feed is a browse-all grid of a few dozen posts that is already in
-    memory, so a round trip per chip would add latency for nothing. The query parameter
-    exists on the API for callers that want it — a shared link, a future paginated feed.
-
     An UNCATEGORISED post matches only "Të gjitha". That is the honest behaviour: it
     belongs to no category, so no category chip should claim it.
   */
-  const visible =
-    selected === ALL_FILTER ? posts : posts.filter((post) => post.category?.name === selected);
+  const filtered = categorySlug
+    ? posts.filter((post) => post.category?.slug === categorySlug)
+    : posts;
 
+  /*
+    THE HERO IS COUNTED OUTSIDE THE SIX, and it is removed from the paginated list on
+    EVERY page, not just the one that draws it. Slicing it off only on page 1 would push
+    it back into the grid on page 2 and show the newest post twice.
+
+    It appears only unfiltered: inside a category the newest post of that category is not
+    "the" lead story, and giving each filter its own hero would make the same article the
+    headline of several pages at once.
+  */
+  const featured = categorySlug ? undefined : filtered[0];
+  const paginated = featured ? filtered.slice(1) : filtered;
+
+  const totalPages = Math.max(1, Math.ceil(paginated.length / POSTS_PER_PAGE));
+
+  /*
+    Anything outside 1..totalPages collapses to 1 — a typed `?faqja=99`, a `?faqja=abc`
+    that parses to NaN, or a bookmark to a page that existed before posts were unpublished.
+  */
+  const isPageValid = Number.isFinite(requestedPage) && requestedPage >= 1 && requestedPage <= totalPages;
+  const page = isPageValid ? requestedPage : 1;
+
+  /*
+    Rewrite the URL when it asked for a page that does not exist, so the address bar stops
+    claiming otherwise. `replace` on purpose: a bad page must not become a history entry
+    the back button walks the visitor into again.
+
+    Guarded on `posts.length` because `totalPages` is 1 while the feed is still loading,
+    and without that guard a legitimate `?faqja=3` would be rewritten to 1 before its
+    posts ever arrived.
+  */
+  useEffect(() => {
+    if (posts.length > 0 && !isPageValid) {
+      const next = new URLSearchParams(searchParams);
+      next.delete(PAGE_PARAM);
+      setSearchParams(next, { replace: true });
+    }
+  }, [posts.length, isPageValid, searchParams, setSearchParams]);
+
+  const pageItems = paginated.slice((page - 1) * POSTS_PER_PAGE, page * POSTS_PER_PAGE);
+  const showHero = Boolean(featured) && page === 1;
+
+  const selectedCategory = categories.find((category) => category.slug === categorySlug);
+  const selected = selectedCategory ? selectedCategory.name : ALL_FILTER;
   const chipOptions = [ALL_FILTER, ...categories.map((category) => category.name)];
 
-  // The newest post gets the wide treatment; the rest fill the grid beneath it.
-  const [featured, ...rest] = visible;
+  /* A chip always returns to page 1 — page 4 of "Të gjitha" is rarely page 4 of a
+     category, and landing on an empty grid after a click reads as a broken filter. */
+  const selectCategory = (label: string) => {
+    const next = new URLSearchParams(searchParams);
+    const match = categories.find((category) => category.name === label);
+    if (match) {
+      next.set("category", match.slug);
+    } else {
+      next.delete("category");
+    }
+    next.delete(PAGE_PARAM);
+    setSearchParams(next);
+  };
+
+  const selectPage = (value: number) => {
+    const next = new URLSearchParams(searchParams);
+    if (value <= 1) {
+      next.delete(PAGE_PARAM);
+    } else {
+      next.set(PAGE_PARAM, String(value));
+    }
+    setSearchParams(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <PageWrapper>
@@ -122,7 +209,7 @@ export function PageLajme() {
               label="Kategoria:"
               options={chipOptions}
               active={selected}
-              onSelect={setSelected}
+              onSelect={selectCategory}
             />
           </div>
         </section>
@@ -150,7 +237,7 @@ export function PageLajme() {
               <p className="text-lg" style={{ color: C.n700 }}>Ende nuk ka lajme të publikuara</p>
               <p className="text-sm mt-2" style={{ color: C.n500 }}>Kthehu së shpejti — po punojmë në përmbajtje të re.</p>
             </div>
-          ) : visible.length === 0 ? (
+          ) : filtered.length === 0 ? (
             /* A filtered-to-nothing grid is a different state from an empty blog, and it
                needs a way back — otherwise the visitor is stuck on a blank page with no
                clue that a chip caused it. The endpoint only offers categories that have a
@@ -158,11 +245,11 @@ export function PageLajme() {
                unfiling the last one and the list being refetched. */
             <div className="py-20 text-center flex flex-col items-center gap-4">
               <p className="text-lg" style={{ color: C.n500 }}>Nuk ka lajme në këtë kategori</p>
-              <SecondaryBtn onClick={() => setSelected(ALL_FILTER)}>Shfaq të gjitha</SecondaryBtn>
+              <SecondaryBtn onClick={() => selectCategory(ALL_FILTER)}>Shfaq të gjitha</SecondaryBtn>
             </div>
           ) : (
             <>
-              {featured && (
+              {showHero && featured && (
                 <Link to={`/lajme/${featured.slug}`} className="block mb-12">
                   <div className="grid grid-cols-1 lg:grid-cols-[58fr_42fr] gap-8 p-6 rounded-2xl hover:shadow-md transition-all" style={{ border: `1px solid ${C.n200}` }}>
                     <div className="aspect-video rounded-xl overflow-hidden" style={{ backgroundColor: C.n100 }}>
@@ -186,11 +273,13 @@ export function PageLajme() {
                 </Link>
               )}
 
-              {rest.length > 0 && (
+              {pageItems.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {rest.map((post) => <ArticleCard key={post.slug} post={post} />)}
+                  {pageItems.map((post) => <ArticleCard key={post.slug} post={post} />)}
                 </div>
               )}
+
+              <Pagination page={page} totalPages={totalPages} onSelect={selectPage} />
             </>
           )}
         </div>
