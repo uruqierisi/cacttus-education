@@ -9,6 +9,7 @@ import { HTTP_STATUS } from '../config/constants';
 import { sendSuccess } from '../lib/api-response';
 import { validatedBody, validatedParams, validatedQuery } from '../middleware/validate';
 import * as postsService from '../services/posts.service';
+import * as postCategoriesService from '../services/post-categories.service';
 import * as submissionsService from '../services/submissions.service';
 import * as formsService from '../services/forms.service';
 import * as trainingsService from '../services/trainings.service';
@@ -51,6 +52,17 @@ export async function listTrainings(req: Request, res: Response): Promise<void> 
 }
 
 /** Filter chips, derived from what is actually on live cards. */
+/**
+ * The categories the /lajme chips should offer.
+ *
+ * Only those with at least one PUBLISHED post — a chip that leads to an empty list is a
+ * dead end, the same rule `trainingFilters` follows. Uncategorised posts produce no chip
+ * and are reachable under "Të gjitha" alone.
+ */
+export async function postCategories(_req: Request, res: Response): Promise<void> {
+  sendSuccess(res, await postCategoriesService.getPublicPostCategories());
+}
+
 export async function trainingFilters(_req: Request, res: Response): Promise<void> {
   const filters = await trainingsService.getPublicTrainingFilters();
 

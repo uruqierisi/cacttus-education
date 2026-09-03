@@ -11,6 +11,7 @@ import { adminTrainingsRouter } from './trainings.routes';
 import { adminTrainingCategoriesRouter } from './training-categories.routes';
 import { adminSubmissionsRouter } from './submissions.routes';
 import { adminPostsRouter } from './posts.routes';
+import { adminPostCategoriesRouter } from './post-categories.routes';
 import { adminUsersRouter } from './users.routes';
 import { adminUploadsRouter } from './uploads.routes';
 import { adminAuditLogsRouter } from './audit-logs.routes';
@@ -33,6 +34,8 @@ router.use('/trainings', adminTrainingsRouter);
 router.use('/training-categories', adminTrainingCategoriesRouter);
 router.use('/submissions', adminSubmissionsRouter);
 router.use('/posts', adminPostsRouter);
+// The blog taxonomy. Same split as posts: both roles write, ADMIN deletes.
+router.use('/post-categories', adminPostCategoriesRouter);
 // Self-gated with requireAdmin inside — EDITORs get 403 on every verb.
 router.use('/users', adminUsersRouter);
 // ADMIN + EDITOR: both roles author blog posts, so both may attach a cover image.

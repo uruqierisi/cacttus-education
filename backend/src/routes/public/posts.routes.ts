@@ -11,7 +11,13 @@ import * as publicController from '../../controllers/public.controller';
 
 const router = Router();
 
-// GET /api/public/posts?page&pageSize&search   -> summaries (no body HTML)
+// GET /api/public/posts/categories             -> [{ name, slug }] with published posts
+//
+// Above `/:slug` — a literal path declared after a param route is unreachable, the same
+// trap `/trainings/filters` documents.
+router.get('/categories', asyncHandler(publicController.postCategories));
+
+// GET /api/public/posts?page&pageSize&search&category  -> summaries (no body HTML)
 router.get(
   '/',
   validate({ query: publicPostsQuerySchema }),

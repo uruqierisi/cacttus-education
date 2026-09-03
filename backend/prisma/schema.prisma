@@ -98,6 +98,10 @@ enum AuditAction {
   TRAINING_CATEGORY_CREATED
   TRAINING_CATEGORY_UPDATED
   TRAINING_CATEGORY_DELETED
+  // The blog taxonomy. DELETED is a HARD delete, refused while any post references it.
+  POST_CATEGORY_CREATED
+  POST_CATEGORY_UPDATED
+  POST_CATEGORY_DELETED
 }
 
 model User {
@@ -395,6 +399,7 @@ model AuditLog {
 
   action     AuditAction
   /// "Form" | "Submission" | "User" | "Post" | "Auth" | "Training" | "TrainingCategory"
+  /// | "PostCategory"
   entityType String
   // Null for auth events, which act on a session rather than on a row.
   entityId   String?

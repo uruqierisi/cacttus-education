@@ -7,6 +7,7 @@ import { ApiError } from '../lib/api-error';
 import { buildPaginationMeta, type PaginationMeta } from '../lib/api-response';
 import { resolvePageParams, toPrismaPageArgs } from '../lib/pagination';
 import { recordAuditWithin, type AuditContext } from '../lib/audit';
+import { assertPostCategoryIdExists } from './post-categories.service';
 import { sanitizeRichText, toExcerpt } from '../lib/html';
 import type {
   CreatePostInput,
@@ -19,6 +20,20 @@ const EXCERPT_LENGTH = 200;
 
 export type PostAuthor = { readonly id: string; readonly name: string };
 
+/**
+ * The category on a post payload, or null.
+ *
+ * NULL IS A REAL STATE here, unlike on a training: posts predating the taxonomy carry no
+ * category and are served exactly as before. Every consumer has to handle it — the
+ * dashboard renders "— Pa kategori —", the public feed shows the post under "Të gjitha"
+ * and draws no chip label.
+ */
+export type PostCategoryRef = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+};
+
 export type PostDto = {
   readonly id: string;
   readonly slug: string;
@@ -27,6 +42,7 @@ export type PostDto = {
   readonly content: string;
   readonly excerpt: string;
   readonly published: boolean;
+  readonly category: PostCategoryRef | null;
   readonly author: PostAuthor;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -35,9 +51,19 @@ export type PostDto = {
 /** The public feed omits the full body — list payloads stay small. */
 export type PublicPostSummary = Omit<PostDto, 'content' | 'published'>;
 
-type PostWithAuthor = Post & { author: { id: string; name: string } };
+type PostWithAuthor = Post & {
+  author: { id: string; name: string };
+  category: PostCategoryRef | null;
+};
 
-const withAuthor = { author: { select: { id: true, name: true } } } as const;
+/**
+ * Every read includes the category. It is a LEFT join — the relation is optional — so an
+ * uncategorised post still comes back, with `category: null`.
+ */
+const withAuthor = {
+  author: { select: { id: true, name: true } },
+  category: { select: { id: true, name: true, slug: true } },
+} as const;
 
 function toDto(post: PostWithAuthor): PostDto {
   return {
@@ -48,6 +74,7 @@ function toDto(post: PostWithAuthor): PostDto {
     content: post.content,
     excerpt: toExcerpt(post.content, EXCERPT_LENGTH),
     published: post.published,
+    category: post.category,
     author: post.author,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
@@ -81,6 +108,9 @@ function buildOrderBy(
 function buildAdminWhere(query: ListPostsQuery): Prisma.PostWhereInput {
   return {
     ...(query.published === undefined ? {} : { published: query.published }),
+    // By ID here, unlike the public feed's slug: the dashboard already holds the rows it
+    // renders the filter from, and an id cannot drift under a rename.
+    ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.search
       ? {
           OR: [
@@ -141,6 +171,10 @@ export async function createPost(
 ): Promise<PostDto> {
   await assertSlugIsFree(input.slug);
 
+  if (input.categoryId !== null) {
+    await assertPostCategoryIdExists(input.categoryId);
+  }
+
   const post = await prisma.$transaction(async (tx) => {
     const created = await tx.post.create({
       data: {
@@ -148,6 +182,7 @@ export async function createPost(
         title: input.title,
         coverImage: input.coverImage,
         content: sanitizeRichText(input.content),
+        categoryId: input.categoryId,
         published: input.published,
         authorId,
       },
@@ -196,12 +231,25 @@ export async function updatePost(
     await assertSlugIsFree(input.slug, id);
   }
 
+  // `null` clears the category and needs no lookup; only a real id is resolved.
+  if (input.categoryId !== undefined && input.categoryId !== null) {
+    await assertPostCategoryIdExists(input.categoryId);
+  }
+
   const data: Prisma.PostUpdateInput = {
     ...(input.slug === undefined ? {} : { slug: input.slug }),
     ...(input.title === undefined ? {} : { title: input.title }),
     ...(input.coverImage === undefined ? {} : { coverImage: input.coverImage }),
     ...(input.published === undefined ? {} : { published: input.published }),
     ...(input.content === undefined ? {} : { content: sanitizeRichText(input.content) }),
+    ...(input.categoryId === undefined
+      ? {}
+      : {
+          category:
+            input.categoryId === null
+              ? { disconnect: true }
+              : { connect: { id: input.categoryId } },
+        }),
   };
 
   const post = await prisma.$transaction(async (tx) => {
@@ -273,6 +321,9 @@ export async function listPublishedPosts(
 
   const where: Prisma.PostWhereInput = {
     published: true,
+    // By SLUG, not by id: the feed's filter lives in a shareable URL, where a cuid is
+    // neither readable nor stable across environments. Same contract as the catalogue.
+    ...(query.category ? { category: { slug: query.category } } : {}),
     ...(query.search
       ? { title: { contains: query.search, mode: Prisma.QueryMode.insensitive } }
       : {}),

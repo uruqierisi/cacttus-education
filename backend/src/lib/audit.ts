@@ -59,6 +59,7 @@ export const AUDIT_ENTITY_TYPES = [
   'Auth',
   'Training',
   'TrainingCategory',
+  'PostCategory',
 ] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 

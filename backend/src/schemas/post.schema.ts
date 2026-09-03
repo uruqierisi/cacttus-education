@@ -17,6 +17,16 @@ export const createPostSchema = z.object({
   title: z.string().trim().min(1).max(FIELD_LIMITS.TITLE_MAX),
   coverImage: imageUrlSchema.nullable().default(null),
   content: z.string().min(1).max(FIELD_LIMITS.CONTENT_MAX),
+  /**
+   * A `post_categories` row id, or null for "no category".
+   *
+   * NULLABLE all the way through, unlike a training's: filing an article is optional and
+   * `null` is the state every pre-existing post is in. `.nullable().default(null)` means
+   * an omitted key on CREATE files the post under nothing, while on PATCH `undefined`
+   * still reads as "leave alone" and an explicit `null` clears it — the same
+   * undefined/null split `coverImage` above already relies on.
+   */
+  categoryId: z.string().trim().min(1).max(FIELD_LIMITS.NAME_MAX).nullable().default(null),
   published: z.boolean().default(false),
 });
 export type CreatePostInput = z.infer<typeof createPostSchema>;
@@ -29,6 +39,8 @@ export const updatePostSchema = createPostSchema
 export type UpdatePostInput = z.infer<typeof updatePostSchema>;
 
 export const listPostsQuerySchema = paginationQuerySchema.extend({
+  /** A category row id. The dashboard holds the rows it renders the filter from. */
+  categoryId: z.string().trim().min(1).max(FIELD_LIMITS.NAME_MAX).optional(),
   published: z
     .enum(['true', 'false'])
     .transform((value) => value === 'true')
@@ -41,6 +53,8 @@ export type ListPostsQuery = z.infer<typeof listPostsQuerySchema>;
 
 /** Public feed: no `published` switch — it is forced to true in the service. */
 export const publicPostsQuerySchema = paginationQuerySchema.extend({
+  /** A category SLUG. The feed's filter belongs in a shareable, readable URL. */
+  category: slugSchema.optional(),
   search: searchSchema,
 });
 export type PublicPostsQuery = z.infer<typeof publicPostsQuerySchema>;

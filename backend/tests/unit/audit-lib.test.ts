@@ -195,6 +195,7 @@ describe('AUDIT_ENTITY_TYPES', () => {
       'Auth',
       'Training',
       'TrainingCategory',
+      'PostCategory',
     ]);
   });
 });
