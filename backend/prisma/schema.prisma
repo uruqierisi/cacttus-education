@@ -318,6 +318,27 @@ model Training {
   @@map("trainings")
 }
 
+/// The blog taxonomy. Same shape as `TrainingCategory`, and deliberately a SEPARATE
+/// table rather than a shared one: a training category ("Siguri Kibernetike") and a post
+/// category ("Karriera") answer different questions, and one shared list would put every
+/// training category into the /lajme chips the day someone added one.
+model PostCategory {
+  id        String   @id @default(cuid())
+  /// Shown to admins and visitors verbatim. Unique so two categories cannot read alike.
+  name      String   @unique
+  /// URL-safe handle: the public feed filters on `?category=<slug>`.
+  slug      String   @unique
+  /// Display order in the dashboard select and in the public filter chips. Ties fall
+  /// back to `name`, so the ordering is total even when several share a number.
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  posts Post[]
+
+  @@index([sortOrder])
+  @@map("post_categories")
+}
+
 model Post {
   id         String  @id @default(cuid())
   slug       String  @unique
@@ -325,6 +346,17 @@ model Post {
   coverImage String?
   content    String  @db.Text
   published  Boolean @default(false)
+
+  /// NULLABLE, unlike `Training.categoryId`. Every post that exists today predates this
+  /// column and there is no honest value to backfill them with — guessing a category
+  /// from a title would mislabel the archive. An uncategorised post stays valid, is
+  /// served exactly as before, and appears under "Të gjitha" on the public feed.
+  categoryId String?
+  /// `Restrict`, not `SetNull`: deleting a category that posts still reference must FAIL
+  /// rather than silently strip the label off them. The service counts references inside
+  /// the delete transaction and returns a readable Albanian error first — this is the
+  /// backstop for anything that bypasses the service.
+  category   PostCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
@@ -338,6 +370,8 @@ model Post {
   @@index([published, createdAt])
   // "Posts by this author" in the dashboard.
   @@index([authorId])
+  // The public feed's category filter.
+  @@index([categoryId])
   @@map("posts")
 }
 
