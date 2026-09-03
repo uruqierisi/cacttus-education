@@ -1,6 +1,6 @@
 /* One-shot recorder: saves every GET /api/public/** response the site can issue,
    as raw bytes, so baseline and post-split runs compare against identical data. */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { API_BASE as BASE, FIXTURE_DIR as OUT } from "./paths.mjs";
@@ -30,14 +30,20 @@ const postSlugs = (posts.data ?? []).map((p) => p.slug);
 for (const s of trainingSlugs) paths.push(`/api/public/trainings/${encodeURIComponent(s)}`);
 for (const s of postSlugs) paths.push(`/api/public/posts/${encodeURIComponent(s)}`);
 
-// Every form slug the site can ask for: the four in forms.config.ts plus whatever
+// Every form slug the site can ask for: the ones forms.config.ts names, plus whatever
 // each training's detail payload links to.
-const formSlugs = new Set([
-  "aplikim-studime-profesionale",
-  "kontakt",
-  "kontakt-biznesi",
-  "rezervo-klase",
-]);
+//
+// READ OUT OF forms.config.ts rather than listed here. The single `APPLICATION_FORM_SLUG`
+// this used to hard-code became the per-programme `APPLICATION_FORM_SLUGS` map, and a
+// hand-kept copy silently stopped recording the form the band actually requests — a
+// missing fixture shows up as a 404 in the replay, not as an error here.
+const config = readFileSync(new URL("../src/marketing/lib/forms.config.ts", import.meta.url), "utf8");
+const formSlugs = new Set([...config.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]));
+// Plus any form the ROUTE TABLE visits directly. `/forma/:slug` is reachable with a slug
+// forms.config.ts does not name — it is the link an admin copies out of the dashboard —
+// so the routes file is a second, independent source of slugs the replay will need.
+const routeFile = readFileSync(new URL("./routes.mjs", import.meta.url), "utf8");
+for (const m of routeFile.matchAll(/\/forma\/([a-z0-9-]+)/g)) formSlugs.add(m[1]);
 for (const s of trainingSlugs) {
   const d = await (await fetch(`${BASE}/api/public/trainings/${encodeURIComponent(s)}`)).json();
   const fs2 = d?.data?.form?.slug;

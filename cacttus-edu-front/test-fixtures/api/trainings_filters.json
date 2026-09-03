@@ -1,1 +1,1 @@
-{"success":true,"data":{"categories":["MARKETING_DIZAJN","PROGRAMIM","SIGURI_KIBERNETIKE"],"cities":["Kamenicë","Prishtinë"]}}
+{"success":true,"data":{"categories":[{"name":"Programim","slug":"programim"},{"name":"Siguri Kibernetike","slug":"siguri-kibernetike"},{"name":"Marketing & Dizajn","slug":"marketing-dizajn"}],"cities":["Kamenicë","Prishtinë"]}}
