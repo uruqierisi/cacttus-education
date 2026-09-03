@@ -39,6 +39,9 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = Object.free
   TRAINING_CATEGORY_CREATED: 'Krijim kategorie trajnimi',
   TRAINING_CATEGORY_UPDATED: 'Përditësim kategorie trajnimi',
   TRAINING_CATEGORY_DELETED: 'Fshirje kategorie trajnimi',
+  POST_CATEGORY_CREATED: 'Krijim kategorie artikulli',
+  POST_CATEGORY_UPDATED: 'Përditësim kategorie artikulli',
+  POST_CATEGORY_DELETED: 'Fshirje kategorie artikulli',
 });
 
 export const AUDIT_ENTITY_LABELS: Readonly<Record<string, string>> = Object.freeze({

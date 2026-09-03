@@ -25,6 +25,8 @@ export type PostPayload = {
   readonly coverImage: string | null;
   readonly content: string;
   readonly published: boolean;
+  /** A `post_categories` row id, or null for "no category". */
+  readonly categoryId: string | null;
 };
 
 export function listPosts(params: ListPostsParams): Promise<Paginated<Post>> {

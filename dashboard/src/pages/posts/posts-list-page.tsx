@@ -117,6 +117,7 @@ export default function PostsListPage(): JSX.Element {
               <TableHeader>
                 <TableRow>
                   <TableHead>Titulli</TableHead>
+                  <TableHead className="hidden md:table-cell">Kategoria</TableHead>
                   <TableHead className="hidden lg:table-cell">Autori</TableHead>
                   <TableHead>Statusi</TableHead>
                   <TableHead className="hidden sm:table-cell">Përditësuar</TableHead>
@@ -136,6 +137,16 @@ export default function PostsListPage(): JSX.Element {
                       <p className="mt-0.5 max-w-md text-xs text-muted-foreground">
                         {truncate(post.excerpt, EXCERPT_LENGTH)}
                       </p>
+                    </TableCell>
+                    {/* An unfiled article is normal, not an error — every post that
+                        predates the taxonomy is in that state — so it reads as muted
+                        text rather than an empty cell or a warning. */}
+                    <TableCell className="hidden md:table-cell">
+                      {post.category ? (
+                        <Badge variant="muted">{post.category.name}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">— Pa kategori —</span>
+                      )}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">{post.author.name}</TableCell>
                     <TableCell>

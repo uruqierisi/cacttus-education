@@ -35,6 +35,12 @@ export const queryKeys = {
     detail: (id: string) => ['submissions', 'detail', id] as const,
     stats: ['submissions', 'stats'] as const,
   },
+  postCategories: {
+    /** One key: the endpoint is unpaginated and unfiltered, so every consumer wants the
+     *  same array. A mutation invalidates this AND `posts.all`, because a rename changes
+     *  the label rendered on every post row. */
+    all: ['post-categories'] as const,
+  },
   posts: {
     all: ['posts'] as const,
     list: (filters: Record<string, unknown>) => ['posts', 'list', filters] as const,

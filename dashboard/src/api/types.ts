@@ -75,6 +75,8 @@ export type Post = {
   readonly content: string;
   readonly excerpt: string;
   readonly published: boolean;
+  /** Null for every post that predates the taxonomy, and for anything left unfiled. */
+  readonly category: PostCategoryRef | null;
   readonly author: { readonly id: string; readonly name: string };
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -163,6 +165,28 @@ export type StatsByType = {
  * copy in the marketing site; both are gone, because adding a category no longer means
  * editing two frontends.
  */
+/**
+ * A row of the blog taxonomy. Same shape as `TrainingCategory`.
+ *
+ * `postCount` includes DRAFTS: an unpublished post still holds the foreign key and still
+ * blocks a delete, so the number has to match what the API will enforce.
+ */
+export type PostCategory = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly sortOrder: number;
+  readonly postCount: number;
+  readonly createdAt: string;
+};
+
+/** The category as it rides along on a post payload — NULL when nothing is filed. */
+export type PostCategoryRef = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+};
+
 export type TrainingCategory = {
   readonly id: string;
   readonly name: string;
