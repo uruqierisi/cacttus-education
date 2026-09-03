@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  STATIC, and hand-maintained. Every fixed route of the marketing SPA is listed below.
+
+  THE DETAIL ROUTES ARE DELIBERATELY ABSENT. /trajnime/:slug and /lajme/:slug are served
+  by the SPA from data the API owns, so enumerating them here would mean a build-time
+  generator that queries the API — a build that fails when the API is down, and a sitemap
+  that goes stale the moment an admin publishes a training. They stay crawlable through
+  the /trajnime and /lajme listings, which ARE listed. A generated sitemap is worth
+  doing; it is a separate piece of work.
+
+  The eight /projektet/* pages are a different case and are left out only because this
+  pass was scoped to exclude them: their paths come from the hard-coded PROJECTS array in
+  App.tsx, not from the API, so listing them needs no generator at all — just eight more
+  <url> entries kept in step with that array. Worth adding.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://cacttus.education/</loc><priority>1.0</priority></url>
+
+  <!-- Study programmes -->
+  <url><loc>https://cacttus.education/programim</loc><priority>0.9</priority></url>
+  <url><loc>https://cacttus.education/siguria</loc><priority>0.9</priority></url>
+
+  <!-- Listings. The crawl paths to every training, article and project. -->
+  <url><loc>https://cacttus.education/trajnime</loc><priority>0.9</priority></url>
+  <url><loc>https://cacttus.education/lajme</loc><priority>0.7</priority></url>
+  <url><loc>https://cacttus.education/projektet</loc><priority>0.7</priority></url>
+
+  <!-- For businesses -->
+  <url><loc>https://cacttus.education/biznese</loc><priority>0.8</priority></url>
+  <url><loc>https://cacttus.education/biznese/trajnime</loc><priority>0.7</priority></url>
+  <url><loc>https://cacttus.education/biznese/talente</loc><priority>0.7</priority></url>
+  <url><loc>https://cacttus.education/biznese/bursa</loc><priority>0.7</priority></url>
+  <url><loc>https://cacttus.education/biznese/klasa</loc><priority>0.7</priority></url>
+
+  <!-- Institution -->
+  <url><loc>https://cacttus.education/rreth-nesh</loc><priority>0.7</priority></url>
+  <url><loc>https://cacttus.education/ekipi</loc><priority>0.5</priority></url>
+  <url><loc>https://cacttus.education/ligj%C3%ABrueit</loc><priority>0.5</priority></url>
+  <url><loc>https://cacttus.education/kontakti</loc><priority>0.6</priority></url>
+</urlset>

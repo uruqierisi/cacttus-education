@@ -200,6 +200,7 @@ import {
   type TrainingDetail,
   type TrainingFormat,
 } from "../marketing/lib/public-api";
+import { usePageMeta } from "../marketing/lib/use-page-meta";
 import {
   APPLICATION_FORM_SLUGS,
   BUSINESS_FORM_SLUG,
@@ -208,6 +209,27 @@ import {
   CLASS_BOOKING_ROOMS,
   CONTACT_FORM_SLUG,
 } from "../marketing/lib/forms.config";
+
+/**
+ * Cut a description to a length a search result will actually show, at a word boundary.
+ *
+ * Used only where the source text is longer than a meta description should be — a
+ * training's free-text `description`, a project's `desc`, a post's excerpt. It never
+ * rewrites: what it emits is a prefix of what the page itself already says, so a
+ * description can never claim something the page does not.
+ */
+const META_DESCRIPTION_MAX = 155;
+
+function metaSummary(text: string, fallback: string): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+
+  if (clean === "") return fallback;
+  if (clean.length <= META_DESCRIPTION_MAX) return clean;
+
+  const cut = clean.slice(0, META_DESCRIPTION_MAX);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 60 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:—-]+$/, "")}…`;
+}
 
 /* The Albanian label map that used to live here is GONE. Categories are rows the
    marketing team edits from the dashboard, and each one arrives carrying its own `name`
@@ -2710,11 +2732,18 @@ function PublicApplicationForm({
   slug,
   trainingId,
   title,
+  onFormLoaded,
 }: {
   slug: string;
   /** Provenance, set only by a training's detail page. */
   trainingId?: string;
   title?: string;
+  /**
+   * Reports the loaded form's title to the parent. Set only by `/forma/:slug`, which
+   * needs it for the document title; a training's detail page owns its own title and
+   * deliberately does not pass this.
+   */
+  onFormLoaded?: (formTitle: string) => void;
 }) {
   const [form, setForm] = useState<PublicForm | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -2740,6 +2769,7 @@ function PublicApplicationForm({
         if (!active) return;
         setForm(loaded);
         setAnswers(blankAnswers(loaded.fields));
+        onFormLoaded?.(loaded.title);
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -3391,6 +3421,13 @@ function ProjectCard({ project, to }: { project: { title: string; partner: strin
    PART 2 — HOME PAGE
 ══════════════════════════════════════════ */
 function PageBallina() {
+  /* `canonicalPath` is pinned to "/" because the catch-all route renders this component
+     too — without it every mistyped URL would declare ITSELF canonical. */
+  usePageMeta(
+    "Studime dhe trajnime profesionale në IT — Cacttus Education",
+    "Institucion i arsimit të lartë profesional me studime dyvjeçare të akredituara e të licencuara, mësim praktik dhe ligjërues me përvojë nga industria.",
+    "/",
+  );
   const openApplyPopup = useApplyPopup();
 
   return (
@@ -4574,6 +4611,10 @@ function ProgramPage({
 }
 
 function PageProgramim() {
+  usePageMeta(
+    "Zhvillim i Ueb-it dhe Aplikacioneve Mobile — Cacttus Education",
+    "Programi të përgatit me njohuri praktike për zhvillimin e uebfaqeve, aplikacioneve mobile dhe integrimin e Inteligjencës Artificiale (AI).",
+  );
   return (
     <ProgramPage
       title="Zhvillim i Ueb-it dhe Aplikacioneve Mobile"
@@ -4634,6 +4675,10 @@ function PageProgramim() {
 }
 
 function PageSiguria() {
+  usePageMeta(
+    "Siguria Kibernetike — Cacttus Education",
+    "Programi të përgatit me njohuri praktike për mbrojtjen e rrjeteve, sistemeve, të dhënave dhe infrastrukturës cloud nga kërcënimet kibernetike.",
+  );
   return (
     <ProgramPage
       title="Siguria Kibernetike"
@@ -4823,6 +4868,10 @@ function dedupeCities(values: readonly (string | null | undefined)[]): string[] 
 }
 
 function PageTrajnime() {
+  usePageMeta(
+    "Trajnime profesionale — Cacttus Education",
+    "Trajnime të shkurtra dhe intensive, të dizajnuara me kompanitë e teknologjisë. Zgjidh formatin: online, në klasë ose hibrid, dhe merr certifikatë në përfundim.",
+  );
   const [trainings, setTrainings] = useState<readonly TrainingCardData[]>([]);
   const [categories, setCategories] = useState<readonly TrainingCategory[]>([]);
   const [cities, setCities] = useState<readonly string[]>([]);
@@ -5078,6 +5127,23 @@ function PageTrajnimiDetal() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState("");
+
+  /*
+    Generic until the fetch resolves, then the real thing. The hook re-runs on every
+    change to its arguments, so the title simply becomes correct when the data lands —
+    which is also what a crawler that executes JavaScript waits for. A training with no
+    free-text description falls back to the two facts its own page shows in the meta
+    strip, rather than to a sentence invented here.
+  */
+  usePageMeta(
+    training ? `${training.title} — Cacttus Education` : "Trajnim — Cacttus Education",
+    training
+      ? metaSummary(
+          training.description ?? "",
+          `Trajnim profesional në ${training.category.name}, në formatin ${TRAINING_FORMAT_LABELS[training.format]}.`,
+        )
+      : "Trajnim profesional nga Cacttus Education.",
+  );
 
   useEffect(() => {
     if (!slug) return;
@@ -5410,6 +5476,20 @@ function PageTrajnimiDetal() {
 ══════════════════════════════════════════ */
 function PageForma() {
   const { slug } = useParams<{ slug: string }>();
+  /*
+    The form itself is fetched by `PublicApplicationForm`, which also renders inside a
+    training's detail page — so it cannot set the title itself without clobbering the
+    training's. It reports the title up through an OPTIONAL callback instead: additive,
+    and the training page simply does not pass one.
+
+    Declared above the `!slug` guard because hooks cannot run after a conditional return.
+  */
+  const [formTitle, setFormTitle] = useState("");
+
+  usePageMeta(
+    formTitle ? `${formTitle} — Cacttus Education` : "Aplikim — Cacttus Education",
+    "Merr vetëm një minutë. Stafi ynë të kontakton brenda 48 orëve.",
+  );
 
   if (!slug) {
     return (
@@ -5437,7 +5517,7 @@ function PageForma() {
 
       <section className="py-12" style={{ backgroundColor: C.n0 }}>
         <div className="max-w-[720px] mx-auto px-5">
-          <PublicApplicationForm slug={slug} />
+          <PublicApplicationForm slug={slug} onFormLoaded={setFormTitle} />
         </div>
       </section>
     </PageWrapper>
@@ -5537,6 +5617,10 @@ const BIZNESE_HERO_IMG_HEIGHT = "min(500px, 35vw)";
 const BIZNESE_HERO_IMG_SCALE = 1.30;
 
 function PageBiznese() {
+  usePageMeta(
+    "Për biznese — Cacttus Education",
+    "Cacttus Education mbështet bizneset në zhvillimin e kapaciteteve profesionale: trajnime të personalizuara, qasje në rrjetin e studentëve dhe të diplomuarve.",
+  );
   const navigate = useNavigate();
   const BUSINESS_OFFERINGS = [
     { title: "Trajnime të personalizuara", desc: "Investoni në aftësitë, zhvillimin dhe të ardhmen e ekipit tuaj!", icon: Briefcase, path: "/biznese/trajnime" },
@@ -5804,6 +5888,10 @@ const KLASA_BOOKING_ID = "rezervo-klasen";
 const BIZNESE_TRAJNIME_IMG_POSITION = "center 50%";
 
 function PageBizneseTrajnime() {
+  usePageMeta(
+    "Trajnime të personalizuara — Cacttus Education",
+    "Investoni në aftësitë, zhvillimin dhe të ardhmen e ekipit tuaj me trajnime të personalizuara, të përshtatura sipas nevojave dhe objektivave të kompanisë.",
+  );
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.TRAININGS);
   const [biz, setBiz] = useState({ kompania: "", personi: "", email: "", telefoni: "" });
@@ -6427,6 +6515,10 @@ function TalentCarousel({ people }: { people: readonly TalentPerson[] }) {
 }
 
 function PageBizneseTalente() {
+  usePageMeta(
+    "Rrjeti i talentëve — Cacttus Education",
+    "Eksploroni CV-të, aftësitë dhe përvojën e studentëve dhe të diplomuarve tanë, të përgatitur për praktikë dhe punësim në industrinë e teknologjisë.",
+  );
   const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.PARTNERSHIP);
   /* No separate contact-person input on this box, so the COMPANY is the lead's `name`.
      It is also sent as `kompania` so the inbox shows it under its own label. */
@@ -6720,6 +6812,10 @@ const BURSA_SPONSORS: readonly BursaSponsor[] = [
 ];
 
 function PageBizneseBursa() {
+  usePageMeta(
+    "Bursa e Impaktit — Cacttus Education",
+    "Çdo bursë e sponsorizuar hap derën e arsimit teknologjik për një student me talent që nuk ka mundësi financiare.",
+  );
   return (
     <PageWrapper>
       <style>{globalStyle}</style>
@@ -6911,6 +7007,10 @@ Si sponsor, kompania juaj fiton njohje publike, qasje prioritare në rrjetin e s
 const KLASA_HERO_IMG_POSITION = "center 50%";
 
 function PageBiznestKlasa() {
+  usePageMeta(
+    "Klasa me qira — Cacttus Education",
+    "Klasa plotësisht të pajisura për trajnime, workshope, provime, takime dhe konferenca, në një lokacion të përshtatshëm.",
+  );
   /*
     The booking band posts to the DEDICATED room-booking form now, not the general
     business-enquiry form: the band is literally "Rezervo hapësirën tënde", and a booking
@@ -7453,6 +7553,10 @@ const PROJECTS = [
 ];
 
 function PageProjektet() {
+  usePageMeta(
+    "Projektet — Cacttus Education",
+    "Ne ndërtojmë projekte që fuqizojnë shkathtësitë digjitale të së nesërmes, me bashkëpunime strategjike dhe zhvillim të qëndrueshëm në Kosovë e rajon.",
+  );
   return (
     <PageWrapper>
       <section className="py-16" style={{ backgroundColor: C.brandSoft }}>
@@ -7517,6 +7621,12 @@ const PROJECT_FALLBACK_GALLERY = [
 ];
 
 function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
+  usePageMeta(
+    `${project.title} — Cacttus Education`,
+    // `desc` runs long on several projects, so it is cut at a word boundary rather
+    // than rewritten — what ships is a prefix of the page's own opening paragraph.
+    metaSummary(project.desc, "Projekt i Cacttus Education."),
+  );
   /*
     The funder's mark, looked up from PROJEKTET_LIST — the navbar dropdown's array — by
     path, rather than copied into PROJECTS as a second `logo` field. One mapping, one place
@@ -7708,6 +7818,10 @@ function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
    grows a field to support them.
 ══════════════════════════════════════════ */
 function PageLajme() {
+  usePageMeta(
+    "Lajme dhe njoftime — Cacttus Education",
+    "Njoftime, histori dhe risi nga Cacttus Education.",
+  );
   const [posts, setPosts] = useState<readonly PostCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -7821,6 +7935,11 @@ function PageArtikulli() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState("");
+
+  usePageMeta(
+    post ? `${post.title} — Cacttus Education` : "Lajme — Cacttus Education",
+    post ? metaSummary(post.excerpt, "Lajme nga Cacttus Education.") : "Lajme nga Cacttus Education.",
+  );
 
   useEffect(() => {
     if (!slug) return;
@@ -7956,6 +8075,10 @@ function PageArtikulli() {
 }
 
 function PageKontakti() {
+  usePageMeta(
+    "Kontakti — Cacttus Education",
+    "Na shkruaj ose na vizito — jemi këtu për çdo pyetje rreth studimeve dhe trajnimeve. Do të të përgjigjemi sa më shpejt.",
+  );
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ emri: "", email: "", telefon: "", subjekti: "", mesazhi: "" });
   const [error, setError] = useState("");
@@ -8377,6 +8500,10 @@ const RRETH_AMBIENT_IMG_POSITION = "center 50%";
 const RRETH_TEAM_IMG_POSITION = "center 50%";
 
 function PageRrethNesh() {
+  usePageMeta(
+    "Rreth nesh — Cacttus Education",
+    "Me rrënjë në edukimin profesional që nga viti 2003, Cacttus Education vepron që nga viti 2015 si institucioni i parë privat profesional i Nivelit 5 në Kosovë.",
+  );
   return (
     <PageWrapper>
       {/* 1 — who we are, text left / image right */}
@@ -8623,6 +8750,10 @@ function PageRrethNesh() {
 }
 
 function PageEkipi() {
+  usePageMeta(
+    "Ekipi — Cacttus Education",
+    "Njihu me njerëzit që qëndrojnë prapa Cacttus Education.",
+  );
   const [activeCity, setActiveCity] = useState("Të gjitha");
   const cities = ["Të gjitha", "Prishtinë", "Prizren", "Kamenicë"];
   const members = activeCity === "Të gjitha" ? TEAM_MEMBERS : TEAM_MEMBERS.filter((m) => m.city === activeCity);
@@ -8688,13 +8819,17 @@ const LIGJËRUEIT = [
 ];
 
 function PageLigjërueit() {
+  usePageMeta(
+    "Ligjëruesit — Cacttus Education",
+    "Njihuni me ligjëruesit, profesionistë të industrisë që sjellin njohuri praktike dhe ju përgatisin për tregun e punës.",
+  );
   return (
     <PageWrapper>
       <section className="py-16" style={{ backgroundColor: C.brandSoft }}>
         <div className="max-w-[1200px] mx-auto px-5">
           <Breadcrumb items={[{ label: "Ballina", path: "/" }, { label: "Rreth nesh" }, { label: "Ligjëruesit" }]} />
           <h1 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: C.n900, letterSpacing: "-0.01em" }}>Ligjëruesit</h1>
-          <p className="text-0.5g" style={{ color: C.muted }}>Njihuni me ligjëruesit, profesionistë të industrisë që sjellin njohuri praktike dhe ju përgatisin për tregun e punës.</p>
+          <p className="text-0.5g" style={{ color: C.muted }}>Njihuni me ligjëruesit, profesionistë të industrisë që sjellin njohuri praktike dhe ju përgatisin për tregun e punës.</p>
         </div>
       </section>
       <section className="py-16" style={{ backgroundColor: C.n0 }}>

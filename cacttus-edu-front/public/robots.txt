@@ -1,0 +1,6 @@
+# Cacttus Education — marketing site.
+# Everything here is public brochure content; nothing is gated, so nothing is excluded.
+User-agent: *
+Allow: /
+
+Sitemap: https://cacttus.education/sitemap.xml
