@@ -1,3 +1,4 @@
+import { usePageMeta, metaSummary } from "../hooks/usePageMeta";
 import { Link } from "react-router";
 import { PROJECTS, PROJECT_FALLBACK_GALLERY } from "../data/projects";
 import { PROJEKTET_LIST } from "../data/projektet-list";
@@ -8,6 +9,12 @@ import { PrimaryBtn } from "../ui/buttons";
 
 
 export function ProjectDetailPage({ project }: { project: typeof PROJECTS[0] }) {
+  usePageMeta(
+    `${project.title} — Cacttus Education`,
+    // `desc` runs long on several projects, so it is cut at a word boundary rather
+    // than rewritten — what ships is a prefix of the page's own opening paragraph.
+    metaSummary(project.desc, "Projekt i Cacttus Education."),
+  );
   /*
     The funder's mark, looked up from PROJEKTET_LIST — the navbar dropdown's array — by
     path, rather than copied into PROJECTS as a second `logo` field. One mapping, one place

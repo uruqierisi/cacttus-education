@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useParams } from "react-router";
 import { PublicApplicationForm } from "../forms/PublicApplicationForm";
 import { C } from "../theme";
@@ -15,6 +17,20 @@ import { PageWrapper } from "../ui/PageWrapper";
 ══════════════════════════════════════════ */
 export function PageForma() {
   const { slug } = useParams<{ slug: string }>();
+  /*
+    The form itself is fetched by `PublicApplicationForm`, which also renders inside a
+    training's detail page — so it cannot set the title itself without clobbering the
+    training's. It reports the title up through an OPTIONAL callback instead: additive,
+    and the training page simply does not pass one.
+
+    Declared above the `!slug` guard because hooks cannot run after a conditional return.
+  */
+  const [formTitle, setFormTitle] = useState("");
+
+  usePageMeta(
+    formTitle ? `${formTitle} — Cacttus Education` : "Aplikim — Cacttus Education",
+    "Merr vetëm një minutë. Stafi ynë të kontakton brenda 48 orëve.",
+  );
 
   if (!slug) {
     return (
@@ -42,7 +58,7 @@ export function PageForma() {
 
       <section className="py-12" style={{ backgroundColor: C.n0 }}>
         <div className="max-w-[720px] mx-auto px-5">
-          <PublicApplicationForm slug={slug} />
+          <PublicApplicationForm slug={slug} onFormLoaded={setFormTitle} />
         </div>
       </section>
     </PageWrapper>

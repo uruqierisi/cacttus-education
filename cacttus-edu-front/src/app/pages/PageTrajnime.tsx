@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useEffect, useState } from "react";
 import {
   getPublicTrainings,
@@ -10,7 +11,6 @@ import { TrainingCard } from "../cards/TrainingCard";
 import { TRAINERS } from "../data/trainers";
 import { cityKey, dedupeCities } from "../lib/cities";
 import {
-  TRAINING_CATEGORY_LABELS,
   TRAINING_FORMAT_LABELS,
   TRAINING_STATUS_LABELS,
 } from "../lib/training-labels";
@@ -27,6 +27,10 @@ export const ALL_FILTER = "Të gjitha";
 
 
 export function PageTrajnime() {
+  usePageMeta(
+    "Trajnime profesionale — Cacttus Education",
+    "Trajnime të shkurtra dhe intensive, të dizajnuara me kompanitë e teknologjisë. Zgjidh formatin: online, në klasë ose hibrid, dhe merr certifikatë në përfundim.",
+  );
   const [trainings, setTrainings] = useState<readonly TrainingCardData[]>([]);
   const [categories, setCategories] = useState<readonly TrainingCategory[]>([]);
   const [cities, setCities] = useState<readonly string[]>([]);
@@ -99,7 +103,7 @@ export function PageTrajnime() {
 
     const status = statusForLabel(sel);
     return status === undefined
-      ? TRAINING_CATEGORY_LABELS[t.category] === sel
+      ? t.category.name === sel
       : t.status === status;
   });
 
@@ -114,7 +118,7 @@ export function PageTrajnime() {
     ...(["ACTIVE", "COMPLETED"] as const)
       .filter((value) => trainings.some((t) => t.status === value))
       .map((value) => TRAINING_STATUS_LABELS[value]),
-    ...categories.map((c) => TRAINING_CATEGORY_LABELS[c]),
+    ...categories.map((c) => c.name),
   ];
   const cityOptions = [ALL_FILTER, ...dedupeCities(cities)];
   /*

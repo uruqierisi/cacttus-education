@@ -1,5 +1,4 @@
 import type {
-  TrainingCategory,
   TrainingFormat,
   TrainingStatus,
 } from "../../marketing/lib/public-api";
@@ -9,14 +8,6 @@ import type {
 /* ─── Albanian labels for the catalogue taxonomy ───
    The API stores stable machine values; these are what a visitor reads. Renaming a
    category is a change here, never a data migration. */
-export const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = {
-  PROGRAMIM: "Programim",
-  ADMINISTRIM: "Administrim",
-  SIGURI_KIBERNETIKE: "Siguri Kibernetike",
-  MARKETING_DIZAJN: "Marketing & Dizajn",
-  MENAXHIM_PROJEKTEVE: "Menaxhim i Projekteve",
-  AFTESI_TE_BUTA: "Aftësi të buta",
-};
 
 
 /* Lifecycle labels + the two badge palettes. Green reads as "open, you can still join",

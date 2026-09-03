@@ -21,6 +21,14 @@ export const queryKeys = {
     detail: (id: string) => ['trainings', 'detail', id] as const,
     formOptions: ['trainings', 'form-options'] as const,
   },
+  trainingCategories: {
+    /**
+     * One key, no list variants: the endpoint is unpaginated and unfiltered, so every
+     * consumer wants the same array. Mutating a category invalidates this AND
+     * `trainings.all`, because a rename changes the label rendered on every training row.
+     */
+    all: ['training-categories'] as const,
+  },
   submissions: {
     all: ['submissions'] as const,
     list: (filters: Record<string, unknown>) => ['submissions', 'list', filters] as const,

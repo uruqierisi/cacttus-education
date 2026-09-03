@@ -1,46 +1,53 @@
 /**
- * Which backend form the public "Apliko tani" band renders.
+ * Which backend form each public application surface submits to.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │  CHANGE THIS ONE LINE to point the site at a different form.             │
- * │  The value is the form's `slug` — visible in the dashboard under         │
- * │  Format → (open a form). It is derived from the title on creation,       │
- * │  e.g. "Aplikim për ZHVAM" → "aplikim-per-zhvam".                         │
+ * │  THE PROGRAMME IS THE FORM.                                             │
+ * │  A study programme is no longer a `programi` answer on one shared form;  │
+ * │  it is expressed by WHICH form receives the submission. /programim posts │
+ * │  to ZHVAM, /siguria to CYBER, and an admin reads the two as separate     │
+ * │  inboxes without filtering on a field.                                   │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * The form must be ACTIVE in the dashboard; `/api/public/forms/:slug` returns 404 for
- * an inactive or deleted one, and the band renders its "form unavailable" state.
+ * Each value is the form's `slug` — visible in the dashboard under Format → (open a
+ * form). It is derived from the title on creation, e.g. "Aplikim ZHVAM" → "aplikim-zhvam".
  *
- * Shared by the "Apliko tani" band (home, /programim, /siguria, /rreth-nesh) AND the
- * scroll popup, deliberately: they are two skins on ONE application path, so a lead is
- * the same record whichever one it came through.
+ * Every form named here must be ACTIVE in the dashboard. `/api/public/forms/:slug`
+ * returns 404 for an inactive or deleted one, and each surface renders its own
+ * "Formulari i aplikimit nuk është aktiv" state — the same behaviour as before, now per
+ * programme rather than for the single shared form.
  *
- * Points at the ZHVAM form "Aplikim — Studime Profesionale", whose `programi` select
- * carries the applicant's chosen programme. It previously pointed at the CYBER form
- * `regjistrimi-kiber-siguri`, whose only field was `motivimi` — so a /programim
- * applicant was filed as CYBER and their programme choice was silently dropped, having
- * matched no field on that form.
+ * WHAT USES WHICH
+ * ---------------
+ *   ZHVAM    /programim
+ *   CYBER    /siguria
+ *   DEFAULT  every surface with no programme of its own — the band on the home page and
+ *            on /rreth-nesh. It points at ZHVAM deliberately rather than at a third
+ *            "general" form: a lead from the home page is a real lead and must land in an
+ *            inbox someone reads, not in one nobody opens. Change this line the day a
+ *            general intake form exists.
+ *
+ * The scroll popup is the exception: it asks the visitor which programme they want, so it
+ * chooses between ZHVAM and CYBER at submit time rather than taking a fixed slug. See
+ * POPUP_PROGRAMME_SLUGS in App.tsx.
+ *
+ * REPLACES the previous single `APPLICATION_FORM_SLUG` plus a `STUDY_PROGRAMME_VALUES`
+ * lookup, where every surface posted to one form and the programme travelled as a
+ * `programi` select answer that each caller had to pre-select correctly.
  */
-export const APPLICATION_FORM_SLUG = 'aplikim-studime-profesionale'
-
-/**
- * The option VALUES of that form's `programi` select.
- *
- * They are the strings the server validates against (a select answer is checked against
- * `option.value`, never the label), and they are also what `ProgramPage` passes as
- * `preselected` — which is why the band pre-selects correctly without a lookup table.
- * The popup's own dropdown wording differs slightly and is mapped onto these; see
- * POPUP_PROGRAMME_VALUES in App.tsx.
- */
-export const STUDY_PROGRAMME_VALUES = {
-  ZHVAM: 'Zhvillim i Ueb-it dhe Aplikacioneve Mobile',
-  CYBER: 'Siguria Kibernetike',
+export const APPLICATION_FORM_SLUGS = {
+  ZHVAM: 'aplikim-zhvam',
+  CYBER: 'aplikim-siguria-kibernetike',
+  DEFAULT: 'aplikim-zhvam',
 } as const
+
+export type ApplicationFormSlug =
+  (typeof APPLICATION_FORM_SLUGS)[keyof typeof APPLICATION_FORM_SLUGS]
 
 /**
  * Which backend form the /kontakti "Na dërgo mesazh" box submits to.
  *
- * Same contract as `APPLICATION_FORM_SLUG` above — change this one line to point the
+ * Same contract as `APPLICATION_FORM_SLUGS` above — change this one line to point the
  * contact box at a different form, and keep that form ACTIVE in the dashboard.
  *
  * Unlike the application band, /kontakti does NOT render the form's fields: its inputs

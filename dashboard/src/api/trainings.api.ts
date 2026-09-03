@@ -1,18 +1,13 @@
 import { getData, getPaginated, patchData, postData, deleteData, type Paginated } from '@/lib/api-client';
-import type {
-  FormOption,
-  Training,
-  TrainingCategory,
-  TrainingFormat,
-  TrainingStatus,
-} from './types';
+import type { FormOption, Training, TrainingFormat, TrainingStatus } from './types';
 
 const BASE = '/api/admin/trainings';
 
 export type ListTrainingsParams = {
   readonly page?: number;
   readonly pageSize?: number;
-  readonly category?: TrainingCategory;
+  /** A category row id. The public catalogue filters by slug; the dashboard has ids. */
+  readonly categoryId?: string;
   readonly city?: string;
   readonly isActive?: boolean;
   readonly includeDeleted?: boolean;
@@ -33,7 +28,8 @@ export type TrainingPayload = {
   /** Optional on create — the API derives an Albanian-safe slug from the title. */
   readonly slug?: string;
   readonly title: string;
-  readonly category: TrainingCategory;
+  /** A `training_categories` row id — the enum member it replaced is gone. */
+  readonly categoryId: string;
   /** `YYYY-MM-DD`, exactly what `<input type="date">` produces. */
   readonly startDate: string | null;
   readonly format: TrainingFormat;

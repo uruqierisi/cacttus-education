@@ -14,7 +14,7 @@ import { PrimaryBtn, SecondaryBtn } from "../ui/buttons";
 
 /* ── PROGRAM PAGE TEMPLATE ── */
 export function ProgramPage({
-  title, breadcrumbEnd, heroParagraph, whatCards, semesters, roles, preselected, imgUrl,
+  title, breadcrumbEnd, heroParagraph, whatCards, semesters, roles, formSlug, imgUrl,
   planUrl,
   imgPosition = "center 20%",
 }: {
@@ -26,7 +26,7 @@ export function ProgramPage({
    * card cannot be added without one — TypeScript refuses the object.
    */
   whatCards: { title: string; icon: React.ElementType; description: string }[];
-  semesters: typeof SEM_PROGRAMIM; roles: string[]; preselected: string; imgUrl: string; to: string;
+  semesters: typeof SEM_PROGRAMIM; roles: string[]; formSlug: string; imgUrl: string; to: string;
   /**
    * Absolute path to THIS programme's curriculum PDF, served from `public/`.
    *
@@ -210,7 +210,7 @@ export function ProgramPage({
       </section>
 
       {/* 3.3 — HORIZONTAL FORM instead of full ApplicationForm */}
-      <HorizontalApplicationBand preselected={preselected} />
+      <HorizontalApplicationBand slug={formSlug} />
     </PageWrapper>
   );
 }

@@ -27,7 +27,6 @@ import type { Training } from '@/api/types';
 import {
   DEFAULT_PAGE_SIZE,
   ROUTES,
-  TRAINING_CATEGORY_LABELS,
   TRAINING_STATUS_LABELS,
   TRAINING_FORMAT_LABELS,
   publicTrainingUrl,
@@ -129,7 +128,7 @@ export default function TrainingsPage(): JSX.Element {
                         </Link>
                       </h2>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {TRAINING_CATEGORY_LABELS[training.category]} · krijuar më{' '}
+                        {training.category.name} · krijuar më{' '}
                         {formatDate(training.createdAt)}
                       </p>
                     </div>

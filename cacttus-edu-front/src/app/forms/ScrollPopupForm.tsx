@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
-import { APPLICATION_FORM_SLUG } from "../../marketing/lib/forms.config";
+import { APPLICATION_FORM_SLUGS } from "../../marketing/lib/forms.config";
 import { PublicApiError, submitPublicForm } from "../../marketing/lib/public-api";
 import { PHONE_ERROR, isValidPhone, sanitizePhone } from "../lib/phone";
 import { C } from "../theme";
@@ -11,7 +11,7 @@ import {
   POPUP_ENTER_EASE,
   POPUP_ENTER_MS,
   POPUP_EXIT_MS,
-  POPUP_PROGRAMME_VALUES,
+  POPUP_PROGRAMME_SLUGS,
   POPUP_REDUCED_MS,
   POPUP_REVEAL_FALLBACK_MS,
   POPUP_ROW_EASE,
@@ -121,9 +121,14 @@ export function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose:
   }, [isOpen]);
 
   /**
-   * Sends the lead to the SAME application form the "Apliko tani" band posts to
-   * (APPLICATION_FORM_SLUG), so the popup is a second door onto one path rather than a
-   * parallel one — an admin sees both in a single list.
+   * Sends the lead to the form for the programme the visitor picked — the same form the
+   * band on that programme's own page posts to, so the popup stays a second door onto one
+   * path rather than becoming a parallel one.
+   *
+   * The `drejtimi` choice IS the routing decision, which is why nothing about it travels
+   * in the payload. An unrecognised value — only reachable if POPUP_DREJTIMET and
+   * POPUP_PROGRAMME_SLUGS are edited out of step — falls back to DEFAULT rather than
+   * dropping the lead on the floor.
    *
    * `sent` flips only after the POST resolves. A rejection leaves the card open with
    * every value still in it, so nothing has to be retyped.
@@ -154,13 +159,15 @@ export function ScrollPopupForm({ isOpen, onClose }: { isOpen: boolean; onClose:
     setIsSubmitting(true);
 
     try {
-      await submitPublicForm(APPLICATION_FORM_SLUG, {
+      await submitPublicForm(POPUP_PROGRAMME_SLUGS[drejtimi] ?? APPLICATION_FORM_SLUGS.DEFAULT, {
         // One `name` column server-side, so the two inputs are joined for it.
         name: `${emri.trim()} ${mbiemri.trim()}`,
         email: email.trim(),
         phone: telefoni.trim(),
-        // Mapped, not passed through: the dropdown's wording is not the option value.
-        data: { programi: POPUP_PROGRAMME_VALUES[drejtimi] ?? drejtimi },
+        // Empty: the programme is the form, and these two forms declare no other
+        // question. `data` is required by PublicSubmission rather than optional, so it is
+        // sent as {} instead of omitted — the server would default it to {} either way.
+        data: {},
       });
       setSent(true);
     } catch (cause: unknown) {

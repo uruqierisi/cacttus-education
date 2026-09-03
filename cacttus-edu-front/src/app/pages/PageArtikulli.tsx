@@ -1,3 +1,4 @@
+import { usePageMeta, metaSummary } from "../hooks/usePageMeta";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import {
@@ -30,6 +31,10 @@ export function PageArtikulli() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState("");
+  usePageMeta(
+    post ? `${post.title} — Cacttus Education` : "Lajme — Cacttus Education",
+    post ? metaSummary(post.excerpt, "Lajme nga Cacttus Education.") : "Lajme nga Cacttus Education.",
+  );
 
   useEffect(() => {
     if (!slug) return;

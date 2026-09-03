@@ -13,7 +13,6 @@ import { Link } from "react-router";
 import {
   getPublicTrainings,
   type TrainingCard as TrainingCardData,
-  type TrainingCategory,
 } from "../../marketing/lib/public-api";
 import { TRAINING_FORMAT_LABELS } from "../lib/training-labels";
 import { C } from "../theme";
@@ -34,13 +33,13 @@ import { GhostBtn, PrimaryBtn } from "../ui/buttons";
   taking the whole band down over a missing 18px glyph. Same guard `TrainingStatusBadge`
   applies to an unknown status.
 */
-export const TRAINING_CATEGORY_ICONS: Record<TrainingCategory, LucideIcon> = {
-  PROGRAMIM: Code,
-  ADMINISTRIM: Monitor,
-  SIGURI_KIBERNETIKE: Shield,
-  MARKETING_DIZAJN: Laptop,
-  MENAXHIM_PROJEKTEVE: Briefcase,
-  AFTESI_TE_BUTA: Users,
+export const TRAINING_CATEGORY_ICONS: Record<string, LucideIcon> = {
+  programim: Code,
+  administrim: Monitor,
+  "siguri-kibernetike": Shield,
+  "marketing-dizajn": Laptop,
+  "menaxhim-i-projekteve": Briefcase,
+  "aftesi-te-buta": Users,
 };
 
 
@@ -148,7 +147,7 @@ export function TrajnimePromoSection() {
                   </div>
                 ))
               : trainings.map((t) => {
-                  const Icon = TRAINING_CATEGORY_ICONS[t.category] ?? BookOpen;
+                  const Icon = TRAINING_CATEGORY_ICONS[t.category.slug] ?? BookOpen;
 
                   /* The slot the hard-coded version filled with a marketing sentence. A
                      card payload carries no description — that field lives on the DETAIL

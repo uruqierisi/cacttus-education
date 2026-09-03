@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { Award, BookOpen, Briefcase, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { C } from "../theme";
@@ -105,6 +106,10 @@ export const BIZNESE_HERO_IMG_SCALE = 1.30;
 
 
 export function PageBiznese() {
+  usePageMeta(
+    "Për biznese — Cacttus Education",
+    "Cacttus Education mbështet bizneset në zhvillimin e kapaciteteve profesionale: trajnime të personalizuara, qasje në rrjetin e studentëve dhe të diplomuarve.",
+  );
   const navigate = useNavigate();
   const BUSINESS_OFFERINGS = [
     { title: "Trajnime të personalizuara", desc: "Investoni në aftësitë, zhvillimin dhe të ardhmen e ekipit tuaj!", icon: Briefcase, path: "/biznese/trajnime" },

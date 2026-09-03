@@ -1,4 +1,4 @@
-import { STUDY_PROGRAMME_VALUES } from "../../marketing/lib/forms.config";
+import { APPLICATION_FORM_SLUGS } from "../../marketing/lib/forms.config";
 
 
 
@@ -17,17 +17,21 @@ export const POPUP_DREJTIMET = [
 
 
 /**
- * The popup's dropdown wording → the `programi` option VALUES the API accepts.
+ * The popup's dropdown wording → the FORM that choice submits to.
  *
- * These two lists read almost the same but are NOT identical ("Ueb" vs "Ueb-it",
- * "Siguri" vs "Siguria"), and a select answer is validated against `option.value`
- * exactly, so sending the visible label straight through would 400. The visible strings
- * above are Ernata's copy and stay untouched; this table is the only thing that moves if
- * either side is reworded.
+ * The popup is the one surface that cannot take a fixed slug: it asks which programme the
+ * visitor wants, so the answer decides the destination. Under the previous model this
+ * table mapped the visible label onto a `programi` option value, because a select answer
+ * is validated against `option.value` exactly and the two wordings differ ("Ueb" vs
+ * "Ueb-it", "Siguri" vs "Siguria"). The programme is now the form, so it maps onto a slug
+ * instead and no answer is sent at all.
+ *
+ * The visible strings in POPUP_DREJTIMET above are Ernata's copy and stay untouched; this
+ * table is still the only thing that moves if either side is reworded.
  */
-export const POPUP_PROGRAMME_VALUES: Record<string, string> = {
-  "Zhvillim i Ueb dhe Aplikacioneve Mobile": STUDY_PROGRAMME_VALUES.ZHVAM,
-  "Siguri Kibernetike": STUDY_PROGRAMME_VALUES.CYBER,
+export const POPUP_PROGRAMME_SLUGS: Record<string, string> = {
+  "Zhvillim i Ueb dhe Aplikacioneve Mobile": APPLICATION_FORM_SLUGS.ZHVAM,
+  "Siguri Kibernetike": APPLICATION_FORM_SLUGS.CYBER,
 };
 
 

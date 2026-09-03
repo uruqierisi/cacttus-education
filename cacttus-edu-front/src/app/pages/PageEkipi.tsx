@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useState } from "react";
 import { PersonCard } from "../cards/PersonCard";
 import { TEAM_MEMBERS } from "../data/team";
@@ -7,6 +8,10 @@ import { PageWrapper } from "../ui/PageWrapper";
 
 
 export function PageEkipi() {
+  usePageMeta(
+    "Ekipi — Cacttus Education",
+    "Njihu me njerëzit që qëndrojnë prapa Cacttus Education.",
+  );
   const [activeCity, setActiveCity] = useState("Të gjitha");
   const cities = ["Të gjitha", "Prishtinë", "Prizren", "Kamenicë"];
   const members = activeCity === "Të gjitha" ? TEAM_MEMBERS : TEAM_MEMBERS.filter((m) => m.city === activeCity);

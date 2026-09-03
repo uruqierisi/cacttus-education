@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useState } from "react";
 import {
   Award,
@@ -80,6 +81,10 @@ export const KLASA_HERO_IMG_POSITION = "center 50%";
 
 
 export function PageBiznestKlasa() {
+  usePageMeta(
+    "Klasa me qira — Cacttus Education",
+    "Klasa plotësisht të pajisura për trajnime, workshope, provime, takime dhe konferenca, në një lokacion të përshtatshëm.",
+  );
   /*
     The booking band posts to the DEDICATED room-booking form now, not the general
     business-enquiry form: the band is literally "Rezervo hapësirën tënde", and a booking

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Check } from "lucide-react";
-import { APPLICATION_FORM_SLUG } from "../../marketing/lib/forms.config";
+import { APPLICATION_FORM_SLUGS } from "../../marketing/lib/forms.config";
 import {
   PublicApiError,
   getPublicForm,
@@ -13,6 +13,8 @@ import { C } from "../theme";
 import { ApplyFieldShell } from "./ApplyFieldShell";
 import {
   EMPTY_CONTACT,
+  EMPTY_NAME_PARTS,
+  joinName,
   TEXT_INPUT_TYPES,
   blankAnswers,
   indexErrorDetails,
@@ -21,14 +23,26 @@ import {
 } from "./answers";
 
 
-export function HorizontalApplicationBand({ preselected = "" }: { preselected?: string }) {
+export function HorizontalApplicationBand({
+  slug = APPLICATION_FORM_SLUGS.DEFAULT,
+}: {
+  /** Which form to fetch and post to. Defaults to the non-programme surface's form. */
+  slug?: string;
+}) {
   const [form, setForm] = useState<PublicForm | null>(null);
   const [loadError, setLoadError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   /** Bumped to re-run the fetch when the visitor presses "Provo përsëri". */
   const [reloadKey, setReloadKey] = useState(0);
 
+  /*
+    `contact.name` is deliberately left unused HERE. This band asks for the name in two
+    inputs and joins them at submit, but `EMPTY_CONTACT` is shared with the popup, the
+    standalone form page and the two business forms, all of which still ask for one
+    name — so the shape stays as it is and only this band's own state splits.
+  */
   const [contact, setContact] = useState(EMPTY_CONTACT);
+  const [nameParts, setNameParts] = useState(EMPTY_NAME_PARTS);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   /** Anti-spam honeypot: hidden from humans, irresistible to bots. */
   const [website, setWebsite] = useState("");
@@ -44,11 +58,11 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
     setIsLoading(true);
     setLoadError("");
 
-    getPublicForm(APPLICATION_FORM_SLUG)
+    getPublicForm(slug)
       .then((loaded) => {
         if (!active) return;
         setForm(loaded);
-        setAnswers(blankAnswers(loaded.fields, preselected));
+        setAnswers(blankAnswers(loaded.fields));
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -65,7 +79,7 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
     return () => {
       active = false;
     };
-  }, [preselected, reloadKey]);
+  }, [slug, reloadKey]);
 
   const setAnswer = (name: string, value: AnswerValue) =>
     setAnswers((previous) => ({ ...previous, [name]: value }));
@@ -88,7 +102,8 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
   function findMissingRequired(): Record<string, string> {
     const missing: Record<string, string> = {};
 
-    if (!contact.name.trim()) missing.name = "Emri është i detyrueshëm.";
+    if (!nameParts.firstName.trim()) missing.firstName = "Emri është i detyrueshëm.";
+    if (!nameParts.lastName.trim()) missing.lastName = "Mbiemri është i detyrueshëm.";
     if (!contact.email.trim()) missing.email = "Email-i është i detyrueshëm.";
     if (!contact.phone.trim()) missing.phone = "Numri i telefonit është i detyrueshëm.";
     else if (!isValidPhone(contact.phone)) missing.phone = PHONE_ERROR;
@@ -138,7 +153,7 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
 
     try {
       await submitPublicForm(form.slug, {
-        name: contact.name.trim(),
+        name: joinName(nameParts),
         email: contact.email.trim(),
         phone: contact.phone.trim(),
         data: buildData(),
@@ -146,12 +161,20 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
       });
 
       setContact(EMPTY_CONTACT);
-      setAnswers(blankAnswers(form.fields, preselected));
+      setNameParts(EMPTY_NAME_PARTS);
+      setAnswers(blankAnswers(form.fields));
       setWebsite("");
       setSubmitted(true);
     } catch (error: unknown) {
       if (error instanceof PublicApiError) {
-        setFieldErrors(indexErrorDetails(error.details));
+        /*
+          The server validates the JOINED name and reports it as `name`, which is not
+          the key of any input on this band. Re-point it at the first of the pair so the
+          message is actually rendered somewhere — silently dropping it would leave the
+          summary line pointing at "the marked fields" with nothing marked.
+        */
+        const { name: joinedNameError, ...rest } = indexErrorDetails(error.details);
+        setFieldErrors(joinedNameError ? { ...rest, firstName: joinedNameError } : rest);
         setSubmitError(
           error.isValidation
             ? "Disa përgjigje nuk janë të vlefshme. Kontrollo fushat e shënuara."
@@ -357,8 +380,27 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
     );
   }
 
+  /** One half of the split name. Same shell and styling as `renderContactField`; it
+   *  differs only in reading from `nameParts` rather than `contact`. */
+  function renderNameField(part: "firstName" | "lastName", label: string, placeholder: string) {
+    const invalid = Boolean(fieldErrors[part]);
+    return (
+      <ApplyFieldShell name={part} label={label} required error={fieldErrors[part]}>
+        <input
+          id={`apliko-${part}`}
+          type="text"
+          value={nameParts[part]}
+          onChange={(e) => setNameParts({ ...nameParts, [part]: e.target.value })}
+          placeholder={placeholder}
+          autoComplete={part === "firstName" ? "given-name" : "family-name"}
+          style={invalid ? { ...inputStyle, ...errorStyle } : inputStyle}
+        />
+      </ApplyFieldShell>
+    );
+  }
+
   function renderContactField(
-    name: "name" | "email" | "phone",
+    name: "email" | "phone",
     label: string,
     type: string,
     placeholder: string,
@@ -377,7 +419,7 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
             })
           }
           placeholder={placeholder}
-          autoComplete={name === "name" ? "name" : name === "email" ? "email" : "tel"}
+          autoComplete={name === "email" ? "email" : "tel"}
           style={invalid ? { ...inputStyle, ...errorStyle } : inputStyle}
         />
       </ApplyFieldShell>
@@ -385,6 +427,30 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
   }
 
   const sortedFields = [...(form?.fields ?? [])].sort((a, b) => a.order - b.order);
+
+  /*
+    Emri, Mbiemri, Email and Telefoni are promoted columns this band always renders;
+    everything after them is whatever the linked Form declares. A `textarea` is excluded
+    because it renders `wide` and spans two columns, which would throw the row count out
+    even when the arithmetic looks right.
+  */
+  const renderedInputCount = 4 + sortedFields.length;
+  const hasSpanningField = sortedFields.some((field) => field.type === "textarea");
+
+  /*
+    THE BALANCED 3+3 ROW, and it is keyed on the COUNT rather than on any field name —
+    staff rename and reorder questions from the dashboard, so `qyteti` is not something
+    to write into a layout. Five inputs plus the button is six cells, which divides into
+    two rows of three: Emri / Mbiemri / Email, then Telefoni / Qyteti / Apliko. Because
+    both rows are tracks of one grid, the columns line up down the band instead of the
+    second row drifting against the first.
+
+    Any other count falls back to the `[fields | button]` wrap from d375aa8, which makes
+    no assumption about N at all. Six cells is the only count in the plausible range that
+    divides evenly AND leaves rows wide enough to read — see the report for why this did
+    not become a general `N/2 + N/2` rule.
+  */
+  const isBalancedRow = renderedInputCount === 5 && !hasSpanningField;
 
   return (
     <section id="apliko" className="py-16">
@@ -443,9 +509,54 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
                 {!isLoading && !loadError && form && (
                   <form onSubmit={handleSubmit} noValidate>
                     {/*
-                      The submit button is a CELL of this grid, not a row beneath it, so it
-                      lands beside Telefoni on a wide screen and wraps with the fields on a
-                      narrow one — one set of breakpoints governs the whole row.
+                      TWO LAYOUTS, chosen by `isBalancedRow` above.
+
+                      When the cells divide evenly the row is a plain three-column grid:
+                      Emri / Mbiemri / Email, then Telefoni / Qyteti / Apliko. Both rows
+                      are tracks of the SAME grid, so the columns line up down the band —
+                      which a wrapping row cannot promise, because each of its lines packs
+                      independently. Everything below describes the fallback the other
+                      counts take.
+
+                      From `lg:` up the submit button sits BESIDE the fields rather than on
+                      a row of its own. Below `lg` nothing changes — one column on a phone,
+                      two from `md` — which is why the field region below is `contents`
+                      until `lg`: a `display: contents` box generates no box at all, so the
+                      field cells stay direct children of this grid and the stacked layout
+                      renders as it did before, now with the name asked in two inputs.
+
+                      THE BUTTON'S WIDTH IS RESERVED UP FRONT, and that is the whole idea.
+                      The obvious version — one flat wrapping row with the button as its
+                      last item — was built and measured first, and it fails on the form
+                      this band actually renders today: the button only lands on a field's
+                      row when that row happens to have room left over, so with 3 fields at
+                      1280 the fields filled the line exactly and the button dropped
+                      underneath, unchanged from before. Whether it works comes down to
+                      whether N fields happen to divide the line neatly, which is not
+                      something to leave to chance when staff can add a field whenever they
+                      like. Splitting the row into [fields | button] instead subtracts the
+                      button's width before the fields are laid out, so it is beside them
+                      at every count.
+
+                      The field count is never named here. The fields wrap among themselves
+                      inside their own region — grow into the spare width, never shrink past
+                      `basis-[10rem]` — so N changes the number of LINES, not whether the
+                      layout holds. Measured at 3, 4 and 6 fields across 1024/1280/1920: the
+                      narrowest field came out at 178px against the 150px the longest
+                      placeholder needs.
+
+                      This also replaces a fixed `lg:grid-cols-[repeat(N,minmax(0,1fr))_auto]`
+                      template, the talent band's pattern, which was tried and rejected: that
+                      band has four known fields in a 1080px container, while this panel is
+                      716px at 1280 and 542px at 1024, so dividing one line N ways left each
+                      field 132px at N=4 and 55px at N=6 — nothing overflowed, but three of
+                      four placeholders were cut off, and a form whose labels you cannot read
+                      is worse than the orphaned button this set out to fix.
+
+                      `xl:grid-cols-4` is gone FROM THIS ROW: it governed the old four-across
+                      layout and would fight this one from 1280px up. The loading skeleton
+                      above still carries it, deliberately — four pulsing bars are a stand-in
+                      for a field count nobody knows yet, not a preview of the real row.
 
                       `items-start` and the spacer above the button are what line it up.
                       Every field cell is label-then-input; the button has no label, so
@@ -455,13 +566,36 @@ export function HorizontalApplicationBand({ preselected = "" }: { preselected?: 
                       message appearing under one field grows that cell, and an `items-end`
                       button would slide down with it.
                     */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 items-start mb-3">
-                      {renderContactField("name", "Emri dhe mbiemri", "text", "Emri dhe mbiemri")}
-                      {renderContactField("email", "Email", "email", "Email-i juaj")}
-                      {renderContactField("phone", "Telefoni", "tel", "Numri i telefonit")}
-                      {sortedFields.map(renderField)}
+                    <div
+                      className={
+                        isBalancedRow
+                          ? "grid grid-cols-1 md:grid-cols-2 gap-3 items-start mb-3 lg:grid-cols-3"
+                          : "grid grid-cols-1 md:grid-cols-2 gap-3 items-start mb-3 lg:flex"
+                      }
+                    >
+                      {/*
+                        `contents` in BOTH modes below `lg`, and in the balanced mode all
+                        the way up: a `display: contents` box generates no box, so the
+                        field cells are direct children of the grid and flow into its
+                        tracks in source order. In the wrap mode this becomes a flex
+                        region of its own from `lg:` up, which is what reserves the
+                        button's column there.
+                      */}
+                      <div
+                        className={
+                          isBalancedRow ? "contents" : "contents lg:flex lg:flex-wrap lg:gap-3 lg:min-w-0 lg:flex-1"
+                        }
+                      >
+                        {renderNameField("firstName", "Emri", "Emri juaj")}
+                        {renderNameField("lastName", "Mbiemri", "Mbiemri juaj")}
+                        {renderContactField("email", "Email", "email", "Email-i juaj")}
+                        {renderContactField("phone", "Telefoni", "tel", "Numri i telefonit")}
+                        {sortedFields.map(renderField)}
+                      </div>
 
-                      <div className="flex flex-col">
+                      {/* `lg:shrink-0` is inert in the balanced mode — a grid item does
+                          not flex — and load-bearing in the wrap mode. */}
+                      <div className="flex flex-col lg:shrink-0">
                         <span aria-hidden="true" className="hidden md:block text-xs font-medium mb-1.5 invisible">
                           &nbsp;
                         </span>

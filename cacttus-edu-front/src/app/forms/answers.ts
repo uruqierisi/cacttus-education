@@ -15,7 +15,10 @@ import type {
    the API promotes those three to real columns and always requires them, and
    they are reserved names a form field may not use.
 
-   To point the band at a different form, edit APPLICATION_FORM_SLUG in
+   WHICH form it renders is the caller's decision, passed as `slug`: /programim hands it
+   the ZHVAM form and /siguria the CYBER one, so the programme is carried by the
+   destination rather than by a pre-selected answer on a shared form. Surfaces with no
+   programme of their own (home, /rreth-nesh) take the default. The slugs live in
    `src/marketing/lib/forms.config.ts`.
 ══════════════════════════════════════════ */
 
@@ -24,6 +27,19 @@ export type AnswerValue = string | string[] | boolean;
 
 
 export const EMPTY_CONTACT = { name: "", email: "", phone: "" };
+
+/**
+ * The apply band's own split of the single `name` field into two visible inputs. The
+ * API, the database column and the dashboard all still hold ONE name — the two parts
+ * are joined with a single space on submit and never travel separately.
+ */
+export const EMPTY_NAME_PARTS = { firstName: "", lastName: "" };
+
+/** `"  Ana Maria " + " Gashi  "` -> `"Ana Maria Gashi"`. Only the edges are trimmed, so
+ *  a space INSIDE either part is preserved. */
+export function joinName(parts: { firstName: string; lastName: string }): string {
+  return `${parts.firstName.trim()} ${parts.lastName.trim()}`;
+}
 
 
 /** Field types that render as a plain <input>, with the HTML type to use. */
@@ -37,30 +53,15 @@ export const TEXT_INPUT_TYPES: Partial<Record<PublicFormFieldType, string>> = {
 
 
 /** The blank answer for a field, used both on first render and after a successful send. */
-export function emptyAnswer(field: PublicFormField, preselected: string): AnswerValue {
+export function emptyAnswer(field: PublicFormField): AnswerValue {
   if (field.type === "checkbox") return false;
   if (field.type === "multiselect") return [];
-
-  // Carry the programme the visitor arrived from into the first matching choice
-  // field, so /programim pre-selects "Zhvillues i Ueb-it..." exactly as before.
-  if (preselected && (field.type === "select" || field.type === "radio")) {
-    const match = field.options.find(
-      (option) =>
-        option.value.toLowerCase() === preselected.toLowerCase() ||
-        option.label.toLowerCase() === preselected.toLowerCase(),
-    );
-    if (match) return match.value;
-  }
-
   return "";
 }
 
 
-export function blankAnswers(
-  fields: readonly PublicFormField[],
-  preselected: string,
-): Record<string, AnswerValue> {
-  return Object.fromEntries(fields.map((field) => [field.name, emptyAnswer(field, preselected)]));
+export function blankAnswers(fields: readonly PublicFormField[]): Record<string, AnswerValue> {
+  return Object.fromEntries(fields.map((field) => [field.name, emptyAnswer(field)]));
 }
 
 

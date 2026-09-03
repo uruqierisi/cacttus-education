@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import {
   BarChart,
   Building2,
@@ -48,6 +49,10 @@ export const BURSA_HERO_IMG_POSITION = "center 40%";
 
 
 export function PageBizneseBursa() {
+  usePageMeta(
+    "Bursa e Impaktit — Cacttus Education",
+    "Çdo bursë e sponsorizuar hap derën e arsimit teknologjik për një student me talent që nuk ka mundësi financiare.",
+  );
   return (
     <PageWrapper>
       <style>{globalStyle}</style>

@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { HorizontalApplicationBand } from "../forms/HorizontalApplicationBand";
 import { useApplyPopup } from "../hooks/apply-popup";
 import { BALLINA_PROGRAMS_ID, scrollToSection } from "../lib/scroll";
@@ -18,6 +19,13 @@ import heroGraduates from "../../imports/group4.png";
    PART 2 — HOME PAGE
 ══════════════════════════════════════════ */
 export function PageBallina() {
+  /* `canonicalPath` is pinned to "/" because the catch-all route renders this component
+     too — without it every mistyped URL would declare ITSELF canonical. */
+  usePageMeta(
+    "Studime dhe trajnime profesionale në IT — Cacttus Education",
+    "Institucion i arsimit të lartë profesional me studime dyvjeçare të akredituara e të licencuara, mësim praktik dhe ligjërues me përvojë nga industria.",
+    "/",
+  );
   const openApplyPopup = useApplyPopup();
 
   return (

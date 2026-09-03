@@ -1,3 +1,5 @@
+import { usePageMeta } from "../hooks/usePageMeta";
+import { APPLICATION_FORM_SLUGS } from "../../marketing/lib/forms.config";
 import { Award, BookOpen, Code, Globe, Laptop, Shield } from "lucide-react";
 import { SEM_SIGURIA } from "../data/semesters";
 import { ProgramPage } from "./ProgramPage";
@@ -6,6 +8,10 @@ import cyberHero from "../../imports/cyberPage.png";
 
 
 export function PageSiguria() {
+  usePageMeta(
+    "Siguria Kibernetike — Cacttus Education",
+    "Programi të përgatit me njohuri praktike për mbrojtjen e rrjeteve, sistemeve, të dhënave dhe infrastrukturës cloud nga kërcënimet kibernetike.",
+  );
   return (
     <ProgramPage
       title="Siguria Kibernetike"
@@ -46,7 +52,7 @@ export function PageSiguria() {
       ]}
       semesters={SEM_SIGURIA}
       roles={["Cybersecurity Analyst", "SOC Analyst", "Network Administrator", "Penetration Tester", "Cloud Security Specialist", "Information Security Specialist"]}
-      preselected="Siguria Kibernetike"
+      formSlug={APPLICATION_FORM_SLUGS.CYBER}
       imgUrl={cyberHero}
       /* ── HERO IMAGE VERTICAL CROP — TUNE THE SECOND NUMBER ──
          Same knob as /programim above: higher % pushes the photo DOWN, lower % pulls it UP.

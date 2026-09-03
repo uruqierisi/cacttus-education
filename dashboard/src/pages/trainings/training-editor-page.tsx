@@ -13,9 +13,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ExternalLink, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/page-header';
+import { FormActions } from '@/components/common/form-actions';
 import { ErrorState, LoadingRows } from '@/components/common/state-views';
 import { CoverImageField } from '@/components/posts/cover-image-field';
 import { JobRoleTagInput } from '@/components/trainings/job-role-tag-input';
@@ -42,12 +43,12 @@ import {
   type TrainingPayload,
 } from '@/api/trainings.api';
 import { queryKeys } from '@/api/query-keys';
-import type { Training, TrainingCategory, TrainingFormat } from '@/api/types';
+import type { Training, TrainingFormat } from '@/api/types';
+import { listTrainingCategories } from '@/api/training-categories.api';
+import { CategoryManagerDialog } from '@/components/trainings/category-manager-dialog';
 import {
   ROUTES,
-  TRAINING_CATEGORIES,
   TRAINING_CITIES,
-  TRAINING_CATEGORY_LABELS,
   TRAINING_STATUSES,
   TRAINING_STATUS_LABELS,
   type TrainingStatusValue,
@@ -58,12 +59,23 @@ import {
 import { describeApiError } from '@/lib/api-error';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
-/** Matches the API's `FIELD_LIMITS.INSTRUCTOR_BIO_MAX`. */
-const INSTRUCTOR_BIO_MAX = 600;
+/**
+ * Matches the API's `FIELD_LIMITS.INSTRUCTOR_BIO_MAX`.
+ *
+ * Duplicated rather than imported because the dashboard has no build-time dependency on
+ * the backend package. The two must be changed together; the API is the one that actually
+ * rejects, this only stops the textarea accepting what the API will refuse.
+ */
+const INSTRUCTOR_BIO_MAX = 5_000;
 
 type EditorState = {
   title: string;
-  category: TrainingCategory;
+  /**
+   * A category ROW ID, not an enum member. Empty until the categories have loaded (on
+   * create) or the training has (on edit) — `<Select>` treats '' as "nothing chosen",
+   * which is exactly the state a brand-new editor is in before the list arrives.
+   */
+  categoryId: string;
   startDate: string;
   format: TrainingFormat;
   hours: string;
@@ -84,7 +96,7 @@ type EditorState = {
 
 const INITIAL_STATE: EditorState = {
   title: '',
-  category: 'PROGRAMIM',
+  categoryId: '',
   startDate: '',
   format: 'KLASE',
   hours: '',
@@ -132,7 +144,7 @@ function orNull(value: string): string | null {
 function toPayload(state: EditorState): TrainingPayload {
   return {
     title: state.title.trim(),
-    category: state.category,
+    categoryId: state.categoryId,
     startDate: orNull(state.startDate),
     format: state.format,
     hours: state.hours.trim() === '' ? null : Number(state.hours),
@@ -201,6 +213,31 @@ export default function TrainingEditorPage(): JSX.Element {
     queryFn: getFormOptions,
   });
 
+  const categoriesQuery = useQuery({
+    queryKey: queryKeys.trainingCategories.all,
+    queryFn: listTrainingCategories,
+  });
+
+  const [isCategoryManagerOpen, setCategoryManagerOpen] = useState(false);
+
+  /*
+   * Preselect the first category on a NEW training once the list lands.
+   *
+   * `state.categoryId === ''` guards it, so it fires once and never overwrites a choice
+   * the admin has already made — including the one the manager dialog hands back after
+   * creating a category. On an EDIT the training's own category has already been written
+   * into state by the effect above, so this is a no-op there too.
+   */
+  useEffect(() => {
+    const first = categoriesQuery.data?.[0];
+    if (!first) {
+      return;
+    }
+    setState((previous) =>
+      previous.categoryId === '' ? { ...previous, categoryId: first.id } : previous,
+    );
+  }, [categoriesQuery.data]);
+
   useEffect(() => {
     const training = trainingQuery.data;
     if (!training) {
@@ -209,7 +246,7 @@ export default function TrainingEditorPage(): JSX.Element {
 
     setState({
       title: training.title,
-      category: training.category,
+      categoryId: training.category.id,
       startDate: toDateInput(training.startDate),
       format: training.format,
       hours: training.hours === null ? '' : String(training.hours),
@@ -318,34 +355,24 @@ export default function TrainingEditorPage(): JSX.Element {
   const isKnownCity =
     state.city === '' || (TRAINING_CITIES as readonly string[]).includes(state.city);
   const formOptions = formOptionsQuery.data ?? [];
-  /* A form that was switched off after this training was saved is no longer offered by
-     the dropdown, which would silently reset the field on the next save. Surfaced. */
+  /* The dropdown now lists inactive forms too, so a missing entry means the form was
+     soft-deleted — the one case where the link really is broken and must be repointed. */
   const linkedFormMissing =
     isEditing &&
     state.formSlug !== '' &&
     formOptionsQuery.isSuccess &&
     !formOptions.some((option) => option.slug === state.formSlug);
+  /* Selected but closed: the training still publishes, the apply box just shows the
+     closed-applications notice until the form is switched back on. Not an error. */
+  const linkedFormInactive = formOptions.some(
+    (option) => option.slug === state.formSlug && !option.isActive,
+  );
 
   return (
     <form onSubmit={handleSubmit}>
       <PageHeader
         title={isEditing ? 'Ndrysho trajnimin' : 'Krijo trajnim të ri'}
         description="Kartela shfaqet në listën e trajnimeve; pjesa tjetër ndërton faqen e trajnimit."
-        actions={
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSaving}
-              onClick={() => navigate(ROUTES.TRAININGS)}
-            >
-              Anulo
-            </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Duke ruajtur…' : 'Ruaj'}
-            </Button>
-          </div>
-        }
       />
 
       <div className="space-y-6">
@@ -378,22 +405,46 @@ export default function TrainingEditorPage(): JSX.Element {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="training-category">Kategoria</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="training-category">Kategoria</Label>
+                {/*
+                  The manager opens from HERE rather than from Cilësimet because that
+                  page is ADMIN_ONLY while the API lets an EDITOR create and rename a
+                  category — and because the moment you discover a category is missing is
+                  the moment you are filling in this field. Deleting lives inside the
+                  dialog, behind a confirmation, and only for an ADMIN.
+                */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCategoryManagerOpen(true)}
+                >
+                  <Plus />
+                  Shto kategori
+                </Button>
+              </div>
               <Select
-                value={state.category}
-                onValueChange={(value) => update('category', value as TrainingCategory)}
+                value={state.categoryId}
+                onValueChange={(value) => update('categoryId', value)}
+                disabled={categoriesQuery.isPending || (categoriesQuery.data?.length ?? 0) === 0}
               >
                 <SelectTrigger id="training-category">
-                  <SelectValue />
+                  <SelectValue placeholder="Zgjidh kategorinë" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TRAINING_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {TRAINING_CATEGORY_LABELS[category]}
+                  {(categoriesQuery.data ?? []).map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {categoriesQuery.data?.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Ende asnjë kategori — shtoni një para se ta ruani trajnimin.
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -574,8 +625,7 @@ export default function TrainingEditorPage(): JSX.Element {
                   onChange={(event) => update('instructorBio', event.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {state.instructorBio.trim().length}/{INSTRUCTOR_BIO_MAX} karaktere — mbaje të
-                  shkurtër, është një bllok i vogël pranë fotos.
+                  {state.instructorBio.trim().length}/{INSTRUCTOR_BIO_MAX} karaktere.
                 </p>
               </div>
             </div>
@@ -600,7 +650,7 @@ export default function TrainingEditorPage(): JSX.Element {
                 <SelectContent>
                   {formOptions.map((option) => (
                     <SelectItem key={option.slug} value={option.slug}>
-                      {option.title}
+                      {option.isActive ? option.title : `${option.title} (e mbyllur)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -612,8 +662,17 @@ export default function TrainingEditorPage(): JSX.Element {
               {linkedFormMissing ? (
                 <p className="flex items-start gap-2 text-xs text-warning">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  Forma e lidhur («{state.formSlug}») nuk është më aktive. Zgjidh një tjetër,
+                  Forma e lidhur («{state.formSlug}») është fshirë. Zgjidh një tjetër,
                   përndryshe aplikimi nga kjo faqe nuk do të funksionojë.
+                </p>
+              ) : null}
+
+              {linkedFormInactive ? (
+                <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Kjo formë është e mbyllur për momentin. Trajnimi publikohet normalisht;
+                  te faqja e tij shfaqet njoftimi që aplikimet janë mbyllur, derisa forma
+                  të rihapet.
                 </p>
               ) : null}
             </div>
@@ -678,6 +737,26 @@ export default function TrainingEditorPage(): JSX.Element {
           </CardContent>
         </Card>
       </div>
+
+      <FormActions
+        onCancel={() => navigate(ROUTES.TRAININGS)}
+        isSaving={isSaving}
+        saveLabel="Ruaj"
+      />
+
+      {/*
+        Rendered inside the form only in the JSX tree — Radix portals the dialog to
+        document.body, so the create/rename inputs inside it never become nested form
+        controls of this one, and Enter in them cannot submit the training.
+
+        `onCreated` selects what was just added: an admin who opens this because the
+        category they wanted is missing should not then have to find it in the dropdown.
+      */}
+      <CategoryManagerDialog
+        open={isCategoryManagerOpen}
+        onOpenChange={setCategoryManagerOpen}
+        onCreated={(category) => update('categoryId', category.id)}
+      />
     </form>
   );
 }

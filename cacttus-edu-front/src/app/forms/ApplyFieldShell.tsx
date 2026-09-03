@@ -27,7 +27,21 @@ export function ApplyFieldShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className={wide ? "md:col-span-2 xl:col-span-4" : ""}>
+    <div
+      className={
+        wide
+          ? "md:col-span-2 lg:basis-full"
+          : // From `lg:` up this is a flex item in the field region: grow into the spare
+            // width, but never shrink past `basis` — that floor is what makes the region
+            // WRAP to another line instead of squeezing a placeholder out of view. 10rem
+            // clears the longest placeholder the promoted inputs ask for ("Numri i
+            // telefonit", 139px including the input's padding) with room to spare; the
+            // 150px figure the row comment below quotes was "Emri dhe mbiemri", which
+            // the split into Emri and Mbiemri retired.
+            // `min-w-0` stops the input's intrinsic ~170px minimum from overriding it.
+            "lg:min-w-0 lg:flex-1 lg:basis-[10rem]"
+      }
+    >
       <label htmlFor={`apliko-${name}`} className="block text-xs font-medium mb-1.5 text-white/85">
         {label}
         {required && <span className="text-white/60"> *</span>}

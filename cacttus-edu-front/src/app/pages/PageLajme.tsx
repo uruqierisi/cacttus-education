@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
@@ -25,6 +26,10 @@ import { GhostBtn, SecondaryBtn } from "../ui/buttons";
    grows a field to support them.
 ══════════════════════════════════════════ */
 export function PageLajme() {
+  usePageMeta(
+    "Lajme dhe njoftime — Cacttus Education",
+    "Njoftime, histori dhe risi nga Cacttus Education.",
+  );
   const [posts, setPosts] = useState<readonly PostCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");

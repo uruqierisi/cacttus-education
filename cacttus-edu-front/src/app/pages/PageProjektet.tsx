@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { ProjectCard } from "../cards/ProjectCard";
 import { PROJECTS } from "../data/projects";
 import { PartnerLogoGrid } from "../sections/PartnerLogoGrid";
@@ -7,6 +8,10 @@ import { PageWrapper } from "../ui/PageWrapper";
 
 
 export function PageProjektet() {
+  usePageMeta(
+    "Projektet — Cacttus Education",
+    "Ne ndërtojmë projekte që fuqizojnë shkathtësitë digjitale të së nesërmes, me bashkëpunime strategjike dhe zhvillim të qëndrueshëm në Kosovë e rajon.",
+  );
   return (
     <PageWrapper>
       <section className="py-16" style={{ backgroundColor: C.brandSoft }}>

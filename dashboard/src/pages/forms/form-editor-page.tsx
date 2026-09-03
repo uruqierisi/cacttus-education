@@ -12,10 +12,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/page-header';
+import { FormActions } from '@/components/common/form-actions';
 import { ErrorState, LoadingRows } from '@/components/common/state-views';
 import { FieldListEditor } from '@/components/forms/field-list-editor';
 import { CopyUrlButton } from '@/components/forms/copy-url-button';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -197,16 +197,6 @@ export default function FormEditorPage(): JSX.Element {
       <PageHeader
         title={isEditing ? 'Ndrysho formën' : 'Krijo formë të re'}
         description="Fushat ruhen si konfigurim — ndryshimi hyn në fuqi menjëherë."
-        actions={
-          <>
-            <Button type="button" variant="outline" onClick={() => navigate(ROUTES.FORMS)}>
-              Anulo
-            </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Duke ruajtur…' : 'Ruaj formën'}
-            </Button>
-          </>
-        }
       />
 
       {createdForm ? (
@@ -328,15 +318,11 @@ export default function FormEditorPage(): JSX.Element {
         onChange={(fields) => setState((previous) => ({ ...previous, fields }))}
       />
 
-      {/* Repeated at the bottom: on a long form the header button is off-screen. */}
-      <div className="mt-6 flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => navigate(ROUTES.FORMS)}>
-          Anulo
-        </Button>
-        <Button type="submit" disabled={saveMutation.isPending}>
-          {saveMutation.isPending ? 'Duke ruajtur…' : 'Ruaj formën'}
-        </Button>
-      </div>
+      <FormActions
+        onCancel={() => navigate(ROUTES.FORMS)}
+        isSaving={saveMutation.isPending}
+        saveLabel="Ruaj formën"
+      />
     </form>
   );
 }

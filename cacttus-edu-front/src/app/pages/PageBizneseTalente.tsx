@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useState } from "react";
 import {
   Award,
@@ -31,6 +32,10 @@ import talentFatjonKerceli from "../../imports/fatjonKerceli.jpeg";
 
 
 export function PageBizneseTalente() {
+  usePageMeta(
+    "Rrjeti i talentëve — Cacttus Education",
+    "Eksploroni CV-të, aftësitë dhe përvojën e studentëve dhe të diplomuarve tanë, të përgatitur për praktikë dhe punësim në industrinë e teknologjisë.",
+  );
   const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.PARTNERSHIP);
   /* No separate contact-person input on this box, so the COMPANY is the lead's `name`.
      It is also sent as `kompania` so the inbox shows it under its own label. */
@@ -190,13 +195,49 @@ export function PageBizneseTalente() {
 
       {/* 6. Join CTA */}
       <section className="py-16" style={{ backgroundColor: C.brand }}>
-        <div className="max-w-[900px] mx-auto px-5">
+        {/*
+          Wider from `lg:` up than the 900px this band shipped with, because the submit
+          button joins the input row there and five items need the room — at 900px the
+          four inputs would be squeezed to ~145px each. Below `lg` the grid is a single
+          column and the extra width is inert, so the phone and tablet layouts are
+          untouched.
+        */}
+        <div className="max-w-[900px] lg:max-w-[1080px] mx-auto px-5">
           <h2 className="text-2xl font-bold text-white text-center mb-8">Regjistrohu si punëdhënës partner</h2>
           {lead.sent ? (
             <p className="text-white text-sm font-semibold text-center">Faleminderit! Regjistrimi u dërgua — do t'ju kontaktojmë së shpejti.</p>
           ) : (
             <>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {/*
+            FIVE tracks from `lg:` up: the four inputs plus the submit button, so the
+            button sits in the empty space to their right instead of dropping to a row
+            of its own.
+
+            The button's track is `auto` — sized to its own content — while the inputs
+            are `minmax(0,1fr)` and share what is left. That asymmetry is the whole
+            point: an equal five-column split would leave the button too narrow and wrap
+            "Regjistrohu në rrjet" onto a second line inside a 52px-tall pill. Sizing
+            its track to the label instead means the label decides the column, never the
+            other way round.
+
+            `minmax(0,1fr)` rather than a bare `1fr` for the inputs, which is also what
+            Tailwind's own `grid-cols-4` expands to: an `<input>` has an intrinsic
+            minimum width of roughly 170px, and a bare `1fr` (i.e. `minmax(auto,1fr)`)
+            would refuse to shrink past it and push the row out of the container.
+
+            `lg:` AND NOT `md:`, which is the one number here that was chosen by
+            measurement rather than by symmetry. Five items need about 730px of row at
+            768px, which leaves each input 125px — and "Fusha e interesit" needs 143px,
+            so the fourth placeholder was cut off. It clears at ~836px. Rather than
+            shorten the placeholder or shave the gaps to buy 6px, the row simply starts
+            at `lg:` (1024px), where every input gets 189px. Everything below that stays
+            single-column: on a portrait tablet a stacked form is the better layout
+            anyway, and this way no width renders a truncated field label.
+
+            Row height needs no alignment rule — every input carries `height: 52` and
+            the button `h-[52px]`, so the tracks already line up.
+          */}
+          <div className="grid grid-cols-1 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] gap-3">
             {([
               { ph: "Kompania", key: "kompania" },
               { ph: "Email", key: "email" },
@@ -205,7 +246,17 @@ export function PageBizneseTalente() {
             ] as const).map(({ ph, key }) => (
               <input key={ph} type="text" placeholder={ph} value={talente[key]} onChange={(e) => setTalente({ ...talente, [key]: key === "telefoni" ? sanitizePhone(e.target.value) : e.target.value })} className="px-4 text-sm rounded-xl" style={{ height: 52, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "#fff", color: C.n900, outline: "none" }} />
             ))}
-            <button onClick={() => lead.submit({ name: talente.kompania, email: talente.email, phone: talente.telefoni }, { kompania: talente.kompania, fusha_interesit: talente.fusha })} className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Regjistrohu në rrjet"}</button>
+            {/*
+              The fifth grid item. It carries no column utilities of its own — the grid
+              template above places it — so below `lg` it simply stacks under the inputs
+              exactly as it always has.
+
+              `whitespace-nowrap` is the guarantee the `auto` track is built around: the
+              track is sized from the label, so the label must never be the thing that
+              gives way. Without it a narrow `lg` viewport could still break the pill
+              across two lines inside its fixed 52px height.
+            */}
+            <button onClick={() => lead.submit({ name: talente.kompania, email: talente.email, phone: talente.telefoni }, { kompania: talente.kompania, fusha_interesit: talente.fusha })} className="h-[52px] px-6 rounded-xl font-semibold text-sm text-white whitespace-nowrap" style={{ border: "1.5px solid rgba(255,255,255,0.7)" }}>{lead.isSubmitting ? "Duke dërguar…" : "Regjistrohu në rrjet"}</button>
           </div>
               {lead.error && <p className="text-white text-sm mt-3 text-center">{lead.error}</p>}
             </>

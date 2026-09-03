@@ -37,11 +37,18 @@ export function PublicApplicationForm({
   slug,
   trainingId,
   title,
+  onFormLoaded,
 }: {
   slug: string;
   /** Provenance, set only by a training's detail page. */
   trainingId?: string;
   title?: string;
+  /**
+   * Reports the loaded form's title to the parent. Set only by `/forma/:slug`, which
+   * needs it for the document title; a training's detail page owns its own title and
+   * deliberately does not pass this.
+   */
+  onFormLoaded?: (formTitle: string) => void;
 }) {
   const [form, setForm] = useState<PublicForm | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +73,8 @@ export function PublicApplicationForm({
       .then((loaded) => {
         if (!active) return;
         setForm(loaded);
-        setAnswers(blankAnswers(loaded.fields, ""));
+        setAnswers(blankAnswers(loaded.fields));
+        onFormLoaded?.(loaded.title);
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -148,7 +156,7 @@ export function PublicApplicationForm({
       });
 
       setContact(EMPTY_CONTACT);
-      setAnswers(blankAnswers(form.fields, ""));
+      setAnswers(blankAnswers(form.fields));
       setWebsite("");
       setSubmitted(true);
     } catch (error: unknown) {

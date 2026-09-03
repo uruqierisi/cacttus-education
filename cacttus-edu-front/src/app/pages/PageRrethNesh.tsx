@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { Check, GraduationCap, TrendingUp } from "lucide-react";
 import { Link } from "react-router";
 import { ABOUT_MISSION_POINTS, ABOUT_VALUES } from "../data/about";
@@ -25,6 +26,10 @@ export const RRETH_TEAM_IMG_POSITION = "center 50%";
 
 
 export function PageRrethNesh() {
+  usePageMeta(
+    "Rreth nesh — Cacttus Education",
+    "Me rrënjë në edukimin profesional që nga viti 2003, Cacttus Education vepron që nga viti 2015 si institucioni i parë privat profesional i Nivelit 5 në Kosovë.",
+  );
   return (
     <PageWrapper>
       {/* 1 — who we are, text left / image right */}

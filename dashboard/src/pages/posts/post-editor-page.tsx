@@ -6,9 +6,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/page-header';
+import { FormActions } from '@/components/common/form-actions';
 import { ErrorState, LoadingRows } from '@/components/common/state-views';
 import { RichTextEditor } from '@/components/posts/rich-text-editor';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -125,16 +125,6 @@ export default function PostEditorPage(): JSX.Element {
       <PageHeader
         title={isEditing ? 'Ndrysho artikullin' : 'Shto artikull'}
         description="Përmbajtja pastrohet në server para se të ruhet."
-        actions={
-          <>
-            <Button type="button" variant="outline" onClick={() => navigate(ROUTES.POSTS)}>
-              Anulo
-            </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Duke ruajtur…' : 'Ruaj artikullin'}
-            </Button>
-          </>
-        }
       />
 
       {validationError ? (
@@ -236,6 +226,12 @@ export default function PostEditorPage(): JSX.Element {
           </Card>
         </div>
       </div>
+
+      <FormActions
+        onCancel={() => navigate(ROUTES.POSTS)}
+        isSaving={saveMutation.isPending}
+        saveLabel="Ruaj artikullin"
+      />
     </form>
   );
 }

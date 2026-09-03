@@ -1,3 +1,4 @@
+import { usePageMeta, metaSummary } from "../hooks/usePageMeta";
 import { useEffect, useState } from "react";
 import { Briefcase, Check, FileText } from "lucide-react";
 import { Link, useParams } from "react-router";
@@ -9,7 +10,6 @@ import {
 import { PublicApplicationForm } from "../forms/PublicApplicationForm";
 import { formatTrainingDate } from "../lib/dates";
 import {
-  TRAINING_CATEGORY_LABELS,
   TRAINING_FORMAT_LABELS,
 } from "../lib/training-labels";
 import { C } from "../theme";
@@ -38,6 +38,23 @@ export function PageTrajnimiDetal() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState("");
+
+  /*
+    Generic until the fetch resolves, then the real thing. The hook re-runs on every
+    change to its arguments, so the title simply becomes correct when the data lands —
+    which is also what a crawler that executes JavaScript waits for. A training with no
+    free-text description falls back to the two facts its own page shows in the meta
+    strip, rather than to a sentence invented here.
+  */
+  usePageMeta(
+    training ? `${training.title} — Cacttus Education` : "Trajnim — Cacttus Education",
+    training
+      ? metaSummary(
+          training.description ?? "",
+          `Trajnim profesional në ${training.category.name}, në formatin ${TRAINING_FORMAT_LABELS[training.format]}.`,
+        )
+      : "Trajnim profesional nga Cacttus Education.",
+  );
 
   useEffect(() => {
     if (!slug) return;
@@ -123,7 +140,7 @@ export function PageTrajnimiDetal() {
             >
               Training
             </span>
-            <MetaChip>{TRAINING_CATEGORY_LABELS[training.category]}</MetaChip>
+            <MetaChip>{training.category.name}</MetaChip>
           </div>
           <h1 className="text-3xl md:text-5xl font-bold mb-6 max-w-3xl" style={{ color: C.n900, letterSpacing: "-0.01em" }}>
             {training.title}

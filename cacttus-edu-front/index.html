@@ -1,21 +1,48 @@
 
   <!DOCTYPE html>
-  <html lang="en">
+  <html lang="sq">
     <head>
-      
+
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Cacttus Education Website</title>
+      <title>Cacttus Education — Studime dhe trajnime profesionale në IT</title>
       <meta name="description" content="Cacttus Education është shkollë IT në Kosovë, që ofron kurse dhe trajnime profesionale në programim, teknologji dhe zhvillim karriere për të rinj dhe biznese." />
+
+      <!--
+        SITE-WIDE DEFAULTS. `usePageMeta` overwrites og:title, og:description and og:url
+        per route once React mounts; these are what a crawler that does NOT run
+        JavaScript sees, and what the app falls back to for the split second before the
+        first route renders. They are deliberately about the site, not about any page.
+      -->
+      <meta property="og:site_name" content="Cacttus Education" />
+      <meta property="og:type" content="website" />
+      <meta property="og:locale" content="sq_AL" />
+      <meta property="og:title" content="Cacttus Education — Studime dhe trajnime profesionale në IT" />
+      <meta property="og:description" content="Cacttus Education është shkollë IT në Kosovë, që ofron kurse dhe trajnime profesionale në programim, teknologji dhe zhvillim karriere për të rinj dhe biznese." />
+      <meta property="og:url" content="https://cacttus.education" />
+      <!--
+        The only brand asset that ships in public/ — everything else is imported through
+        the bundler and therefore content-hashed, which an absolute og:image URL cannot
+        name. NOTE: this is an SVG, and Facebook, LinkedIn and X all ignore SVG og:images;
+        a 1200x630 PNG or JPG is needed before link previews actually render a picture.
+        See the commit message.
+      -->
+      <meta property="og:image" content="https://cacttus.education/brand/education-black.svg" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Cacttus Education — Studime dhe trajnime profesionale në IT" />
+      <meta name="twitter:description" content="Cacttus Education është shkollë IT në Kosovë, që ofron kurse dhe trajnime profesionale në programim, teknologji dhe zhvillim karriere për të rinj dhe biznese." />
+      <meta name="twitter:image" content="https://cacttus.education/brand/education-black.svg" />
+
+      <link rel="canonical" href="https://cacttus.education/" />
+
       <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
-      
+
     </head>
 
     <body>
-      
+
       <div id="root"></div>
       <script type="module" src="/src/main.tsx"></script>
-      
+
     </body>
   </html>
-  

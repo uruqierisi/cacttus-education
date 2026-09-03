@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useState } from "react";
 import {
   BarChart,
@@ -30,6 +31,10 @@ export const BIZNESE_TRAJNIME_IMG_POSITION = "center 50%";
 
 
 export function PageBizneseTrajnime() {
+  usePageMeta(
+    "Trajnime të personalizuara — Cacttus Education",
+    "Investoni në aftësitë, zhvillimin dhe të ardhmen e ekipit tuaj me trajnime të personalizuara, të përshtatura sipas nevojave dhe objektivave të kompanisë.",
+  );
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const lead = useBusinessLead(BUSINESS_REQUEST_TYPES.TRAININGS);
   const [biz, setBiz] = useState({ kompania: "", personi: "", email: "", telefoni: "" });

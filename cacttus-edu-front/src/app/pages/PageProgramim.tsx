@@ -1,3 +1,5 @@
+import { usePageMeta } from "../hooks/usePageMeta";
+import { APPLICATION_FORM_SLUGS } from "../../marketing/lib/forms.config";
 import { BookOpen, Briefcase, Code, Globe, Laptop, Users } from "lucide-react";
 import { SEM_PROGRAMIM } from "../data/semesters";
 import { ProgramPage } from "./ProgramPage";
@@ -8,6 +10,10 @@ import programimHero from "../../imports/programimPage.png";
 
 
 export function PageProgramim() {
+  usePageMeta(
+    "Zhvillim i Ueb-it dhe Aplikacioneve Mobile — Cacttus Education",
+    "Programi të përgatit me njohuri praktike për zhvillimin e uebfaqeve, aplikacioneve mobile dhe integrimin e Inteligjencës Artificiale (AI).",
+  );
   return (
     <ProgramPage
       title="Zhvillim i Ueb-it dhe Aplikacioneve Mobile"
@@ -48,7 +54,7 @@ export function PageProgramim() {
       ]}
       semesters={SEM_PROGRAMIM}
       roles={["Full-Stack Developer", "Mobile App Developer", "QA / Software Tester", "UI/UX Designer", "Software Developer", "Junior AI Developer"]}
-      preselected="Zhvillim i Ueb-it dhe Aplikacioneve Mobile"
+      formSlug={APPLICATION_FORM_SLUGS.ZHVAM}
       /*
         Bundled asset rather than the stock photo this used to point at. `ProgramPage`
         takes the hero image as a prop, so swapping it here changes this page only —

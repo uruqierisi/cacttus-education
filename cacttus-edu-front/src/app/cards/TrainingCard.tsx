@@ -2,7 +2,6 @@ import { Link } from "react-router";
 import type { TrainingCard as TrainingCardData } from "../../marketing/lib/public-api";
 import { formatTrainingDate } from "../lib/dates";
 import {
-  TRAINING_CATEGORY_LABELS,
   TRAINING_FORMAT_LABELS,
 } from "../lib/training-labels";
 import { C } from "../theme";
@@ -28,7 +27,7 @@ export function TrainingCard({ training }: { training: TrainingCardData }) {
       {/* Category left, status right — the badge sits beside the tag rather than being
           absolutely positioned, so it can never overlap a long category label. */}
       <div className="flex items-start justify-between gap-2">
-        <MetaChip>{TRAINING_CATEGORY_LABELS[training.category]}</MetaChip>
+        <MetaChip>{training.category.name}</MetaChip>
         <TrainingStatusBadge status={training.status} />
       </div>
       <h4 className="text-base font-semibold leading-snug" style={{ color: C.n900 }}>{training.title}</h4>

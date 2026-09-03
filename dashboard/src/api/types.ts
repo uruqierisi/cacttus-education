@@ -155,13 +155,33 @@ export type StatsByType = {
   readonly items: readonly ByTypePoint[];
 };
 
-export type TrainingCategory =
-  | 'PROGRAMIM'
-  | 'ADMINISTRIM'
-  | 'SIGURI_KIBERNETIKE'
-  | 'MARKETING_DIZAJN'
-  | 'MENAXHIM_PROJEKTEVE'
-  | 'AFTESI_TE_BUTA';
+/**
+ * A row of the managed taxonomy, not a union of machine values any more.
+ *
+ * `name` IS the label. There used to be a `TRAINING_CATEGORY_LABELS` map in
+ * `lib/constants.ts` translating `'PROGRAMIM'` into `'Programim'`, with an identical
+ * copy in the marketing site; both are gone, because adding a category no longer means
+ * editing two frontends.
+ */
+export type TrainingCategory = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly sortOrder: number;
+  /**
+   * Trainings pointing here, SOFT-DELETED ONES INCLUDED — those still hold the foreign
+   * key and still block a delete, so the number has to match what the API will enforce.
+   */
+  readonly trainingCount: number;
+  readonly createdAt: string;
+};
+
+/** The category as it rides along on a training payload. */
+export type TrainingCategoryRef = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+};
 
 export type TrainingFormat = 'KLASE' | 'HIBRID' | 'ONLINE';
 
@@ -177,7 +197,7 @@ export type Training = {
   readonly id: string;
   readonly slug: string;
   readonly title: string;
-  readonly category: TrainingCategory;
+  readonly category: TrainingCategoryRef;
   /** ISO instant, or null. Rendered as a date — the time component is always midnight. */
   readonly startDate: string | null;
   readonly format: TrainingFormat;
@@ -210,4 +230,6 @@ export type Training = {
 export type FormOption = {
   readonly slug: string;
   readonly title: string;
+  /** False for a form that exists but is not accepting submissions. Still selectable. */
+  readonly isActive: boolean;
 };

@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 /* The route, the component and the data table keep their Albanian spelling
    (“Ligjërueit”); only this FILENAME is ASCII, to keep git and Windows out of
    NFC/NFD normalisation trouble. */
@@ -11,6 +12,10 @@ import { SecondaryBtn } from "../ui/buttons";
 
 
 export function PageLigjërueit() {
+  usePageMeta(
+    "Ligjëruesit — Cacttus Education",
+    "Njihuni me ligjëruesit, profesionistë të industrisë që sjellin njohuri praktike dhe ju përgatisin për tregun e punës.",
+  );
   return (
     <PageWrapper>
       <section className="py-16" style={{ backgroundColor: C.brandSoft }}>

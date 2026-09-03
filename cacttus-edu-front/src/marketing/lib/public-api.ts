@@ -239,13 +239,19 @@ export function submitPublicForm(
 
 /* ─── Trainings ─── */
 
-export type TrainingCategory =
-  | 'PROGRAMIM'
-  | 'ADMINISTRIM'
-  | 'SIGURI_KIBERNETIKE'
-  | 'MARKETING_DIZAJN'
-  | 'MENAXHIM_PROJEKTEVE'
-  | 'AFTESI_TE_BUTA'
+/**
+ * A category, as the API now sends it.
+ *
+ * It used to be a union of six machine values, paired with a `TRAINING_CATEGORY_LABELS`
+ * map in App.tsx that turned `'PROGRAMIM'` into `'Programim'` — a copy of the same map
+ * the dashboard kept. Both are gone: `name` IS the label, so a category the marketing
+ * team adds shows up here with the right wording and no deploy. `slug` is the stable
+ * handle the catalogue filters on.
+ */
+export type TrainingCategory = {
+  readonly name: string
+  readonly slug: string
+}
 
 export type TrainingFormat = 'KLASE' | 'HIBRID' | 'ONLINE'
 
@@ -294,7 +300,8 @@ export type TrainingFilters = {
 }
 
 export type TrainingQuery = {
-  readonly category?: TrainingCategory
+  /** A category SLUG — the filter belongs in a shareable, readable URL. */
+  readonly category?: string
   readonly city?: string
   readonly status?: TrainingStatus
 }

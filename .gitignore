@@ -19,3 +19,4 @@ Thumbs.db
 # managed by Docker outside this directory — there is no bind-mounted data
 # folder to ignore. Inspect it with `docker volume inspect cacttus-pgdata`.
 cacttus-edu-front/.vite/
+SECURITY_AUDIT.md

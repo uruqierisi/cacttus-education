@@ -39,9 +39,48 @@ type FieldListEditorProps = {
   readonly onChange: (fields: readonly FieldDefinition[]) => void;
 };
 
-function createEmptyField(order: number): FieldDefinition {
+/** The API requires snake_case keys; convert whatever the admin types. */
+function toFieldName(raw: string): string {
+  return slugify(raw).replace(/-/g, '_').replace(/^[^a-z]+/, '') || 'fusha';
+}
+
+/**
+ * The first free key in the `base`, `base_2`, `base_3`… sequence.
+ *
+ * `Form.fields` keys must be unique — the API rejects a duplicate outright
+ * (fieldDefinitionsSchema in form-fields.service.ts). Without this, two questions
+ * labelled the same both slugified to the same key and the admin only found out when
+ * the save came back 400 with "duplicate field name", after filling the whole form.
+ * The key is derived text, not something they typed, so resolving the collision here
+ * costs them nothing.
+ */
+function uniqueFieldName(base: string, taken: ReadonlySet<string>): string {
+  if (!taken.has(base)) {
+    return base;
+  }
+
+  for (let suffix = 2; suffix < 100; suffix += 1) {
+    const candidate = `${base}_${suffix}`;
+    if (!taken.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return `${base}_${Date.now()}`;
+}
+
+/** Every key currently in use, optionally ignoring the field being edited. */
+function takenNames(fields: readonly FieldDefinition[], exceptIndex?: number): Set<string> {
+  return new Set(
+    fields.filter((_, index) => index !== exceptIndex).map((field) => field.name),
+  );
+}
+
+function createEmptyField(order: number, taken: ReadonlySet<string>): FieldDefinition {
   return {
-    name: `fusha_${order + 1}`,
+    // Seeded from the position but de-duplicated: removing field 2 of 3 and adding a new
+    // one would otherwise regenerate a key that is still in use.
+    name: uniqueFieldName(`fusha_${order + 1}`, taken),
     label: '',
     type: 'text',
     required: false,
@@ -50,11 +89,6 @@ function createEmptyField(order: number): FieldDefinition {
     order,
     options: [],
   };
-}
-
-/** The API requires snake_case keys; convert whatever the admin types. */
-function toFieldName(raw: string): string {
-  return slugify(raw).replace(/-/g, '_').replace(/^[^a-z]+/, '') || 'fusha';
 }
 
 function replaceAt<T>(list: readonly T[], index: number, value: T): T[] {
@@ -162,6 +196,13 @@ export function FieldListEditor({ fields, onChange }: FieldListEditorProps): JSX
     onChange(reindex(fields.filter((_, position) => position !== index)));
   };
 
+  /** Keys claimed by more than one field — the API refuses to save the form in that state. */
+  const duplicateNames = new Set(
+    fields
+      .map((field) => field.name)
+      .filter((name, index, all) => name !== '' && all.indexOf(name) !== index),
+  );
+
   const moveField = (index: number, direction: -1 | 1): void => {
     const target = index + direction;
     if (target < 0 || target >= fields.length) {
@@ -184,7 +225,9 @@ export function FieldListEditor({ fields, onChange }: FieldListEditorProps): JSX
           variant="outline"
           size="sm"
           disabled={fields.length >= MAX_FIELDS}
-          onClick={() => onChange([...fields, createEmptyField(fields.length)])}
+          onClick={() =>
+            onChange([...fields, createEmptyField(fields.length, takenNames(fields))])
+          }
         >
           <Plus />
           Shto fushë
@@ -250,11 +293,19 @@ export function FieldListEditor({ fields, onChange }: FieldListEditorProps): JSX
                 onChange={(event) => {
                   const label = event.target.value;
                   // Keep the machine name in sync until the admin edits it directly.
+                  // `startsWith` rather than equality so a key this editor already
+                  // de-duplicated ("qyteti_2") still counts as auto-generated and keeps
+                  // following the label.
+                  const derived = toFieldName(field.label);
                   const shouldSyncName =
-                    field.name === '' || field.name === toFieldName(field.label);
+                    field.name === '' ||
+                    field.name === derived ||
+                    new RegExp(`^${derived}_\d+$`).test(field.name);
                   updateField(index, {
                     label,
-                    ...(shouldSyncName ? { name: toFieldName(label) } : {}),
+                    ...(shouldSyncName
+                      ? { name: uniqueFieldName(toFieldName(label), takenNames(fields, index)) }
+                      : {}),
                   });
                 }}
               />
@@ -285,11 +336,26 @@ export function FieldListEditor({ fields, onChange }: FieldListEditorProps): JSX
                 id={`field-name-${index}`}
                 className="font-mono text-xs"
                 value={field.name}
+                aria-invalid={duplicateNames.has(field.name) || undefined}
+                aria-describedby={`field-name-help-${index}`}
                 onChange={(event) => updateField(index, { name: toFieldName(event.target.value) })}
               />
-              <p className="text-xs text-muted-foreground">
-                Përdoret në CSV dhe në bazën e të dhënave.
-              </p>
+              {/*
+                A typed key is NOT silently renamed — that would move the ground under
+                someone mid-edit. It is flagged instead, because the API rejects the whole
+                save on a duplicate and this is the only place that can say which two
+                fields collided. Auto-generated keys never reach this state.
+              */}
+              {duplicateNames.has(field.name) ? (
+                <p id={`field-name-help-${index}`} className="text-xs text-destructive">
+                  Ky çelës përdoret nga një fushë tjetër. Çelësat duhet të jenë unikë —
+                  ndryshoje para se ta ruash.
+                </p>
+              ) : (
+                <p id={`field-name-help-${index}`} className="text-xs text-muted-foreground">
+                  Përdoret në CSV dhe në bazën e të dhënave.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -1,3 +1,4 @@
+import { usePageMeta } from "../hooks/usePageMeta";
 import React, { useState } from "react";
 import { Check, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { CONTACT_FORM_SLUG } from "../../marketing/lib/forms.config";
@@ -11,6 +12,10 @@ import { PrimaryBtn } from "../ui/buttons";
 
 
 export function PageKontakti() {
+  usePageMeta(
+    "Kontakti — Cacttus Education",
+    "Na shkruaj ose na vizito — jemi këtu për çdo pyetje rreth studimeve dhe trajnimeve. Do të të përgjigjemi sa më shpejt.",
+  );
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ emri: "", email: "", telefon: "", subjekti: "", mesazhi: "" });
   const [error, setError] = useState("");
