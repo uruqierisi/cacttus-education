@@ -3,8 +3,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
   getPublicPosts,
+  getPublicPostCategories,
   type PostCard as PostCardData,
+  type PostCategory,
 } from "../../marketing/lib/public-api";
+import { FilterRow } from "../sections/FilterRow";
+import { ALL_FILTER } from "./PageTrajnime";
 import { ArticleCard } from "../cards/ArticleCard";
 import { formatPostDate } from "../lib/dates";
 import { C } from "../theme";
@@ -20,10 +24,12 @@ import { GhostBtn, SecondaryBtn } from "../ui/buttons";
    card linked to a single static `/lajme/artikull` mock, so a post published in the
    dashboard could never appear here no matter how correct the backend was.
 
-   NO CATEGORY CHIPS. The mock had "Lajmet / Teknologji / Karriera / Projekte", but `Post`
-   has no category column (see schema.prisma), so those filters cannot be backed by data.
-   Inventing one per post would make the filter lie; the chips are gone until the model
-   grows a field to support them.
+   CATEGORY CHIPS, at last. This comment used to explain their ABSENCE: the mock had
+   "Lajmet / Teknologji / Karriera / Projekte" but `Post` had no category column, so the
+   filters could not be backed by data and inventing one per post would have made them
+   lie. The model has the field now, so the chips are real — and they still come from the
+   DATA, never from a hard-coded list: the endpoint returns only categories that have a
+   published post, so a chip can never lead to an empty page.
 ══════════════════════════════════════════ */
 export function PageLajme() {
   usePageMeta(
@@ -31,14 +37,36 @@ export function PageLajme() {
     "Njoftime, histori dhe risi nga Cacttus Education.",
   );
   const [posts, setPosts] = useState<readonly PostCardData[]>([]);
+  const [categories, setCategories] = useState<readonly PostCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+
+  /*
+    The selected chip, held as the visible LABEL rather than a slug — `FilterRow` speaks
+    in labels and one row that can only have one answer is exactly what one string models.
+    Same shape the /trajnime row uses.
+  */
+  const [selected, setSelected] = useState(ALL_FILTER);
 
   useEffect(() => {
     let active = true;
     setIsLoading(true);
     setLoadError("");
+
+    /*
+      The chips are a SEPARATE, non-fatal request. A failed feed is an error the visitor
+      must see; a failed category list only costs the filter row, and taking the whole
+      page down for it would be the worse trade — so it resolves to an empty list and the
+      row simply does not render.
+    */
+    getPublicPostCategories()
+      .then((data) => {
+        if (active) setCategories(data);
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      });
 
     getPublicPosts()
       .then((data) => {
@@ -56,8 +84,22 @@ export function PageLajme() {
     };
   }, [reloadKey]);
 
+  /*
+    Filtered CLIENT-SIDE, from the list already loaded, rather than by re-requesting with
+    `?category=`. The feed is a browse-all grid of a few dozen posts that is already in
+    memory, so a round trip per chip would add latency for nothing. The query parameter
+    exists on the API for callers that want it — a shared link, a future paginated feed.
+
+    An UNCATEGORISED post matches only "Të gjitha". That is the honest behaviour: it
+    belongs to no category, so no category chip should claim it.
+  */
+  const visible =
+    selected === ALL_FILTER ? posts : posts.filter((post) => post.category?.name === selected);
+
+  const chipOptions = [ALL_FILTER, ...categories.map((category) => category.name)];
+
   // The newest post gets the wide treatment; the rest fill the grid beneath it.
-  const [featured, ...rest] = posts;
+  const [featured, ...rest] = visible;
 
   return (
     <PageWrapper>
@@ -67,6 +109,24 @@ export function PageLajme() {
           <p className="text-lg" style={{ color: C.muted }}>Njoftime, histori dhe risi nga Cacttus Education.</p>
         </div>
       </section>
+
+      {/*
+        Rendered only when there is more than one option — a lone "Të gjitha" chip filters
+        nothing and would just be furniture. That is the same guard the /trajnime rows use,
+        and it is what keeps this row absent entirely until an editor files a first post.
+      */}
+      {chipOptions.length > 1 && (
+        <section className="pt-8" style={{ backgroundColor: C.n0 }}>
+          <div className="max-w-[1200px] mx-auto px-5">
+            <FilterRow
+              label="Kategoria:"
+              options={chipOptions}
+              active={selected}
+              onSelect={setSelected}
+            />
+          </div>
+        </section>
+      )}
 
       <section className="py-16" style={{ backgroundColor: C.n0 }}>
         <div className="max-w-[1200px] mx-auto px-5">
@@ -89,6 +149,16 @@ export function PageLajme() {
             <div className="py-20 text-center">
               <p className="text-lg" style={{ color: C.n700 }}>Ende nuk ka lajme të publikuara</p>
               <p className="text-sm mt-2" style={{ color: C.n500 }}>Kthehu së shpejti — po punojmë në përmbajtje të re.</p>
+            </div>
+          ) : visible.length === 0 ? (
+            /* A filtered-to-nothing grid is a different state from an empty blog, and it
+               needs a way back — otherwise the visitor is stuck on a blank page with no
+               clue that a chip caused it. The endpoint only offers categories that have a
+               published post, so this is reachable only in the seconds between an editor
+               unfiling the last one and the list being refetched. */
+            <div className="py-20 text-center flex flex-col items-center gap-4">
+              <p className="text-lg" style={{ color: C.n500 }}>Nuk ka lajme në këtë kategori</p>
+              <SecondaryBtn onClick={() => setSelected(ALL_FILTER)}>Shfaq të gjitha</SecondaryBtn>
             </div>
           ) : (
             <>

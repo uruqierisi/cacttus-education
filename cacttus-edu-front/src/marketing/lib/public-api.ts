@@ -349,11 +349,24 @@ export type PostAuthor = {
  * summaries so a six-card grid does not ship six full article bodies, and it means no
  * card ever holds HTML that would need sanitising to render.
  */
+/**
+ * A post's category, or null.
+ *
+ * NULL IS ORDINARY here, unlike a training's category: filing an article is optional and
+ * every post that predates the taxonomy is unfiled. An uncategorised post is shown under
+ * "Të gjitha" and carries no chip label.
+ */
+export type PostCategory = {
+  readonly name: string
+  readonly slug: string
+}
+
 export type PostCard = {
   readonly slug: string
   readonly title: string
   readonly coverImage: string | null
   readonly excerpt: string
+  readonly category: PostCategory | null
   readonly author: PostAuthor
   readonly createdAt: string
   readonly updatedAt: string
@@ -380,6 +393,17 @@ export type PostDetail = PostCard & {
  */
 export function getPublicPosts(): Promise<readonly PostCard[]> {
   return request<readonly PostCard[]>('/api/public/posts')
+}
+
+/**
+ * The categories the /lajme chips should offer.
+ *
+ * Only those with at least one PUBLISHED post — the endpoint decides that, not this
+ * client. A chip that could only ever empty the list is a dead end, the same rule the
+ * catalogue's filters follow.
+ */
+export function getPublicPostCategories(): Promise<readonly PostCategory[]> {
+  return request<readonly PostCategory[]>('/api/public/posts/categories')
 }
 
 /** One article. Throws `PublicApiError` with `isNotFound` for an unknown or unpublished slug. */

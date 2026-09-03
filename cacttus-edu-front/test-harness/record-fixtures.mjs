@@ -20,6 +20,9 @@ const paths = [
   "/api/public/trainings",
   "/api/public/trainings/filters",
   "/api/public/posts",
+  // The /lajme chips. Absent from the replay, the page falls back to "no categories" and
+  // the row silently never renders — which would make a broken chip row look like a pass.
+  "/api/public/posts/categories",
 ];
 
 // Discover real slugs from the list endpoints, then record their detail pages.

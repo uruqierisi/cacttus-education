@@ -15,7 +15,13 @@
     "path": "/api/public/posts",
     "status": 200,
     "file": "api/posts.json",
-    "bytes": 2319
+    "bytes": 2399
+  },
+  {
+    "path": "/api/public/posts/categories",
+    "status": 200,
+    "file": "api/posts_categories.json",
+    "bytes": 26
   },
   {
     "path": "/api/public/trainings/ethical-hacking-dhe-penetration-testing-3",
@@ -57,31 +63,31 @@
     "path": "/api/public/posts/cacttus-education-test",
     "status": 200,
     "file": "api/posts_cacttus-education-test.json",
-    "bytes": 1836
+    "bytes": 1852
   },
   {
     "path": "/api/public/posts/ballina-e-ngarkuar",
     "status": 200,
     "file": "api/posts_ballina-e-ngarkuar.json",
-    "bytes": 546
+    "bytes": 562
   },
   {
     "path": "/api/public/posts/ngarkim-foto-1785828809",
     "status": 200,
     "file": "api/posts_ngarkim-foto-1785828809.json",
-    "bytes": 512
+    "bytes": 528
   },
   {
     "path": "/api/public/posts/njoftim-smoke-test-msdtk9g9",
     "status": 200,
     "file": "api/posts_njoftim-smoke-test-msdtk9g9.json",
-    "bytes": 826
+    "bytes": 842
   },
   {
     "path": "/api/public/posts/sanitizer-probe",
     "status": 200,
     "file": "api/posts_sanitizer-probe.json",
-    "bytes": 976
+    "bytes": 797
   },
   {
     "path": "/api/public/forms/aplikim-zhvam",
@@ -99,19 +105,19 @@
     "path": "/api/public/forms/kontakt",
     "status": 200,
     "file": "api/forms_kontakt.json",
-    "bytes": 273
+    "bytes": 335
   },
   {
     "path": "/api/public/forms/kontakt-biznesi",
     "status": 200,
     "file": "api/forms_kontakt-biznesi.json",
-    "bytes": 937
+    "bytes": 713
   },
   {
     "path": "/api/public/forms/rezervo-klase",
     "status": 200,
     "file": "api/forms_rezervo-klase.json",
-    "bytes": 825
+    "bytes": 947
   },
   {
     "path": "/api/public/forms/aplikim-studime-profesionale",
